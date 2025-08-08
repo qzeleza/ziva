@@ -1,0 +1,487 @@
+package query
+
+import (
+	"runtime"
+	"strings"
+
+	"unicode/utf8"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/termos/internal/performance"
+	"github.com/qzeleza/termos/internal/ui"
+)
+
+type ErrorColor int
+
+const (
+	Yellow ErrorColor = iota
+	Red
+	Orange
+)
+
+// Константы для управления памятью на embedded устройствах
+const (
+	MaxCompletedTasks       = 50               // Максимальное количество завершенных задач в памяти
+	MemoryPressureThreshold = 64 * 1024 * 1024 // 64MB - порог для запуска очистки памяти
+)
+
+// Используем константы из пакета common для расчета ширины макета
+
+// Модель очереди задач.
+// Модель представляет собой очередь задач, которые выполняются последовательно.
+type Model struct {
+	tasks          []common.Task  // Список задач.
+	current        int            // Индекс текущей задачи.
+	title          string         // Заголовок очереди.
+	titleStyle     lipgloss.Style // Стиль заголовка.
+	summary        string         // Сводка по выполненным задачам.
+	summaryStyle   lipgloss.Style // Стиль сводки.
+	width          int            // Ширина экрана.
+	quitting       bool           // Флаг завершения работы.
+	stoppedOnError bool           // Флаг прерывания очереди из-за ошибки.
+	appName        string         // Название приложения.
+	appNameStyle   lipgloss.Style // Стиль названия приложения.
+	errorTask      common.Task    // Задача, вызвавшая прерывание очереди.
+
+	// Счетчики для подсчета результатов выполнения
+	successCount int  // Количество успешно выполненных задач
+	errorCount   int  // Количество задач с ошибками
+	showSummary  bool // Флаг отображения сводки
+}
+
+// New создает новую модель очереди с заданным заголовком и задачами.
+func New(title string) *Model {
+	return &Model{
+		title:        title,
+		summary:      "Обработка операций прошла",
+		width:        common.DefaultWidth, // Начальная ширина
+		showSummary:  true,                // По умолчанию сводка отображается
+		appNameStyle: lipgloss.NewStyle().Foreground(ui.ColorDarkGray).Background(ui.ColorBrightWhite).Bold(false),
+	}
+}
+
+// Добавляет список задач для выполнения.
+func (m *Model) AddTasks(tasks []common.Task) {
+	m.tasks = append(m.tasks, tasks...)
+}
+
+// updateTaskStats обновляет статистику выполнения задач
+func (m *Model) updateTaskStats() {
+	m.successCount = 0
+	m.errorCount = 0
+
+	// Подсчитываем только завершенные задачи
+	completedTasks := m.current
+	if m.current >= len(m.tasks) {
+		completedTasks = len(m.tasks)
+	}
+
+	for i := 0; i < completedTasks; i++ {
+		task := m.tasks[i]
+		if task.IsDone() {
+			if task.HasError() {
+				m.errorCount++
+			} else {
+				m.successCount++
+			}
+		}
+	}
+}
+
+// formatSummaryWithStats форматирует сводку с учетом статистики
+func (m *Model) formatSummaryWithStats() (string, string) {
+	totalTasks := len(m.tasks)
+	completedTasks := m.successCount + m.errorCount
+
+	// Формируем левую часть: summary + (успешных/всего)
+	leftSummary := performance.FastConcat(
+		m.summary,
+		" (",
+		performance.FastConcat(
+			performance.IntToString(m.successCount),
+			"/",
+			performance.IntToString(totalTasks),
+		),
+		")",
+	)
+
+	// Формируем правую часть: УСПЕШНО или С ОШИБКАМИ
+	var rightStatus string
+	if m.errorCount > 0 {
+		rightStatus = "С ОШИБКАМИ"
+	} else if completedTasks == totalTasks && completedTasks > 0 {
+		rightStatus = "УСПЕШНО"
+	} else {
+		rightStatus = "В ПРОЦЕССЕ"
+	}
+
+	return leftSummary, rightStatus
+}
+
+// Запускает очередь задач
+func (m *Model) Run() error {
+	_, err := tea.NewProgram(m).Run()
+	return err
+}
+
+// WithTitleColor устанавливает цвет заголовка.
+func (m *Model) WithTitleColor(titleColor lipgloss.TerminalColor, bold bool) *Model {
+	m.titleStyle = lipgloss.NewStyle().Foreground(titleColor).Bold(bold)
+	return m
+}
+
+// WithAppName устанавливает название приложения.
+func (m *Model) WithAppName(appName string) *Model {
+	m.appName = "  " + appName + "  "
+	return m
+}
+
+// WithAppNameStyle устанавливает стиль названия приложения.
+func (m *Model) WithAppNameColor(textColor lipgloss.TerminalColor, bold bool) *Model {
+	m.appNameStyle = lipgloss.NewStyle().Foreground(textColor).Bold(bold).Background(ui.ColorBrightWhite)
+	return m
+}
+
+// WithSummary устанавливает флаг отображения сводки.
+func (m *Model) WithSummary(show bool) *Model {
+	m.showSummary = show
+	return m
+}
+
+// SetErrorColor устанавливает цвет для отображения ошибок в очереди.
+func (m *Model) SetErrorColor(color ErrorColor) *Model {
+
+	switch color {
+	case Yellow:
+		ui.SetErrorColor(ui.ColorDarkYellow, ui.ColorBrightYellow)
+	case Red:
+		ui.SetErrorColor(ui.ColorDarkRed, ui.ColorBrightRed)
+	case Orange:
+		ui.SetErrorColor(ui.ColorDarkOrange, ui.ColorBrightOrange)
+	}
+	return m
+}
+
+// layoutWidth вычисляет ширину для рендеринга задач.
+// Использует функцию из пакета common.
+func (m *Model) layoutWidth() int {
+	return common.CalculateLayoutWidth(m.width)
+}
+
+// Init запускает первую задачу.
+func (m *Model) Init() tea.Cmd {
+	if len(m.tasks) > 0 {
+		return m.tasks[0].Run()
+	}
+	return tea.Quit
+}
+
+// setTitle прорисовывает заголовок
+func (m *Model) setTitle(width int) string {
+	var result string
+	if m.appName != "" {
+		appName := m.appNameStyle.Render(m.appName)
+		title := m.titleStyle.Render(m.title)
+		result = ui.AlignTextToRight("  "+title, appName, width+1) + "\n"
+	} else {
+		result = "  " + m.title + "\n"
+	}
+	return result
+}
+
+// Update обрабатывает сообщения и делегирует их задачам.
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// Обработка обновлений размера окна.
+	if size, ok := msg.(tea.WindowSizeMsg); ok {
+		m.width = size.Width
+	}
+
+	if msg, ok := msg.(tea.KeyMsg); ok && msg.String() == "ctrl+c" {
+		m.quitting = true
+		return m, tea.Quit
+	}
+
+	if m.current >= len(m.tasks) {
+		return m, tea.Quit
+	}
+
+	currentTask := m.tasks[m.current]
+	var cmd tea.Cmd
+
+	m.tasks[m.current], cmd = currentTask.Update(msg)
+
+	if currentTask.IsDone() {
+		// Обновляем статистику выполненных задач
+		m.updateTaskStats()
+
+		// Проверяем давление памяти и выполняем очистку если необходимо
+		m.checkMemoryPressure()
+
+		// Проверяем, есть ли ошибка в текущей задаче
+		if currentTask.HasError() && currentTask.StopOnError() {
+			// Если есть ошибка и флаг StopOnError установлен,
+			// прекращаем выполнение очереди и сохраняем информацию об ошибке
+			m.stoppedOnError = true
+			m.errorTask = currentTask
+			return m, tea.Quit
+		}
+
+		// Иначе переходим к следующей задаче
+		m.current++
+		if m.current < len(m.tasks) {
+			nextCmd := m.tasks[m.current].Run()
+			return m, tea.Batch(cmd, nextCmd)
+		}
+		// Финальное обновление статистики при завершении всех задач
+		m.updateTaskStats()
+		return m, tea.Quit
+	}
+
+	return m, cmd
+}
+
+// View отображает список задач.
+func (m *Model) View() string {
+
+	// Если очередь завершена, отображаем просто надпись о завершении
+	// без прорисовки задач
+	// if m.quitting {
+	// 	return ui.CancelStyle.Render(task.DefaultCancelLabel) + "\n"
+	// }
+
+	var sb strings.Builder
+
+	layoutWidth := m.layoutWidth()
+
+	// Используем настроенный заголовок.
+	sb.WriteString(ui.DrawLine(layoutWidth))
+	sb.WriteString(m.setTitle(layoutWidth))
+	sb.WriteString(ui.DrawLine(layoutWidth) + "\n")
+
+	for i, t := range m.tasks {
+		if i < m.current {
+			// Завершенные задачи: отображаем их финальный, выровненный вид.
+			sb.WriteString(t.FinalView(layoutWidth) + "\n")
+		} else if i == m.current {
+			// Активная задача: отображаем ее интерактивный вид.
+			// Обрезаем только завершающие символы новой строки, сохраняя ведущие пробелы
+			// view := strings.TrimRight(t.View(layoutWidth), "\n")
+			view := t.View(layoutWidth)
+			sb.WriteString(view + "\n")
+			// Добавляем разделитель, если есть ожидающие задачи и нет ошибки
+			if i+1 < len(m.tasks) && !(m.stoppedOnError && t.HasError()) {
+				sb.WriteString(ui.DrawLine(layoutWidth))
+			}
+		}
+	}
+
+	// Убираем крайнюю линию, если она есть
+	removeDuplicateLines(&sb)
+
+	// Добавляем финальную разделительную линию
+	// Если есть активная задача, добавляем обычную линию
+	// Иначе добавляем специальную линию
+	if m.current < len(m.tasks) {
+		sb.WriteString(ui.DrawLine(layoutWidth))
+	} else {
+
+		// Отображаем сводку только если включен флаг showSummary
+		if m.showSummary {
+			// Получаем форматированную сводку с статистикой
+			leftSummary, rightStatus := m.formatSummaryWithStats()
+
+			// Определяем стиль для правой части в зависимости от статуса
+			var rightStyle lipgloss.Style
+			if rightStatus == "УСПЕШНО" {
+				rightStyle = ui.SuccessLabelStyle
+			} else if rightStatus == "С ОШИБКАМИ" {
+				rightStyle = ui.GetErrorStatusStyle()
+			} else {
+				rightStyle = ui.SubtleStyle
+			}
+
+			// Определяем стиль для левой части (summary) в зависимости от результатов
+			var summaryStyle lipgloss.Style
+			if rightStatus == "УСПЕШНО" {
+				summaryStyle = ui.SuccessLabelStyle
+			} else if rightStatus == "С ОШИБКАМИ" {
+				summaryStyle = ui.GetErrorStatusStyle()
+			} else {
+				// Для состояния "В ПРОЦЕССЕ" используем оригинальный стиль или стиль по умолчанию
+				if m.summaryStyle.GetForeground() != nil {
+					summaryStyle = m.summaryStyle
+				} else {
+					summaryStyle = ui.SubtleStyle
+				}
+			}
+
+			// Создаем левую часть футера
+			leftPart := performance.FastConcat(
+				"  ",
+				ui.FinishedLabelStyle.Render(ui.TaskCompletedSymbol),
+				" ",
+				summaryStyle.Render(leftSummary),
+			)
+
+			// Создаем правую часть футера
+			rightPart := rightStyle.Render(rightStatus)
+
+			// Выравниваем по ширине макета
+			footer := ui.AlignTextToRight(leftPart, rightPart, layoutWidth) + "\n\n"
+			footer += ui.DrawLine(layoutWidth) + "\n"
+			sb.WriteString(footer)
+		} else {
+			// Заменяем вертикальные линии перед символами задач ПЕРЕД добавлением финальных элементов
+			removeVerticalLinesBeforeTaskSymbols(&sb)
+			// Если сводка отключена, добавляем только финальную линию
+			// sb.WriteString("\n")
+			sb.WriteString(ui.DrawLine(layoutWidth) + "\n")
+		}
+	}
+
+	return sb.String()
+}
+
+// Убираем из потока вывода крайнюю линию, если она есть
+func removeDuplicateLines(sb *strings.Builder) {
+
+	// Обработка финальной разделительной линии
+	// Получаем текущее содержимое Builder для анализа
+	content := sb.String()
+
+	// Находим последний перенос строки для выделения последней строки
+	lastNewlineIndex := strings.LastIndex(content, "\n")
+	if lastNewlineIndex != -1 {
+		// Проверяем, не является ли последняя строка пустой (только перенос строки)
+		if lastNewlineIndex == len(content)-1 {
+			// Если последняя строка пустая, ищем предыдущий перенос строки
+			lastNewlineIndex = strings.LastIndex(content[:lastNewlineIndex], "\n")
+		}
+
+		if lastNewlineIndex != -1 && lastNewlineIndex < len(content)-1 {
+			// Получаем последнюю строку (или предпоследнюю, если последняя пустая)
+			lastLine := content[lastNewlineIndex+1:]
+			// Убираем возможный перенос строки в конце
+			lastLine = strings.TrimSuffix(lastLine, "\n")
+
+			// Проверяем, является ли строка горизонтальной линией
+			// (состоит только из символов HorizontalLineSymbol)
+			isHorizontalLine := strings.Contains(lastLine, ui.HorizontalLineSymbol)
+
+			// Если строка - горизонтальная линия и не пустая, удаляем её
+			if isHorizontalLine && len(lastLine) > 0 {
+				// Очищаем Builder и записываем контент без последней линии-разделителя
+				sb.Reset()
+				sb.WriteString(content[:lastNewlineIndex+1])
+			}
+		}
+	}
+}
+
+// removeVerticalLinesBeforeTaskSymbols убирает вертикальные линии, ведущие к последнему (самому нижнему)
+// символу задачи (TaskCompletedSymbol/TaskInProgressSymbol). Это позволяет «обрубить» вертикальные
+// ветки, чтобы они не тянулись до конца списка задач.
+//
+// Алгоритм:
+//  1. Ищем строку и колонку (в рунах) последнего символа задачи
+//  2. Ищем самый нижний вертикальный сегмент в той же колонке и меняем его на пробел
+func removeVerticalLinesBeforeTaskSymbols(sb *strings.Builder) {
+	// Конвертируем буфер в строки
+	content := sb.String()
+	lines := strings.Split(content, "\n")
+
+	// 1. Находим строку и колонку (в рунах) последнего символа задачи
+	lastLine := -1
+	col := -1
+	for i := len(lines) - 1; i >= 0; i-- {
+		line := lines[i]
+		completed := strings.Index(line, ui.TaskCompletedSymbol)
+		progress := strings.Index(line, ui.TaskInProgressSymbol)
+		if completed == -1 && progress == -1 {
+			continue
+		}
+		bytePos := completed
+		if bytePos == -1 || (progress != -1 && progress < completed) {
+			bytePos = progress
+		}
+		lastLine = i
+		col = utf8.RuneCountInString(line[:bytePos])
+		break
+	}
+
+	if lastLine == -1 {
+		return // символы задач не найдены
+	}
+
+	// 2. Ищем все вертикальные сегменты в той же колонке после последней задачи и заменяем их на пробелы
+	for i := lastLine + 1; i < len(lines); i++ {
+		runes := []rune(lines[i])
+		if col < len(runes) && string(runes[col]) == ui.VerticalLineSymbol {
+			// Заменяем вертикальную линию на пробел
+			runes[col] = ' '
+			lines[i] = string(runes)
+		}
+	}
+
+	// 3. Обновляем builder
+	sb.Reset()
+	sb.WriteString(strings.Join(lines, "\n"))
+}
+
+// DrawSpecialLine создает горизонтальную линию заданной ширины c угловой линией вверху
+// типа ──┴─
+func DrawFooterLine(width int) string {
+	return performance.FastConcat(
+		ui.HorizontalLineSymbol,
+		ui.FinishedLabelStyle.Render(" "+ui.TaskCompletedSymbol+" "),
+		performance.RepeatEfficient(ui.HorizontalLineSymbol, width-4), "\n")
+}
+
+// checkMemoryPressure проверяет использование памяти и выполняет очистку при необходимости
+func (m *Model) checkMemoryPressure() {
+	var ms runtime.MemStats
+	runtime.ReadMemStats(&ms)
+
+	// Если использование памяти превышает порог, выполняем экстренную очистку
+	if ms.Sys > MemoryPressureThreshold {
+		m.emergencyCleanup()
+		// Принудительный сборщик мусора для embedded устройств
+		runtime.GC()
+	}
+}
+
+// emergencyCleanup выполняет экстренную очистку памяти
+func (m *Model) emergencyCleanup() {
+	// Ограничиваем количество завершенных задач
+	m.cleanupOldTasks()
+
+	// Очищаем буферные пулы через performance пакет
+	performance.EmergencyPoolCleanup()
+
+	// Очищаем кэш интернирования строк
+	ui.ClearInternCache()
+}
+
+// cleanupOldTasks ограничивает количество завершенных задач в памяти
+func (m *Model) cleanupOldTasks() {
+	if m.current <= MaxCompletedTasks {
+		return // Нет необходимости в очистке
+	}
+
+	// Сохраняем только последние MaxCompletedTasks завершенных задач
+	// плюс все активные/незавершенные задачи
+	keepFrom := m.current - MaxCompletedTasks
+	if keepFrom < 0 {
+		keepFrom = 0
+	}
+
+	// Создаем новый срез с ограниченным количеством задач
+	newTasks := make([]common.Task, len(m.tasks)-keepFrom)
+	copy(newTasks, m.tasks[keepFrom:])
+
+	// Обновляем индекс текущей задачи
+	m.current -= keepFrom
+	m.tasks = newTasks
+}

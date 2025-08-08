@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/qzeleza/termos/task"
+	"github.com/qzeleza/termos/internal/task"
 )
 
 func RunBasicUsage() {

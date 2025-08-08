@@ -5,9 +5,9 @@ package examples
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/qzeleza/termos/common"
-	"github.com/qzeleza/termos/query"
-	"github.com/qzeleza/termos/ui"
+	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/termos/internal/query"
+	"github.com/qzeleza/termos/internal/ui"
 )
 
 // RunTasksWithTUI для полной сборки - полнофункциональный TUI

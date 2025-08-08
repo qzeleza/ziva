@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/qzeleza/termos/common"
+
 	"github.com/qzeleza/termos/examples"
-	"github.com/qzeleza/termos/task"
+	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/termos/internal/task"
 )
 
 // Точка входа для полнофункционального TUI

@@ -25,6 +25,7 @@ go run ./cmd/tui_full
   - `task.NewSingleSelectTask(prompt string, options []string) *SingleSelectTask`
   - `task.NewMultiSelectTask(prompt string, options []string) *MultiSelectTask`
   - `task.NewInputTaskNew(prompt, placeholder string) *InputTaskNew`
+  - `task.NewFuncTaskWithOptions(title string, action func() error, options ...task.FuncTaskOption) *FuncTask`
 
 Примечание: Встроенный `Run()` сейчас возвращает `nil`. Интегрируйте задачи в модель Bubble Tea и управляйте ими через `Update`.
 
@@ -138,6 +139,36 @@ val := it.GetValue()
 _ = val
 ```
 
+## Выполнение функции (FuncTask)
+
+```go
+// Создание задачи, выполняющей произвольную функцию
+fn := task.NewFuncTaskWithOptions(
+    "Проверка соединения",
+    func() error {
+        // Здесь могла бы быть реальная проверка
+        // Верните ошибку, если произошёл сбой
+        return nil
+    },
+    // Вывод краткой сводки под заголовком после успеха
+    task.WithSummaryFunction(func() []string {
+        return []string{
+            "Пинг: 12мс",
+            "Потери пакетов: 0%",
+        }
+    }),
+    // Не останавливать очередь при ошибке (для демонстрации)
+    task.WithStopOnError(false),
+    // Переопределение метки успешного завершения (по умолчанию "ГОТОВО")
+    task.WithSuccessLabelOption("ЗАВЕРШЕНО"),
+)
+
+// Клавиши: q/esc/ctrl+c — отмена задачи пользователем
+
+// Использование: добавьте в очередь задач или интегрируйте в вашу модель Bubble Tea
+// queue.AddTasks([]common.Task{ fn })
+```
+
 ## Очередь задач
 
 ```go
@@ -166,18 +197,22 @@ if _, err := tea.NewProgram(queue).Run(); err != nil {
 
 ## Embedded оптимизации
 
-```go
-import (
-    "github.com/qzeleza/termos/examples"
-    "github.com/qzeleza/termos/ui"
-)
+Включение оптимизаций для embedded теперь происходит автоматически при импортировании модуля благодаря внутреннему пакету `internal/autoconfig`. Ручные вызовы из примеров остаются опциональными и могут использоваться для демонстрации.
 
-// Автоматическое определение embedded окружения
-if examples.IsEmbeddedEnvironment() {
-    // Получаем оптимизированную конфигурацию
-    config := examples.OptimizedEmbeddedConfig()
-    
-    // Применяем оптимизации
-    examples.ApplyEmbeddedConfig(config)
-    ui.EnableEmbeddedMode()
-}
+Полезные переменные окружения для управления поведением автодетекции:
+
+- `TERMOS_EMBEDDED` — принудительно включает/выключает режим embedded (`true`/`1` или пусто/`0`).
+- `TERMOS_MEMORY_LIMIT` — задаёт порог памяти для эвристики (например: `64MB`, `128KB`, `1GB`).
+- `TERMOS_ASCII_ONLY` — форсирует ASCII-режим (значение `true`).
+
+Примеры запуска с переменными окружения:
+
+```bash
+# Принудительно включить embedded-режим
+TERMOS_EMBEDDED=1 go run ./cmd/tui_full
+
+# Считать систему «малопамятной» при m.Sys < 64MB
+TERMOS_MEMORY_LIMIT=64MB go run ./cmd/tui_full
+
+# Отключить UTF-8 и использовать максимально совместимый вывод
+TERMOS_ASCII_ONLY=true go run ./cmd/tui_full

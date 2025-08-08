@@ -2,7 +2,7 @@
 package examples
 
 import (
-	"github.com/qzeleza/termos/ui"
+	"github.com/qzeleza/termos/internal/ui"
 )
 
 // EmbeddedConfig содержит настройки оптимизации для embedded устройств

@@ -3,10 +3,10 @@ package main
 import (
 	// Встроенные импорты не требуются
 
-	"github.com/qzeleza/termos/common"
 	"github.com/qzeleza/termos/examples"
-	"github.com/qzeleza/termos/task"
-	"github.com/qzeleza/termos/validation"
+	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/termos/internal/task"
+	"github.com/qzeleza/termos/internal/validation"
 )
 
 func main() {

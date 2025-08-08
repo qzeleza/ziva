@@ -3,7 +3,7 @@ package examples
 import (
 	"testing"
 
-	"github.com/qzeleza/termos/ui"
+	"github.com/qzeleza/termos/internal/ui"
 	"github.com/stretchr/testify/assert"
 )
 
