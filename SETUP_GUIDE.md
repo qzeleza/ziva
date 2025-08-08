@@ -1,4 +1,4 @@
-# Инструкция по настройке Termos как отдельного модуля
+# Инструкция по настройке Термос как отдельного модуля
 
 ## 1. Инициализация Git репозитория
 
@@ -14,7 +14,7 @@ git init
 git add .
 
 # Первый коммит
-git commit -m "Initial commit: Termos TUI framework
+git commit -m "Initial commit: Термос TUI framework
 
 - Complete terminal user interface framework
 - Support for Yes/No, Input, SingleSelect, MultiSelect tasks
@@ -41,7 +41,7 @@ git push -u origin main
 
 ```bash
 # Создание первого релиза
-git tag -a v1.0.0 -m "Release v1.0.0: Stable Termos TUI framework"
+git tag -a v1.0.0 -m "Release v1.0.0: Stable Термос TUI framework"
 git push origin v1.0.0
 ```
 
