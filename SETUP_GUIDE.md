@@ -85,7 +85,7 @@ require (
 
 И замените все импорты с:
 ```go
-"github.com/qzeleza/kvaspro/backend/internal/termos/..."
+"github.com/qzeleza/termos/..."
 ```
 
 на:

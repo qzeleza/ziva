@@ -1,4 +1,4 @@
-package main
+package examples
 
 import (
 	"fmt"
@@ -7,13 +7,13 @@ import (
 	"github.com/qzeleza/termos/task"
 )
 
-func main() {
+func RunBasicUsage() {
 	fmt.Println("Termos - Пример базового использования")
 	fmt.Println("=====================================")
 
 	// Пример 1: Задача Yes/No
 	fmt.Println("\n1. Пример задачи Yes/No:")
-	
+
 	yesNoTask := task.NewYesNoTask(
 		"Хотите продолжить установку?",
 		"Подтвердите ваше действие",
@@ -25,29 +25,28 @@ func main() {
 	fmt.Println("   Результат: Да (симуляция)")
 
 	fmt.Println("\n2. Пример задачи ввода текста:")
-	
+
 	inputTask := task.NewInputTaskNew(
 		"Введите ваше имя",
 		"",
-		nil, // без валидации для простоты
 	)
-	
+
 	fmt.Println("   Заголовок: " + inputTask.Title())
 	fmt.Println("   Результат: Иван Иванов (симуляция)")
 
 	fmt.Println("\n3. Пример задачи выбора из списка:")
-	
+
 	options := []string{
 		"Установить все компоненты",
 		"Выборочная установка",
 		"Только базовые компоненты",
 	}
-	
+
 	selectTask := task.NewSingleSelectTask(
 		"Выберите тип установки",
 		options,
 	)
-	
+
 	fmt.Println("   Заголовок: " + selectTask.Title())
 	fmt.Println("   Опции:")
 	for i, option := range options {
@@ -62,11 +61,11 @@ func main() {
 
 	// Пример с обработкой ошибок
 	fmt.Println("\n4. Пример обработки ошибок:")
-	
+
 	// Симуляция ошибки
 	errorTask := &task.BaseTask{}
 	errorTask.SetError(fmt.Errorf("не удалось подключиться к серверу"))
-	
+
 	if errorTask.HasError() {
 		fmt.Printf("   Ошибка: %v\n", errorTask.Error())
 		fmt.Printf("   Остановка очереди: %v\n", errorTask.StopOnError())

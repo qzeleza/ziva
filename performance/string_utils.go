@@ -3,7 +3,6 @@ package performance
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
 	"unicode"
 )
@@ -75,14 +74,6 @@ func GetBuffer() *strings.Builder {
 // PutBuffer возвращает буфер в глобальный пул
 func PutBuffer(buf *strings.Builder) {
 	defaultPool.Put(buf)
-}
-
-// StripANSILength возвращает длину строки без ANSI escape последовательностей
-var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*[mK]`)
-
-func StripANSILength(s string) int {
-	cleaned := ansiRegex.ReplaceAllString(s, "")
-	return len([]rune(cleaned))
 }
 
 // TrimSpaceEfficient эффективная замена strings.TrimSpace для embedded
@@ -159,6 +150,139 @@ func RepeatEfficient(s string, count int) string {
 	}
 	
 	return buf.String()
+}
+
+// ToLowerEfficient эффективное приведение к нижнему регистру
+func ToLowerEfficient(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	
+	// Быстрая проверка - нужно ли изменение
+	hasUpper := false
+	for _, r := range s {
+		if r >= 'A' && r <= 'Z' {
+			hasUpper = true
+			break
+		}
+		if r > 127 { // Не-ASCII символы
+			hasUpper = true
+			break
+		}
+	}
+	
+	if !hasUpper {
+		return s
+	}
+	
+	return strings.ToLower(s)
+}
+
+// ContainsAnyEfficient проверяет содержание любого из символов
+func ContainsAnyEfficient(s string, chars string) bool {
+	if len(s) == 0 || len(chars) == 0 {
+		return false
+	}
+	
+	// Для коротких строк используем простой поиск
+	if len(chars) <= 8 {
+		for _, c := range s {
+			for _, target := range chars {
+				if c == target {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	
+	// Для длинных строк используем map
+	charMap := make(map[rune]bool, len(chars))
+	for _, c := range chars {
+		charMap[c] = true
+	}
+	
+	for _, c := range s {
+		if charMap[c] {
+			return true
+		}
+	}
+	
+	return false
+}
+
+// ReplaceAllEfficient эффективная замена всех вхождений
+func ReplaceAllEfficient(s, old, new string) string {
+	if len(s) == 0 || len(old) == 0 || old == new {
+		return s
+	}
+	
+	// Подсчитываем количество замен
+	count := strings.Count(s, old)
+	if count == 0 {
+		return s
+	}
+	
+	// Для одной замены используем простой способ
+	if count == 1 {
+		return strings.Replace(s, old, new, 1)
+	}
+	
+	buf := GetBuffer()
+	defer PutBuffer(buf)
+	
+	// Предварительно вычисляем размер результата
+	newSize := len(s) + count*(len(new)-len(old))
+	if newSize > 0 {
+		buf.Grow(newSize)
+	}
+	
+	start := 0
+	for {
+		idx := strings.Index(s[start:], old)
+		if idx == -1 {
+			buf.WriteString(s[start:])
+			break
+		}
+		
+		buf.WriteString(s[start : start+idx])
+		buf.WriteString(new)
+		start += idx + len(old)
+	}
+	
+	return buf.String()
+}
+
+// CleanWhitespaceEfficient очищает лишние пробелы (оптимизировано для embedded)
+func CleanWhitespaceEfficient(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	
+	buf := GetBuffer()
+	defer PutBuffer(buf)
+	
+	lastWasSpace := true // Чтобы удалить ведущие пробелы
+	
+	for _, r := range s {
+		if unicode.IsSpace(r) {
+			if !lastWasSpace {
+				buf.WriteRune(' ')
+				lastWasSpace = true
+			}
+		} else {
+			buf.WriteRune(r)
+			lastWasSpace = false
+		}
+	}
+	
+	result := buf.String()
+	// Удаляем завершающий пробел
+	if len(result) > 0 && result[len(result)-1] == ' ' {
+		result = result[:len(result)-1]
+	}
+	
+	return result
 }
 
 // FastConcat быстрая конкатенация строк для embedded
@@ -239,12 +363,106 @@ func (p *ByteBufferPool) Put(buf *bytes.Buffer) {
 	}
 }
 
+// Глобальный пул байтовых буферов
+var bytePool = NewByteBufferPool(4)
+
+// GetByteBuffer получает байтовый буфер
+func GetByteBuffer() *bytes.Buffer {
+	return bytePool.Get()
+}
+
+// PutByteBuffer возвращает байтовый буфер
+func PutByteBuffer(buf *bytes.Buffer) {
+	bytePool.Put(buf)
+}
+
+// IntToString эффективно преобразует int в строку для embedded устройств
+func IntToString(n int) string {
+	if n == 0 {
+		return "0"
+	}
+	
+	// Для отрицательных чисел
+	negative := n < 0
+	if negative {
+		n = -n
+	}
+	
+	buf := GetBuffer()
+	defer PutBuffer(buf)
+	
+	// Преобразуем цифры в обратном порядке
+	for n > 0 {
+		buf.WriteByte(byte('0' + n%10))
+		n /= 10
+	}
+	
+	if negative {
+		buf.WriteByte('-')
+	}
+	
+	// Переворачиваем строку
+	result := buf.String()
+	runes := []rune(result)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	
+	return string(runes)
+}
+
 // EmergencyPoolCleanup выполняет экстренную очистку всех пулов буферов
 func EmergencyPoolCleanup() {
 	// Очищаем глобальный пул строк
 	for {
 		select {
 		case <-defaultPool.buffers:
+		default:
+			goto nextPool
+		}
+	}
+	
+nextPool:
+	// Очищаем глобальный пул байтов
+	for {
+		select {
+		case <-bytePool.buffers:
+		default:
+			goto cleanupComplete
+		}
+	}
+	
+cleanupComplete:
+	// Примечание: Для полной очистки также нужно вызвать ui.ClearInternCache()
+	// но мы избегаем импорта ui пакета здесь для предотвращения циклических зависимостей
+}
+
+// Cleanup для StringPool - экстренная очистка пула строк
+func (p *StringPool) Cleanup() {
+	targetSize := len(p.buffers) / 2
+	if targetSize < 2 {
+		targetSize = 2
+	}
+	
+	for len(p.buffers) > targetSize {
+		select {
+		case <-p.buffers:
+		default:
+			return
+		}
+	}
+}
+
+// Cleanup для ByteBufferPool - экстренная очистка пула байтов
+func (p *ByteBufferPool) Cleanup() {
+	targetSize := len(p.buffers) / 2
+	if targetSize < 1 {
+		targetSize = 1
+	}
+	
+	for len(p.buffers) > targetSize {
+		select {
+		case <-p.buffers:
 		default:
 			return
 		}

@@ -98,48 +98,241 @@ const (
 // GetTaskBelowPrefix возвращает префикс для задачи ниже текущей выполняющейся задачи
 // Формат: "   │ " (отступ + ветка + линия + пробел)
 func GetTaskBelowPrefix() string {
-	return strings.Repeat(" ", MainLeftIndent) + VerticalLineSymbol + " "
+	return performance.FastConcat(
+		performance.RepeatEfficient(" ", MainLeftIndent),
+		VerticalLineSymbol,
+		" ",
+	)
 }
 
-// GetActiveTaskPrefix возвращает префикс для активной (выполняющейся) задачи
-// Формат: "   ├ " (отступ + разветвление + горизонтальная линия + пробел)
-func GetActiveTaskPrefix() string {
-	return strings.Repeat(" ", MainLeftIndent) + BranchSymbol + " "
+// GetCurrentTaskPrefix возвращает префикс для текущей выполняющейся задачи
+// Формат: "   ○ " (отступ + ветка + линия + пробел)
+func GetCurrentTaskPrefix() string {
+	return performance.FastConcat(
+		performance.RepeatEfficient(" ", MainLeftIndent),
+		TaskInProgressSymbol,
+		" ",
+	)
 }
 
-// GetCompletedTaskPrefix возвращает префикс для завершенной задачи (успешно или с ошибкой)
-// Формат: "   └ " для задач выбора
+// GetCurrentSelectTaskPrefix возвращает префикс для текущей выполняющейся задачи
+// Формат: "└─> " (отступ + угловой символ + линия + стрелка + пробел)
+func GetCurrentActiveTaskPrefix() string {
+	return performance.FastConcat(
+		performance.RepeatEfficient(" ", MainLeftIndent),
+		CornerDownSymbol,
+		HorizontalLineSymbol,
+		ActiveStyle.Render(ArrowSymbol),
+		" ",
+	)
+}
+
+// GetCompletedTaskPrefix возвращает префикс для завершенной задачи
+// Формат: "   ●" или "   ○"
 func GetCompletedTaskPrefix(success bool) string {
-	prefix := strings.Repeat(" ", MainLeftIndent) + CornerDownSymbol + " "
+	var icon string
 	if success {
-		return prefix
+		icon = TaskCompletedSymbol
+	} else {
+		icon = TaskInProgressSymbol
 	}
-	return prefix
+
+	return performance.FastConcat(
+		performance.RepeatEfficient(" ", MainLeftIndent),
+		icon,
+	)
 }
 
-// GetCompletedInputTaskPrefix возвращает префикс для завершенной задачи ввода текста
-// Формат: "   ■ " для текстовых задач
+// GetCommentPrefix возвращает префикс для комментария
+// Формат:
+//
+//	│   Комментарий
+//	│
+func GetCommentPrefix(value string) string {
+	return performance.FastConcat(
+		performance.RepeatEfficient(" ", MainLeftIndent),
+		VerticalLineSymbol,
+		"   ",
+		SubtleStyle.Render(value),
+		"\n",
+		performance.RepeatEfficient(" ", MainLeftIndent),
+		VerticalLineSymbol,
+	)
+}
+
+// GetCompletedInputTaskPrefix возвращает префикс для завершенной задачи с текстовым вводом
+// success = true: "  │ ✔", success = false: "  │ ✕"
 func GetCompletedInputTaskPrefix(success bool) string {
-	symbol := FinishSymbol
+	var icon string
 	if success {
-		return strings.Repeat(" ", MainLeftIndent) + ActiveTitleStyle.Render(symbol) + " "
+		// icon = IconDone
+		icon = TaskCompletedSymbol
+	} else {
+		// icon = IconError
+		icon = TaskInProgressSymbol
 	}
-	return strings.Repeat(" ", MainLeftIndent) + ErrorStatusStyle.Render(symbol) + " "
+
+	return performance.FastConcat(
+		performance.RepeatEfficient(" ", MainLeftIndent),
+		// TaskCompletedSymbol,
+		// " ",
+		icon,
+	)
 }
 
-// GetErrorMessageStyle возвращает текущий стиль для сообщений об ошибках
-func GetErrorMessageStyle() lipgloss.Style {
-	return ErrorMessageStyle
+// GetSelectItemPrefix возвращает префикс для элементов в задачах выбора
+// itemType: "active" - активный элемент, "above" - элемент выше активного, "below" - элемент ниже активного
+func GetSelectItemPrefix(itemType string) string {
+	switch itemType {
+
+	case "above":
+		// Элемент выше активного: "  |   "
+		return performance.FastConcat(
+			performance.RepeatEfficient(" ", MainLeftIndent),
+			VerticalLineSymbol,
+			"   ",
+		)
+
+	case "active":
+		// Активный элемент: "  └─> "
+		return GetCurrentActiveTaskPrefix()
+
+	case "below":
+		// Элемент ниже активного: "       " (отступ + 5 пробелов)
+		return performance.RepeatEfficient(" ", MainLeftIndent+4)
+	default:
+		return performance.RepeatEfficient(" ", MainLeftIndent)
+	}
 }
 
-// GetErrorStatusStyle возвращает текущий стиль для статуса ошибки
-func GetErrorStatusStyle() lipgloss.Style {
-	return ErrorStatusStyle
+// GetPendingTasksPlaceholder возвращает заглушку для отображения вместо невыполненных задач
+// Показывает пустую строку и следом горизонтальную линию
+func GetPendingTasksPlaceholder() string {
+	return ""
+	// return "\n" + performance.FastConcat(
+	// 	performance.RepeatEfficient(" ", MainLeftIndent),
+	// 	performance.RepeatEfficient(HorizontalLineSymbol, 30), // Горизонтальная линия
+	// )
 }
 
-// SetErrorColor устанавливает пользовательский цвет для ошибок
-func SetErrorColor(messageColor, statusColor lipgloss.Color) {
-	ErrorMessageStyle = ErrorMessageStyle.Foreground(messageColor)
+// AlignTextToRight выравнивает текст по правому краю по заданной ширине
+func AlignTextToRight(left string, right string, totalWidth int) string {
+	leftWidth := lipgloss.Width(left)
+	rightWidth := lipgloss.Width(right)
+
+	if totalWidth < leftWidth+rightWidth {
+		return left + " " + right
+	}
+
+	padding := performance.RepeatEfficient(" ", totalWidth-leftWidth-rightWidth-1)
+	return performance.FastConcat(left, padding, right, " ")
+}
+
+// CapitalizeFirst делает первую букву заглавной
+func CapitalizeFirst(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+
+	r, size := utf8.DecodeRuneInString(s)
+	if r == utf8.RuneError {
+		return s
+	}
+
+	return string(unicode.ToUpper(r)) + s[size:]
+}
+
+// wrapText разбивает текст на строки заданной максимальной длины
+// Старается разбивать по словам, избегая разрыва слов посередине
+// Корректно работает с UTF-8 символами
+func wrapText(text string, maxWidth int) []string {
+	if text == "" {
+		return []string{}
+	}
+
+	textRunes := []rune(text)
+	textLen := len(textRunes)
+
+	if textLen <= maxWidth {
+		return []string{text}
+	}
+
+	var lines []string
+	start := 0
+
+	for start < textLen {
+		end := start + maxWidth
+		if end >= textLen {
+			// Последняя строка
+			lines = append(lines, string(textRunes[start:]))
+			break
+		}
+
+		// Ищем оптимальное место для разрыва
+		cutPoint := findOptimalCutPointRunes(textRunes, start, maxWidth)
+
+		// Добавляем строку
+		lines = append(lines, string(textRunes[start:start+cutPoint]))
+
+		// Обновляем позицию, пропуская ведущие пробелы
+		start += cutPoint
+		for start < textLen && textRunes[start] == ' ' {
+			start++
+		}
+	}
+
+	return lines
+}
+
+// findOptimalCutPointRunes находит оптимальное место для разрыва строки при работе с рунами
+// Приоритет: последний пробел в пределах maxWidth, иначе - maxWidth
+func findOptimalCutPointRunes(textRunes []rune, start, maxWidth int) int {
+	textLen := len(textRunes)
+	maxEnd := start + maxWidth
+
+	if maxEnd >= textLen {
+		return textLen - start
+	}
+
+	// Ищем последний пробел в пределах максимальной ширины
+	for i := maxEnd - 1; i > start; i-- {
+		if textRunes[i] == ' ' {
+			return i - start
+		}
+	}
+
+	// Если пробела нет, разрываем по максимальной ширине
+	return maxWidth
+}
+
+// DrawSummaryLine рисует дополнительные строки с отступом
+func DrawSummaryLine(text string) string {
+	styledLine := SubtleStyle.Render(text)
+	indent := performance.RepeatEfficient(" ", 2)
+	return indent + VerticalLineSymbol + "   " + styledLine + "\n"
+}
+
+// DrawLine создает горизонтальную линию заданной ширины
+// типа ───
+func DrawLine(width int) string {
+	return performance.FastConcat(performance.RepeatEfficient(HorizontalLineSymbol, width), "\n")
+}
+
+// DrawSpecialLine создает горизонтальную линию заданной ширины c угловой линией внизу
+// типа ──┬─
+func DrawSpecialHeaderLine(width int) string {
+	return performance.FastConcat(
+		performance.RepeatEfficient(" ", 2),
+		// HorizontalLineSymbol,
+		// HorizontalLineSymbol,
+		CornerUpSymbol,
+		performance.RepeatEfficient(HorizontalLineSymbol, width-3), "\n")
+}
+
+// SetErrorColor устанавливает цвет для стилей ошибок
+// Изменяет цвета для ErrorMessageStyle и ErrorStatusStyle
+func SetErrorColor(errorsColor lipgloss.TerminalColor, statusColor lipgloss.TerminalColor) {
+	ErrorMessageStyle = ErrorMessageStyle.Foreground(errorsColor)
 	ErrorStatusStyle = ErrorStatusStyle.Foreground(statusColor)
 }
 
@@ -149,137 +342,32 @@ func ResetErrorColors() {
 	ErrorStatusStyle = lipgloss.NewStyle().Foreground(ColorBrightYellow).Bold(true)
 }
 
-// FormatErrorMessage форматирует сообщение об ошибке с отступом и переносом строк
-// Используется в FinalView для отображения подробной информации об ошибке
-func FormatErrorMessage(errorText string, width int) string {
-	if errorText == "" {
-		return ""
-	}
-
-	// Убираем лишние пробелы в начале и конце
-	errorText = strings.TrimSpace(errorText)
-
-	// Применяем стиль к тексту ошибки
-	styledError := GetErrorMessageStyle().Render(errorText)
-
-	// Вычисляем доступную ширину для текста с учетом отступа
-	availableWidth := width - MessageIndentSpaces
-	if availableWidth < 10 { // Минимальная ширина
-		availableWidth = 10
-	}
-
-	// Разбиваем текст на строки с учетом доступной ширины
-	lines := WrapText(styledError, availableWidth)
-
-	// Добавляем отступ к каждой строке
-	var result strings.Builder
-	for _, line := range lines {
-		result.WriteString(MessageIndent)
-		result.WriteString(line)
-		result.WriteString("\n")
-	}
-
-	// Убираем последний символ перевода строки
-	return strings.TrimSuffix(result.String(), "\n")
+// GetErrorMessageStyle возвращает текущий стиль сообщений об ошибках
+func GetErrorMessageStyle() lipgloss.Style {
+	return ErrorMessageStyle
 }
 
-// AlignTextToRight выравнивает текст по правому краю с учетом ширины
-// Используется для отображения результатов задач справа от заголовка
-func AlignTextToRight(left, right string, width int) string {
-	// Очищаем ANSI escape последовательности для подсчета реальной длины
-	leftLen := GetPlainTextLength(left)
-	rightLen := GetPlainTextLength(right)
-
-	// Вычисляем количество пробелов для выравнивания
-	spaces := width - leftLen - rightLen
-	if spaces < 1 {
-		spaces = 1 // Минимум один пробел
-	}
-
-	return left + strings.Repeat(" ", spaces) + right
+// GetErrorStatusStyle возвращает текущий стиль статуса ошибки
+func GetErrorStatusStyle() lipgloss.Style {
+	return ErrorStatusStyle
 }
 
-// GetPlainTextLength возвращает длину текста без ANSI escape последовательностей
-func GetPlainTextLength(text string) int {
-	// Используем оптимизированную функцию из пакета performance
-	return performance.StripANSILength(text)
-}
+// cleanMessage удаляет все новые строки, управляющие символы и эскейп последовательности
+func cleanMessage(msg string) string {
+	// Удаляем распространенные эскейп последовательности
+	escapeSequences := regexp.MustCompile(`\\[nrtbfav\\'"?]`)
+	msg = escapeSequences.ReplaceAllString(msg, "")
 
-// WrapText разбивает текст на строки с учетом заданной ширины
-// Поддерживает Unicode символы и ANSI escape последовательности
-func WrapText(text string, width int) []string {
-	if width <= 0 {
-		return []string{text}
-	}
+	// Удаляем ANSI эскейп последовательности (цветовые коды и т.д.)
+	ansiSequences := regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+	msg = ansiSequences.ReplaceAllString(msg, "")
 
-	// Удаляем ANSI коды для корректного подсчета длины
-	plainText := StripANSI(text)
+	// Удаляем все управляющие символы (включая \n, \r, \t и др.)
+	controlChars := regexp.MustCompile(`[\x00-\x1F\x7F]`)
+	msg = controlChars.ReplaceAllString(msg, " ")
 
-	var lines []string
-	var currentLine strings.Builder
-	var currentWidth int
+	// Нормализуем пробелы (убираем множественные пробелы и обрезаем)
+	msg = performance.CleanWhitespaceEfficient(msg)
 
-	for _, r := range plainText {
-		runeWidth := GetRuneWidth(r)
-
-		// Если добавление символа превысит ширину, переходим на новую строку
-		if currentWidth+runeWidth > width && currentLine.Len() > 0 {
-			lines = append(lines, currentLine.String())
-			currentLine.Reset()
-			currentWidth = 0
-		}
-
-		// Обработка символов перевода строки
-		if r == '\n' {
-			lines = append(lines, currentLine.String())
-			currentLine.Reset()
-			currentWidth = 0
-			continue
-		}
-
-		currentLine.WriteRune(r)
-		currentWidth += runeWidth
-	}
-
-	// Добавляем последнюю строку, если она не пустая
-	if currentLine.Len() > 0 {
-		lines = append(lines, currentLine.String())
-	}
-
-	return lines
-}
-
-// StripANSI удаляет ANSI escape последовательности из текста
-func StripANSI(text string) string {
-	// Регулярное выражение для поиска ANSI escape последовательностей
-	re := regexp.MustCompile(`\x1b\[[0-9;]*[mK]`)
-	return re.ReplaceAllString(text, "")
-}
-
-// GetRuneWidth возвращает ширину отображения Unicode символа
-func GetRuneWidth(r rune) int {
-	// Для большинства символов ширина равна 1
-	// Для широких символов (например, китайские иероглифы) ширина равна 2
-	// Для управляющих символов ширина равна 0
-
-	if unicode.IsControl(r) {
-		return 0
-	}
-
-	// Простая проверка на широкие символы
-	// В реальном приложении лучше использовать библиотеку runewidth
-	if r >= 0x1100 && (r <= 0x115F || // Hangul Jamo
-		(r >= 0x2E80 && r <= 0x9FFF) || // CJK
-		(r >= 0xAC00 && r <= 0xD7A3) || // Hangul Syllables
-		(r >= 0xF900 && r <= 0xFAFF) || // CJK Compatibility Ideographs
-		(r >= 0xFE10 && r <= 0xFE19) || // Vertical forms
-		(r >= 0xFE30 && r <= 0xFE6F) || // CJK Compatibility Forms
-		(r >= 0xFF00 && r <= 0xFF60) || // Fullwidth Forms
-		(r >= 0xFFE0 && r <= 0xFFE6) || // Fullwidth Forms
-		(r >= 0x20000 && r <= 0x2FFFD) || // CJK Extension B
-		(r >= 0x30000 && r <= 0x3FFFD)) { // CJK Extension C
-		return 2
-	}
-
-	return utf8.RuneLen(r) // Возвращаем количество байт в UTF-8 представлении
+	return msg
 }

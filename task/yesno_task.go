@@ -5,105 +5,187 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/qzeleza/termos/common"
+	"github.com/qzeleza/termos/performance"
 	"github.com/qzeleza/termos/ui"
 )
 
-// YesNoTask представляет задачу с выбором "да/нет"
+// YesNoExitOption представляет варианты выбора для YesNoTask
+type YesNoExitOption int
+
+const (
+	YesOption YesNoExitOption = iota
+	NoOption
+	ExitOption
+)
+
+// YesNoTask представляет задачу выбора из трех опций: Да, Нет, Выйти
+// Теперь это обертка над SingleSelectTask для консистентности UI
 type YesNoTask struct {
-	BaseTask
-	question    string
-	description string
-	choice      bool
-	confirmed   bool
+	*SingleSelectTask
+	question       string
+	yesLabel       string
+	noLabel        string
+	selectedOption YesNoExitOption
 }
 
-// NewYesNoTask создает новую задачу с выбором "да/нет"
-func NewYesNoTask(question, description string) *YesNoTask {
+// NewYesNoTask создает новую задачу выбора с тремя опциями
+func NewYesNoTask(title, question string) *YesNoTask {
+	// Создаем варианты выбора
+	options := []string{"Да", "Нет"}
+
+	// Создаем базовую задачу выбора
+	selectTask := NewSingleSelectTask(title, options)
+
 	return &YesNoTask{
-		BaseTask:    NewBaseTask(question),
-		question:    question,
-		description: description,
-		choice:      false, // По умолчанию "нет"
-		confirmed:   false,
+		SingleSelectTask: selectTask,
+		question:         question,
+		yesLabel:         "Да",
+		noLabel:          "Нет",
+		selectedOption:   YesOption,
 	}
 }
 
-// View отображает текущее состояние задачи
+// Update обновляет состояние задачи, делегируя логику базовому SingleSelectTask
+func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
+	if t.IsDone() {
+		return t, nil
+	}
+
+	// Делегируем обработку базовому SingleSelectTask
+	updatedTask, cmd := t.SingleSelectTask.Update(msg)
+	t.SingleSelectTask = updatedTask.(*SingleSelectTask)
+
+	// Если задача завершена, определяем выбранную опцию
+	if t.IsDone() {
+		selectedIndex := t.SingleSelectTask.GetSelectedIndex()
+		switch selectedIndex {
+		case 0:
+			t.selectedOption = YesOption
+		case 1:
+			t.selectedOption = NoOption
+			// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
+			t.SetError(fmt.Errorf("пользователь выбрал \"Нет\""))
+			t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+		}
+	}
+
+	return t, cmd
+}
+
+// View отображает текущее состояние задачи, делегируя логику базовому SingleSelectTask
 func (t *YesNoTask) View(width int) string {
 	if t.IsDone() {
 		return t.FinalView(width)
 	}
 
-	// Используем ширину из common пакета если передана недостаточная ширина
-	if width < common.DefaultWidth {
-		width = common.DefaultWidth
-	}
+	// return ""
+	// Делегируем отображение базовому SingleSelectTask
+	return t.SingleSelectTask.View(width)
+}
 
-	prefix := ui.GetActiveTaskPrefix()
-	title := ui.ActiveTitleStyle.Render(t.question)
-	
-	var result strings.Builder
-	result.WriteString(fmt.Sprintf("%s%s\n", prefix, title))
-	
-	if t.description != "" {
-		desc := ui.SubtleStyle.Render(t.description)
-		result.WriteString(fmt.Sprintf("   %s\n", desc))
-	}
-	
-	// Показываем опции
-	yesStyle := ui.SelectionStyle
-	noStyle := ui.SelectionNoStyle
-	cursor := ui.IconCursor
-	
-	if t.choice {
-		result.WriteString(fmt.Sprintf("   %s %s\n", cursor, yesStyle.Render("Да")))
-		result.WriteString(fmt.Sprintf("     %s\n", noStyle.Render("Нет")))
+// FinalView переопределяет отображение завершённой задачи.
+// Если пользователь выбрал "Нет", с правой стороны выводится слово "ОТКАЗ"
+// ярко-жёлтым цветом. Для ответа "Да" используется стандартное зелёное
+// оформление выбранной опции.
+func (t *YesNoTask) FinalView(width int) string {
+	// Используем новый префикс завершённой задачи
+	// Успешной считается только выбор "Да" и отсутствие других ошибок
+	success := t.selectedOption == YesOption && !t.HasError()
+	prefix := ui.GetCompletedTaskPrefix(success)
+
+	left := fmt.Sprintf("%s %s", prefix, t.title)
+
+	var right string
+	if t.selectedOption == YesOption {
+		right = ui.SelectionStyle.Render(DefaultYesLabel)
 	} else {
-		result.WriteString(fmt.Sprintf("     %s\n", yesStyle.Render("Да")))
-		result.WriteString(fmt.Sprintf("   %s %s\n", cursor, noStyle.Render("Нет")))
+		// Для "Нет" выводим слово ОТКАЗ стилем ошибки
+		right = ui.GetErrorStatusStyle().Render(DefaultNoLabel)
 	}
-	
-	return result.String()
+
+	var result string
+	// Если задача завершилась успешно и есть дополнительные строки для вывода
+	if t.icon == ui.IconDone && len(t.choices) > 0 {
+		result = "\n" + ui.DrawSummaryLine(t.choices[t.cursor]) +
+			performance.RepeatEfficient(" ", ui.MainLeftIndent) + ui.VerticalLineSymbol
+	}
+
+	// Выравниваем по ширине макета
+	return ui.AlignTextToRight(left, right, width) + result
 }
 
-// Update обновляет состояние задачи
-func (t *YesNoTask) Update(msg tea.Msg) (common.Task, tea.Cmd) {
-	if t.IsDone() {
-		return t, nil
+// WithCustomLabels позволяет изменить текст опций (перегрузка для 2 параметров)
+// Возвращает *YesNoTask для возможности цепочки вызовов
+func (t *YesNoTask) WithCustomLabels(yesLabel, noLabel string) *YesNoTask {
+	if strings.TrimSpace(yesLabel) != "" {
+		t.yesLabel = yesLabel
+		t.SingleSelectTask.choices[0] = yesLabel
 	}
-	
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "up", "k", "left", "h":
-			t.choice = true
-		case "down", "j", "right", "l":
-			t.choice = false
-		case "enter", " ":
-			t.confirmed = true
-			t.done = true
-			if t.choice {
-				t.finalValue = "Да"
-			} else {
-				t.finalValue = "Нет"
-			}
-		case "q", "esc", "ctrl+c":
-			t.done = true
-			t.finalValue = "Отменено"
-			t.SetError(fmt.Errorf("отменено пользователем"))
-		}
+	if strings.TrimSpace(noLabel) != "" {
+		t.noLabel = noLabel
+		t.SingleSelectTask.choices[1] = noLabel
 	}
-	
-	return t, nil
+	return t
 }
 
-// Run запускает выполнение задачи
-func (t *YesNoTask) Run() tea.Cmd {
-	return nil // YesNoTask не требует асинхронного выполнения
+// WithCustomLabelsAll позволяет изменить все три опции
+// Возвращает *YesNoTask для возможности цепочки вызовов
+func (t *YesNoTask) WithCustomLabelsAll(yesLabel, noLabel string) *YesNoTask {
+	if strings.TrimSpace(yesLabel) != "" {
+		t.yesLabel = yesLabel
+		t.SingleSelectTask.choices[0] = yesLabel
+	}
+	if strings.TrimSpace(noLabel) != "" {
+		t.noLabel = noLabel
+		t.SingleSelectTask.choices[1] = noLabel
+	}
+	return t
 }
 
-// GetChoice возвращает выбор пользователя
-func (t *YesNoTask) GetChoice() bool {
-	return t.choice && t.confirmed
+// GetValue возвращает ответ пользователя (true для "Да", false для "Нет", panic для "Выйти")
+// @deprecated Рекомендуется использовать GetSelectedOption() для более ясной семантики
+func (t *YesNoTask) GetValue() bool {
+	switch t.selectedOption {
+	case YesOption:
+		return true
+	case NoOption:
+		return false
+	default:
+		return false
+	}
+}
+
+// GetSelectedOption возвращает выбранную опцию
+func (t *YesNoTask) GetSelectedOption() YesNoExitOption {
+	return t.selectedOption
+}
+
+// IsYes возвращает true если выбрано "Да"
+func (t *YesNoTask) IsYes() bool {
+	return t.selectedOption == YesOption
+}
+
+// IsNo возвращает true если выбрано "Нет"
+func (t *YesNoTask) IsNo() bool {
+	return t.selectedOption == NoOption
+}
+
+// IsExit возвращает true если выбрано "Выйти"
+func (t *YesNoTask) IsExit() bool {
+	return t.selectedOption == ExitOption
+}
+
+// SetError устанавливает ошибку для задачи
+func (t *YesNoTask) SetError(err error) {
+	t.SingleSelectTask.SetError(err)
+}
+
+// HasError возвращает true, если при выполнении задачи произошла ошибка
+func (t *YesNoTask) HasError() bool {
+	return t.SingleSelectTask.HasError()
+}
+
+// Error возвращает ошибку, если она есть
+func (t *YesNoTask) Error() error {
+	return t.SingleSelectTask.Error()
 }
