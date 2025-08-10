@@ -1,16 +1,18 @@
 package query
 
 import (
-	"runtime"
-	"strings"
+    "os"
+    "runtime"
+    "strconv"
+    "strings"
 
-	"unicode/utf8"
+    "unicode/utf8"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/performance"
-	"github.com/qzeleza/termos/internal/ui"
+    tea "github.com/charmbracelet/bubbletea"
+    "github.com/charmbracelet/lipgloss"
+    "github.com/qzeleza/termos/internal/common"
+    "github.com/qzeleza/termos/internal/performance"
+    "github.com/qzeleza/termos/internal/ui"
 )
 
 type ErrorColor int
@@ -22,10 +24,69 @@ const (
 )
 
 // Константы для управления памятью на embedded устройствах
-const (
-	MaxCompletedTasks       = 50               // Максимальное количество завершенных задач в памяти
-	MemoryPressureThreshold = 64 * 1024 * 1024 // 64MB - порог для запуска очистки памяти
+var (
+    // Значения могут быть переопределены через переменные окружения
+    MaxCompletedTasks       int    = 50               // Максимальное количество завершенных задач в памяти
+    MemoryPressureThreshold uint64 = 64 * 1024 * 1024 // 64MB - порог для запуска очистки памяти
 )
+
+func init() {
+    // TERMOS_MAX_COMPLETED_TASKS=int
+    if v := strings.TrimSpace(os.Getenv("TERMOS_MAX_COMPLETED_TASKS")); v != "" {
+        if n, err := strconv.Atoi(v); err == nil && n > 0 {
+            MaxCompletedTasks = n
+        }
+    }
+
+    // TERMOS_MEMORY_PRESSURE_THRESHOLD=64MB/65536KB/67108864/64MiB
+    if v := strings.TrimSpace(os.Getenv("TERMOS_MEMORY_PRESSURE_THRESHOLD")); v != "" {
+        if bytes, err := parseMemoryEnv(v); err == nil && bytes > 0 {
+            MemoryPressureThreshold = bytes
+        }
+    } else if v := strings.TrimSpace(os.Getenv("GOMEMLIMIT")); v != "" {
+        if bytes, err := parseMemoryEnv(v); err == nil && bytes > 0 {
+            // По умолчанию порог в 0.8 от лимита памяти рантайма
+            MemoryPressureThreshold = uint64(float64(bytes) * 0.8)
+        }
+    }
+}
+
+// parseMemoryEnv — локальный парсер для значений памяти с суффиксами
+func parseMemoryEnv(s string) (uint64, error) {
+    s = strings.TrimSpace(s)
+    s = strings.ReplaceAll(s, "_", "")
+    up := strings.ToUpper(s)
+    var mult uint64 = 1
+    num := s
+    switch {
+    case strings.HasSuffix(up, "GIB"):
+        mult = 1024 * 1024 * 1024
+        num = s[:len(s)-3]
+    case strings.HasSuffix(up, "MIB"):
+        mult = 1024 * 1024
+        num = s[:len(s)-3]
+    case strings.HasSuffix(up, "KIB"):
+        mult = 1024
+        num = s[:len(s)-3]
+    case strings.HasSuffix(up, "GB"):
+        mult = 1024 * 1024 * 1024
+        num = s[:len(s)-2]
+    case strings.HasSuffix(up, "MB"):
+        mult = 1024 * 1024
+        num = s[:len(s)-2]
+    case strings.HasSuffix(up, "KB"):
+        mult = 1024
+        num = s[:len(s)-2]
+    case strings.HasSuffix(up, "B"):
+        mult = 1
+        num = s[:len(s)-1]
+    }
+    n, err := strconv.ParseUint(strings.TrimSpace(num), 10, 64)
+    if err != nil {
+        return 0, err
+    }
+    return n * mult, nil
+}
 
 // Используем константы из пакета common для расчета ширины макета
 

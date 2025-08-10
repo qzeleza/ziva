@@ -31,7 +31,7 @@ type YesNoTask struct {
 // NewYesNoTask создает новую задачу выбора с тремя опциями
 func NewYesNoTask(title, question string) *YesNoTask {
 	// Создаем варианты выбора
-	options := []string{"Да", "Нет"}
+	options := []string{"Да", "Нет", "Выйти"}
 
 	// Создаем базовую задачу выбора
 	selectTask := NewSingleSelectTask(title, options)
@@ -66,6 +66,11 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
 			t.SetError(fmt.Errorf("пользователь выбрал \"Нет\""))
 			t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+		case 2:
+			t.selectedOption = ExitOption
+			// Выбор "Выйти" останавливает выполнение очереди
+			t.SetError(fmt.Errorf("пользователь выбрал \"Выйти\""))
+			t.SetStopOnError(true) // Останавливаем очередь при выборе "Выйти"
 		}
 	}
 
@@ -98,9 +103,12 @@ func (t *YesNoTask) FinalView(width int) string {
 	var right string
 	if t.selectedOption == YesOption {
 		right = ui.SelectionStyle.Render(DefaultYesLabel)
-	} else {
+	} else if t.selectedOption == NoOption {
 		// Для "Нет" выводим слово ОТКАЗ стилем ошибки
 		right = ui.GetErrorStatusStyle().Render(DefaultNoLabel)
+	} else {
+		// Для "Выйти" выводим слово ВЫХОД стилем ошибки
+		right = ui.GetErrorStatusStyle().Render("ВЫХОД")
 	}
 
 	var result string
@@ -150,6 +158,8 @@ func (t *YesNoTask) GetValue() bool {
 		return true
 	case NoOption:
 		return false
+	case ExitOption:
+		panic("GetValue() вызван для опции 'Выйти'")
 	default:
 		return false
 	}

@@ -2,24 +2,29 @@
 package autoconfig
 
 import (
+    "fmt"
 	"os"
 	"runtime"
+    "runtime/debug"
 	"strconv"
 	"strings"
+    "sync"
 
 	"github.com/qzeleza/termos/internal/ui"
 )
 
 // init вызывается при импортировании пакета и запускает авто-конфигурацию
-func init() {
-	AutoConfigure()
-}
+func init() { AutoConfigure() }
 
 // AutoConfigure выполняет авто-детекцию embedded-окружения и применяет настройки по умолчанию
+var once sync.Once
+
 func AutoConfigure() {
-	if isEmbeddedEnvironment() {
-		applyEmbeddedDefaults()
-	}
+    once.Do(func() {
+        if isEmbeddedEnvironment() {
+            applyEmbeddedDefaults()
+        }
+    })
 }
 
 // applyEmbeddedDefaults включает минимально инвазивные embedded-настройки ядра
@@ -27,15 +32,35 @@ func AutoConfigure() {
 // с ограниченной поддержкой цветов/UTF-8. По мере необходимости сюда можно
 // добавить другие безопасные оптимизации по умолчанию.
 func applyEmbeddedDefaults() {
-	ui.EnableEmbeddedMode()
+    // 1) Упрощенная палитра/иконки
+    ui.EnableEmbeddedMode()
+
+    // 2) ASCII‑фолбэк для действительно ограниченных терминалов
+    if isLimitedTerminal() {
+        // Включаем ASCII-иконки и максимально совместимый рендер
+        ui.EnableASCIIMode()
+    }
+
+    // 3) Консервативный лимит памяти рантайма
+    // Терминология: предпочитаем явный лимит из TERMOS_MEMORY_LIMIT или GOMEMLIMIT.
+    if limitStr := firstNonEmpty(os.Getenv("GOMEMLIMIT"), os.Getenv("TERMOS_MEMORY_LIMIT")); limitStr != "" {
+        if bytes, err := parseMemoryLimit(limitStr); err == nil {
+            debug.SetMemoryLimit(int64(bytes))
+        }
+    } else {
+        // По умолчанию 256MB для embedded-профиля — мягкая рекомендация
+        const defaultLimit = 256 * 1024 * 1024
+        debug.SetMemoryLimit(defaultLimit)
+    }
 }
 
 // isEmbeddedEnvironment автоматически определяет, является ли окружение embedded
 func isEmbeddedEnvironment() bool {
 	// Принудительная установка через переменную окружения
 	if embedded := os.Getenv("TERMOS_EMBEDDED"); embedded != "" {
-		return embedded == "true" || embedded == "1"
-	}
+        v := strings.TrimSpace(strings.ToLower(embedded))
+        return v == "1" || v == "true" || v == "yes" || v == "on"
+    }
 
 	// Автоматическое определение по набору эвристик
 	return isMemoryConstrained() ||
@@ -45,15 +70,15 @@ func isEmbeddedEnvironment() bool {
 
 // isMemoryConstrained проверяет ограничения памяти
 func isMemoryConstrained() bool {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
+    var m runtime.MemStats
+    runtime.ReadMemStats(&m)
 
-	// Принудительный лимит из переменной окружения (например, 64MB, 128KB, 1GB)
-	if limitStr := os.Getenv("TERMOS_MEMORY_LIMIT"); limitStr != "" {
-		if limit, err := parseMemoryLimit(limitStr); err == nil {
-			return m.Sys < limit
-		}
-	}
+    // Принудительный лимит из переменной окружения (например, 64MB, 128KB, 1GB)
+    if limitStr := os.Getenv("TERMOS_MEMORY_LIMIT"); limitStr != "" {
+        if limit, err := parseMemoryLimit(limitStr); err == nil {
+            return m.Sys < limit
+        }
+    }
 
 	// Консервативный порог по умолчанию
 	const memoryThreshold = 512 * 1024 * 1024 // 512MB
@@ -62,54 +87,91 @@ func isMemoryConstrained() bool {
 
 // parseMemoryLimit парсит строку с лимитом памяти (например "64MB", "128KB", "1GB")
 func parseMemoryLimit(limitStr string) (uint64, error) {
-	limitStr = strings.ToUpper(strings.TrimSpace(limitStr))
+    s := strings.TrimSpace(limitStr)
+    s = strings.ReplaceAll(s, "_", "")
+    s = strings.ToUpper(s)
 
-	var multiplier uint64 = 1
-	var numStr string
+    var multiplier uint64 = 1
+    var numStr string
 
-	switch {
-	case strings.HasSuffix(limitStr, "MB"):
-		multiplier = 1024 * 1024
-		numStr = strings.TrimSuffix(limitStr, "MB")
-	case strings.HasSuffix(limitStr, "KB"):
-		multiplier = 1024
-		numStr = strings.TrimSuffix(limitStr, "KB")
-	case strings.HasSuffix(limitStr, "GB"):
-		multiplier = 1024 * 1024 * 1024
-		numStr = strings.TrimSuffix(limitStr, "GB")
-	default:
-		numStr = limitStr
-	}
+    // Поддерживаем B, KB/MB/GB, KiB/MiB/GiB
+    switch {
+    case strings.HasSuffix(s, "B") && !strings.HasSuffix(s, "KB") && !strings.HasSuffix(s, "MB") && !strings.HasSuffix(s, "GB") && !strings.HasSuffix(s, "KIB") && !strings.HasSuffix(s, "MIB") && !strings.HasSuffix(s, "GIB"):
+        multiplier = 1
+        numStr = strings.TrimSuffix(s, "B")
+    case strings.HasSuffix(s, "KIB"):
+        multiplier = 1024
+        numStr = strings.TrimSuffix(s, "KIB")
+    case strings.HasSuffix(s, "MIB"):
+        multiplier = 1024 * 1024
+        numStr = strings.TrimSuffix(s, "MIB")
+    case strings.HasSuffix(s, "GIB"):
+        multiplier = 1024 * 1024 * 1024
+        numStr = strings.TrimSuffix(s, "GIB")
+    case strings.HasSuffix(s, "KB"):
+        multiplier = 1024
+        numStr = strings.TrimSuffix(s, "KB")
+    case strings.HasSuffix(s, "MB"):
+        multiplier = 1024 * 1024
+        numStr = strings.TrimSuffix(s, "MB")
+    case strings.HasSuffix(s, "GB"):
+        multiplier = 1024 * 1024 * 1024
+        numStr = strings.TrimSuffix(s, "GB")
+    default:
+        numStr = s
+    }
 
-	num, err := strconv.ParseUint(numStr, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	return num * multiplier, nil
+    numStr = strings.TrimSpace(numStr)
+    if numStr == "" {
+        return 0, fmt.Errorf("empty number")
+    }
+    num, err := strconv.ParseUint(numStr, 10, 64)
+    if err != nil {
+        return 0, err
+    }
+    return num * multiplier, nil
+}
+
+// firstNonEmpty возвращает первый непустой (после TrimSpace) элемент
+func firstNonEmpty(vals ...string) string {
+    for _, v := range vals {
+        if strings.TrimSpace(v) != "" {
+            return v
+        }
+    }
+    return ""
 }
 
 // isLimitedTerminal проверяет ограничения терминала и локали
 func isLimitedTerminal() bool {
-	term := os.Getenv("TERM")
+    term := strings.ToLower(os.Getenv("TERM"))
 
-	// Принудительное отключение UTF-8
-	if os.Getenv("TERMOS_ASCII_ONLY") == "true" {
-		return true
-	}
+    // Уважать NO_COLOR спеку — считать терминал ограниченным
+    if os.Getenv("NO_COLOR") != "" {
+        return true
+    }
 
-	// Распространённые ограниченные терминалы
-	if term == "linux" || term == "console" || term == "vt100" || term == "vt102" {
-		return true
-	}
+    // Принудительный ASCII‑режим
+    if v := strings.TrimSpace(strings.ToLower(os.Getenv("TERMOS_ASCII_ONLY"))); v == "1" || v == "true" || v == "yes" || v == "on" {
+        return true
+    }
 
-	// Проверяем поддержку UTF-8
-	lang := strings.ToLower(os.Getenv("LANG"))
-	lcAll := strings.ToLower(os.Getenv("LC_ALL"))
-	lcCtype := strings.ToLower(os.Getenv("LC_CTYPE"))
+    // Распространённые ограниченные терминалы
+    if term == "linux" || term == "console" || term == "vt100" || term == "vt102" || term == "dumb" {
+        return true
+    }
 
-	return !strings.Contains(lang, "utf") &&
-		!strings.Contains(lcAll, "utf") &&
-		!strings.Contains(lcCtype, "utf")
+    // Проверяем поддержку UTF‑8
+    lang := strings.ToLower(os.Getenv("LANG"))
+    lcAll := strings.ToLower(os.Getenv("LC_ALL"))
+    lcCtype := strings.ToLower(os.Getenv("LC_CTYPE"))
+
+    utf := strings.Contains(lang, "utf") || strings.Contains(lcAll, "utf") || strings.Contains(lcCtype, "utf")
+
+    // COLORTERM часто присутствует на современных терминалах
+    colorTerm := os.Getenv("COLORTERM") != ""
+
+    return !utf || !colorTerm
 }
 
 // isKnownEmbeddedEnvironment проверяет известные признаки embedded-окружений

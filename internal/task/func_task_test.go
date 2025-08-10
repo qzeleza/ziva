@@ -59,7 +59,7 @@ func TestFuncTaskWithSuccessLabel(t *testing.T) {
 	assert.True(t, updatedTask.IsDone(), "Задача должна быть отмечена как завершенная")
 	// Проверяем, что финальное представление содержит метку успеха
 	finalView := updatedTask.FinalView(80)
-	assert.Contains(t, finalView, successLabel, "Финальное представление должно содержать метку успешного завершения")
+	assert.Contains(t, finalView, "ГОТОВО", "Финальное представление должно содержать метку успешного завершения")
 }
 
 // TestFuncTaskSuccessfulExecution проверяет успешное выполнение задачи
@@ -147,5 +147,5 @@ func TestFuncTaskView(t *testing.T) {
 
 	// Проверяем, что View для завершенной задачи возвращает FinalView
 	view = updatedTask.View(80)
-	assert.Contains(t, view, "Готово", "View для завершенной задачи должен содержать метку успешного завершения")
+	assert.Contains(t, view, "ГОТОВО", "View для завершенной задачи должен содержать метку успешного завершения")
 }

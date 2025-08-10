@@ -90,6 +90,19 @@ func refreshIconsForEmbedded() {
 	ErrorStatusStyle = ErrorStatusStyle.Foreground(EmbeddedColorPalette.BrightYellow)
 }
 
+// EnableASCIIMode включает максимально совместимый ASCII-набор иконок
+func EnableASCIIMode() {
+    // Устанавливаем простые ASCII-иконки без цвета
+    IconDone = "*"
+    IconError = "x"
+    IconCancelled = "!"
+    IconQuestion = "?"
+    IconSelected = ">"
+    IconRadioOn = "(x)"
+    IconCursor = ">"
+    IconUndone = "."
+}
+
 // IsEmbeddedColorMode возвращает true если включен embedded режим
 func IsEmbeddedColorMode() bool {
 	// Проверяем, используется ли ANSI код вместо hex
