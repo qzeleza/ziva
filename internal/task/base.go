@@ -176,7 +176,7 @@ func (t *BaseTask) FinalView(width int) string {
 		if t.finalValue == "Да" {
 			right = ui.SelectionStyle.Render(t.finalValue)
 		} else {
-			right = ui.SelectionNoStyle.Render(t.finalValue)
+			right = ui.GetErrorStatusStyle().Render(t.finalValue)
 		}
 		return ui.AlignTextToRight(left, right, width)
 	}

@@ -62,6 +62,11 @@ func isEmbeddedEnvironment() bool {
         return v == "1" || v == "true" || v == "yes" || v == "on"
     }
 
+	// Проверяем, не является ли это современным десктопным терминалом
+	if isModernDesktopTerminal() {
+		return false
+	}
+
 	// Автоматическое определение по набору эвристик
 	return isMemoryConstrained() ||
 		isLimitedTerminal() ||
@@ -80,8 +85,8 @@ func isMemoryConstrained() bool {
         }
     }
 
-	// Консервативный порог по умолчанию
-	const memoryThreshold = 512 * 1024 * 1024 // 512MB
+	// Более консервативный порог для embedded устройств - только действительно ограниченные системы
+	const memoryThreshold = 128 * 1024 * 1024 // 128MB (вместо 512MB)
 	return m.Sys < memoryThreshold
 }
 
@@ -172,6 +177,31 @@ func isLimitedTerminal() bool {
     colorTerm := os.Getenv("COLORTERM") != ""
 
     return !utf || !colorTerm
+}
+
+// isModernDesktopTerminal проверяет, является ли терминал современным десктопным
+func isModernDesktopTerminal() bool {
+	term := strings.ToLower(os.Getenv("TERM"))
+	colorTerm := os.Getenv("COLORTERM")
+
+	// Современные терминалы с полной поддержкой цветов
+	modernTerminals := []string{
+		"xterm-256color", "screen-256color", "tmux-256color",
+		"alacritty", "kitty", "iterm2", "vte", "gnome",
+	}
+
+	for _, modernTerm := range modernTerminals {
+		if strings.Contains(term, modernTerm) {
+			return true
+		}
+	}
+
+	// COLORTERM=truecolor указывает на 24-bit цвета
+	if colorTerm == "truecolor" || colorTerm == "24bit" {
+		return true
+	}
+
+	return false
 }
 
 // isKnownEmbeddedEnvironment проверяет известные признаки embedded-окружений

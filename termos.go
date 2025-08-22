@@ -10,23 +10,22 @@
 // Пример использования:
 //
 //	queue := termos.NewQueue("Пример использования Termos")
-//	
+//
 //	// Создаем задачу выбора Да/Нет
 //	confirm := termos.NewYesNoTask("Подтверждение", "Продолжить выполнение?")
-//	
+//
 //	// Создаем задачу выбора из списка
 //	options := []string{"development", "staging", "production"}
 //	env := termos.NewSingleSelectTask("Выбор среды", options)
-//	
+//
 //	// Добавляем задачи в очередь
 //	queue.AddTasks(confirm, env)
-//	
+//
 //	// Запускаем очередь
 //	err := queue.Run()
 //	if err != nil {
 //		log.Fatal(err)
 //	}
-//
 package termos
 
 import (
@@ -48,7 +47,7 @@ type YesNoOption = task.YesNoOption
 const (
 	// YesOption - опция "Да"
 	YesOption = task.YesOption
-	// NoOption - опция "Нет"  
+	// NoOption - опция "Нет"
 	NoOption = task.NoOption
 )
 
