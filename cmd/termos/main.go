@@ -5,43 +5,39 @@ import (
 
 	"time"
 
-	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/query"
-	"github.com/qzeleza/termos/internal/task"
-	"github.com/qzeleza/termos/internal/validation"
+	"github.com/qzeleza/termos"
 )
 
 func main() {
 	// Заголовок и краткое описание для TUI
 	header := "Демонстрация всех типов задач Termos"
 
-	// Формируем очередь задач. ВАЖНО: срез должен быть типа []common.Task
-	var tasks []common.Task
+	// Формируем очередь задач
 	var msel = []string{"CLI", "Сервер", "Агент", "Web UI", "Документация"}
 	var ssel = []string{"development", "staging", "production"}
 	// 1) Задачи мультивыбора (без и с пунктом "Выбрать все")
 	//    Пример без "Выбрать все"
-	ms1 := task.NewMultiSelectTask(
+	ms1 := termos.NewMultiSelectTask(
 		"Выберите компоненты установки",
 		msel,
 	).WithTimeout(10*time.Second, []string{msel[0], msel[1]})
 	//    Пример с пунктом "Выбрать все"
-	ms2 := task.NewMultiSelectTask(
+	ms2 := termos.NewMultiSelectTask(
 		"Выберите модули для сборки",
 		ssel,
 	).WithSelectAll("Выбрать все").WithTimeout(10*time.Second, []string{ssel[0], ssel[1]})
 
 	// 2) Одиночный выбор
-	ss := task.NewSingleSelectTask(
+	ss := termos.NewSingleSelectTask(
 		"Выберите среду развертывания",
 		[]string{"development", "staging", "production"},
 	).WithTimeout(10*time.Second, "staging")
 
 	// 3) Ввод с использованием всех стандартных валидаторов
 	//    Валидация будет происходить в момент подтверждения (Enter)
-	v := validation.DefaultFactory
+	v := termos.DefaultValidators
 
-	inUsername := task.NewInputTaskNew("Имя пользователя", "Введите username:").
+	inUsername := termos.NewInputTask("Имя пользователя", "Введите username:").
 		WithValidator(v.Username()).
 		WithTimeout(10*time.Second, "Alex")
 
@@ -99,29 +95,29 @@ func main() {
 
 	// 4) Задача-выполнение функции (FuncTask)
 	//    Выполняет полезную работу и выводит результат в финальном представлении задачи (без fmt.Print)
-	fn := task.NewFuncTaskWithOptions(
+	fn := termos.NewFuncTaskWithOptions(
 		"Проверка соединения",
 		func() error {
 			// Здесь могла бы быть реальная проверка, для примера считаем, что всё ок
 			return nil
 		},
 		// Выводим краткую сводку под заголовком после успеха
-		task.WithSummaryFunction(func() []string {
+		termos.WithSummaryFunction(func() []string {
 			return []string{
 				"Пинг: 12мс",
 				"Потери пакетов: 0%",
 			}
 		}),
 		// Не останавливать очередь при ошибке (для демонстрации поведения)
-		task.WithStopOnError(false),
+		termos.WithStopOnError(false),
 	)
 
 	// 5) Подтверждение Да/Нет (например, для сохранения настроек)
-	ys := task.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeout(5*time.Second, "Нет")
+	ys := termos.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeout(5*time.Second, "Нет")
 
-	// Добавляем задачи в очередь
-	tasks = append(tasks,
-
+	// Создаем очередь и добавляем задачи
+	queue := termos.NewQueue(header).WithAppName("Термос").WithSummary(true)
+	queue.AddTasks(
 		ss,
 		inUsername, ms1, ms2,
 		//  inEmail, inOptionalEmail,
@@ -134,7 +130,5 @@ func main() {
 
 	// Запускаем TUI c очередью задач. Результаты отображаются внутри интерфейса;
 	// дополнительный вывод через fmt.Print не используется.
-	queue := query.New(header).WithAppName("Термос").WithSummary(true)
-	queue.AddTasks(tasks)
 	queue.Run()
 }
