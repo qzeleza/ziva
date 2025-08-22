@@ -119,8 +119,7 @@ func New(title string) *Model {
 		summary:      "Обработка операций прошла",
 		width:        common.DefaultWidth, // Начальная ширина
 		showSummary:  true,                // По умолчанию сводка отображается
-		appNameStyle: ui.ErrorStatusStyle,
-		// appNameStyle: lipgloss.NewStyle().Foreground(ui.ColorDarkGray).Background(ui.ColorBrightWhite).Bold(false),
+		appNameStyle: lipgloss.NewStyle().Foreground(ui.ColorDarkGray).Background(ui.ColorBrightWhite).Bold(false),
 	}
 }
 
