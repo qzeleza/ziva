@@ -2,6 +2,8 @@ package task
 
 import (
 	"errors"
+	"fmt"
+	"time"
 
 	terrors "github.com/qzeleza/termos/internal/errors"
 	"github.com/qzeleza/termos/internal/performance"
@@ -167,23 +169,58 @@ func (t *InputTaskNew) GetValue() string {
 
 // Run запускает задачу ввода
 func (t *InputTaskNew) Run() tea.Cmd {
-	return textinput.Blink
+	// Запускаем мигание курсора и таймер, если он включен
+	var cmds []tea.Cmd
+	cmds = append(cmds, textinput.Blink)
+	
+	// Запускаем таймер и тикер, если они включены
+	if t.timeoutEnabled && t.timeoutManager != nil {
+		cmds = append(cmds, t.timeoutManager.StartTickerAndTimeout())
+	}
+	
+	return tea.Batch(cmds...)
 }
 
-// Update обновляет состояние задачи
+// Update обрабатывает сообщения и обновляет состояние задачи
 func (t *InputTaskNew) Update(msg tea.Msg) (Task, tea.Cmd) {
-	var cmd tea.Cmd
+	if t.done {
+		return t, nil
+	}
 
 	switch msg := msg.(type) {
+	case TimeoutMsg:
+		// Применяем значение по умолчанию при истечении таймера
+		t.applyDefaultValue()
+		return t, nil
+	case TickMsg:
+		// Обрабатываем тик для обновления счетчика времени
+		if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
+			return t, t.timeoutManager.StartTicker()
+		}
+		return t, nil
 	case tea.KeyMsg:
+		// При любом нажатии клавиши (кроме служебных) скрываем таймер
+		key := msg.String()
+		// Останавливаем таймер при любом вводе, кроме управляющих клавиш
+		if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
+			// Отключаем таймер при вводе текста
+			if key != "ctrl+c" && key != "esc" && key != "enter" {
+				t.DisableTimeout()
+			}
+		}
+		
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			// Отмена ввода
 			return t.handleCancel()
-
 		case "enter":
 			// Подтверждение ввода
 			return t.handleSubmit()
+		default:
+			// Обновляем поле ввода
+			var cmd tea.Cmd
+			t.textInput, cmd = t.textInput.Update(msg)
+			return t, cmd
 		}
 
 	case error:
@@ -195,10 +232,21 @@ func (t *InputTaskNew) Update(msg tea.Msg) (Task, tea.Cmd) {
 	}
 
 	// Обновляем компонент ввода
+	var cmd tea.Cmd
 	t.textInput, cmd = t.textInput.Update(msg)
 
 	// Валидируем введенное значение в реальном времени
 	t.validateInput()
+
+	// Запускаем таймер при первом обновлении, если он включен и еще не активен
+	if t.timeoutEnabled && t.timeoutManager != nil && !t.timeoutManager.IsActive() {
+		return t, t.timeoutManager.StartTickerAndTimeout()
+	}
+
+	// Продолжаем тикер, если таймер активен
+	if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
+		return t, tea.Batch(cmd, t.timeoutManager.StartTicker())
+	}
 
 	return t, cmd
 }
@@ -297,19 +345,86 @@ func (t *InputTaskNew) getDisplayValue() string {
 	return t.value
 }
 
+// applyDefaultValue применяет значение по умолчанию при истечении таймера
+func (t *InputTaskNew) applyDefaultValue() {
+	// Если есть значение по умолчанию
+	if t.defaultValue != nil {
+		var valueToSet string
+		
+		switch val := t.defaultValue.(type) {
+		case string:
+			valueToSet = val
+		case int:
+			valueToSet = fmt.Sprintf("%d", val)
+		case float64:
+			valueToSet = fmt.Sprintf("%f", val)
+		default:
+			// Попытаемся преобразовать любое значение в строку
+			valueToSet = fmt.Sprintf("%v", val)
+		}
+		
+		// Проверяем валидность значения по умолчанию
+		if t.validator != nil {
+			if err := t.validator.Validate(valueToSet); err != nil {
+				// Если значение по умолчанию не прошло валидацию, завершаем с ошибкой
+				validationErr := terrors.NewValidationError(t.title, err).
+					WithContext("значение_по_умолчанию", true).
+					WithContext("input_type", t.inputType)
+				t.validationErr = validationErr
+				t.SetError(validationErr)
+				t.done = true
+				t.icon = ui.IconError
+				t.finalValue = ui.GetErrorMessageStyle().Render("значение по умолчанию невалидно")
+				return
+			}
+		}
+		
+		// Проверяем на пустоту, если пустые значения не разрешены
+		if !t.allowEmpty && performance.TrimSpaceEfficient(valueToSet) == "" {
+			emptyErr := terrors.NewValidationError(t.title, errors.New("поле не может быть пустым")).
+				WithContext("значение_по_умолчанию", true)
+			t.validationErr = emptyErr
+			t.SetError(emptyErr)
+			t.done = true
+			t.icon = ui.IconError
+			t.finalValue = ui.GetErrorMessageStyle().Render("значение по умолчанию пусто")
+			return
+		}
+		
+		// Устанавливаем значение и завершаем задачу
+		t.textInput.SetValue(valueToSet)
+		t.value = valueToSet
+		t.done = true
+		t.icon = ui.IconDone
+		t.finalValue = ui.SuccessLabelStyle.Render(t.getDisplayValue())
+		t.validationErr = nil
+		t.SetError(nil)
+	}
+}
+
 // View отображает текущее состояние задачи
 func (t *InputTaskNew) View(width int) string {
 	if t.IsDone() {
 		return t.FinalView(width)
 	}
 
+	// Получаем отформатированный таймер (если он активен)
+	title := t.title
+	timerStr := t.RenderTimer()
+
+	// Убедимся, что текстовое поле активно
+	if !t.textInput.Focused() {
+		t.textInput.Focus()
+	}
+
 	return t.renderer.RenderInput(
-		t.title,
+		title,
 		t.textInput,
 		t.validator,
 		t.validationErr,
 		t.inputType,
 		width,
+		timerStr,
 	)
 }
 
@@ -397,4 +512,13 @@ func (b *InputTaskBuilder) Validator(validator validation.Validator) *InputTaskB
 // Build возвращает готовую задачу
 func (b *InputTaskBuilder) Build() *InputTaskNew {
 	return b.task
+}
+
+// WithTimeout устанавливает тайм-аут для задачи ввода
+// @param duration Длительность тайм-аута  
+// @param defaultValue Значение по умолчанию (строка)
+// @return Указатель на задачу для цепочки вызовов
+func (t *InputTaskNew) WithTimeout(duration time.Duration, defaultValue interface{}) *InputTaskNew {
+	t.BaseTask.WithTimeout(duration, defaultValue)
+	return t
 }

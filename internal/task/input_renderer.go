@@ -39,13 +39,22 @@ func (r *InputRenderer) WithHelp(enabled bool) *InputRenderer {
 	return r
 }
 
-// RenderInput отображает активное состояние задачи ввода
-func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, validator validation.Validator, err error, inputType InputType, width int) string {
-	// Используем новый префикс для активной задачи
+// RenderInput отображает активное состояние задачи ввода с поддержкой таймера
+func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, validator validation.Validator, err error, inputType InputType, width int, timerStr ...string) string {
+	// Используем правильный префикс для задач ввода (О вместо └─>)
 	prefix := ui.GetCurrentTaskPrefix()
 
-	// Отображение заголовка с зеленым цветом
-	titleView := fmt.Sprintf("%s%s", prefix, ui.ActiveTaskStyle.Render(title))
+	// Формируем заголовок с префиксом
+	titleWithPrefix := fmt.Sprintf("%s%s", prefix, ui.ActiveTaskStyle.Render(title))
+	
+	// Если передан таймер, выравниваем его справа
+	var titleView string
+	if len(timerStr) > 0 && timerStr[0] != "" {
+		timer := ui.SubtleStyle.Render(timerStr[0])
+		titleView = ui.AlignTextToRight(titleWithPrefix, timer, width)
+	} else {
+		titleView = titleWithPrefix
+	}
 
 	// Получаем текст ввода с применением стиля
 	inputView := r.style.Render(textInput.View())

@@ -3,6 +3,7 @@ package task
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -201,8 +202,22 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 	if t.done {
 		return t, nil
 	}
+
 	switch msg := msg.(type) {
+	// Обработка сообщения о тайм-ауте
+	case TimeoutMsg:
+		// Когда истекает тайм-аут, применяем значение по умолчанию (если есть)
+		t.applyDefaultValue()
+		return t, nil
+	// Обработка периодического обновления для счетчика времени
+	case TickMsg:
+		// Если таймер активен, продолжаем обновления
+		if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
+			return t, t.timeoutManager.StartTicker()
+		}
+		return t, nil
 	case tea.KeyMsg:
+		// При нажатии клавиш НЕ сбрасываем таймер - пусть продолжает работать
 		// Сбрасываем сообщение-подсказку при любом нажатии клавиш (кроме Enter)
 		if msg.String() != "enter" {
 			t.showHelpMessage = false
@@ -226,6 +241,13 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 				t.cursor++
 			}
 		case " ":
+			// Если таймер активен, останавливаем его
+			if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
+				t.timeoutManager.StopTimeout()
+				t.showTimeout = false
+			}
+
+			// В любом случае выполняем выбор/переключение
 			if t.hasSelectAll && t.cursor == -1 {
 				// Нажатие пробела на опции "Выбрать все"
 				t.toggleSelectAll()
@@ -268,8 +290,89 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			t.helpMessage = ""
 			return t, nil
 		}
+		// После обработки клавиш возвращаем команду для продолжения тикера
+		if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
+			return t, t.timeoutManager.StartTicker()
+		}
 	}
+
+	// Запускаем таймер при первом обновлении, если он включен и еще не активен
+	if t.timeoutEnabled && t.timeoutManager != nil && !t.timeoutManager.IsActive() {
+		return t, t.timeoutManager.StartTickerAndTimeout()
+	}
+
 	return t, nil
+}
+
+// Run запускает задачу выбора
+func (t *MultiSelectTask) Run() tea.Cmd {
+	// Запускаем таймер и тикер, если они включены
+	if t.timeoutEnabled && t.timeoutManager != nil {
+		return t.timeoutManager.StartTickerAndTimeout()
+	}
+	return nil
+}
+
+// applyDefaultValue применяет значение по умолчанию при истечении таймера
+func (t *MultiSelectTask) applyDefaultValue() {
+	// Если есть значение по умолчанию
+	if t.defaultValue != nil {
+		switch val := t.defaultValue.(type) {
+		case []int:
+			// Если это список индексов для выбора
+			for _, index := range val {
+				// Выбираем только корректные индексы
+				if index >= 0 && index < len(t.choices) {
+					// Устанавливаем выбор для этого элемента
+					if len(t.choices) > 32 && t.fallbackMap != nil {
+						t.fallbackMap[index] = struct{}{}
+					} else {
+						t.selected.Set(index)
+					}
+				}
+			}
+		case []string:
+			// Если это список строк для выбора
+			for _, strVal := range val {
+				// Ищем строку в списке вариантов
+				for i, choice := range t.choices {
+					if choice == strVal {
+						// Устанавливаем выбор для этого элемента
+						if len(t.choices) > 32 && t.fallbackMap != nil {
+							t.fallbackMap[i] = struct{}{}
+						} else {
+							t.selected.Set(i)
+						}
+						break
+					}
+				}
+			}
+		}
+
+		// Проверяем, есть ли хотя бы один выбранный элемент
+		hasSelection := false
+		if len(t.choices) > 32 && t.fallbackMap != nil {
+			hasSelection = len(t.fallbackMap) > 0
+		} else {
+			hasSelection = t.selected.Count() > 0
+		}
+
+		// Если есть выбранные элементы, завершаем задачу
+		if hasSelection {
+			// Собираем выбранные элементы
+			var selectedChoices []string
+			for i := range t.choices {
+				if t.isSelected(i) {
+					selectedChoices = append(selectedChoices, t.choices[i])
+				}
+			}
+			// Завершаем задачу
+			t.done = true
+			t.icon = ui.IconDone
+			t.finalValue = strings.Join(selectedChoices, DefaultSeparator)
+			t.SetError(nil)
+		}
+	}
 }
 
 // View отрисовывает список вариантов выбора для пользователя с выделением активного элемента.
@@ -277,14 +380,29 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 // @param width Ширина макета для отображения
 // @return Строка с отформатированным представлением задачи
 func (t *MultiSelectTask) View(width int) string {
+	// Если задача завершена, возвращаем FinalView
 	if t.done {
-		return ""
+		return t.FinalView(width)
 	}
 
 	var sb strings.Builder
 	// Заголовок задачи с новым префиксом для текущей задачи
 	titlePrefix := ui.GetCurrentTaskPrefix()
-	sb.WriteString(fmt.Sprintf("%s%s\n", titlePrefix, ui.ActiveTaskStyle.Render(t.title)))
+
+	// Формируем заголовок с префиксом
+	title := ui.ActiveTaskStyle.Render(t.title)
+	titleWithPrefix := fmt.Sprintf("%s%s", titlePrefix, title)
+
+	// Получаем отформатированный таймер (если он активен)
+	timerStr := t.RenderTimer()
+
+	// Если есть таймер, выравниваем заголовок и таймер по правому краю
+	if timerStr != "" {
+		titleLine := ui.AlignTextToRight(titleWithPrefix, timerStr, width)
+		sb.WriteString(titleLine + "\n")
+	} else {
+		sb.WriteString(titleWithPrefix + "\n")
+	}
 
 	// Отображаем опцию "Выбрать все" если она включена
 	if t.hasSelectAll {
@@ -375,6 +493,24 @@ func (t *MultiSelectTask) FinalView(width int) string {
 	}
 
 	return result
+}
+
+// WithDefaultOptions устанавливает варианты по умолчанию, которые будут выбраны при тайм-ауте.
+// @param defaultOptions Варианты по умолчанию (список индексов или строк)
+// @param timeout Длительность тайм-аута
+// @return Указатель на задачу для цепочки вызовов
+func (t *MultiSelectTask) WithDefaultOptions(defaultOptions interface{}, timeout time.Duration) *MultiSelectTask {
+	t.WithTimeout(timeout, defaultOptions)
+	return t
+}
+
+// WithTimeout устанавливает тайм-аут для задачи множественного выбора
+// @param duration Длительность тайм-аута
+// @param defaultValue Значение по умолчанию (список индексов или строк)
+// @return Указатель на задачу для цепочки вызовов
+func (t *MultiSelectTask) WithTimeout(duration time.Duration, defaultValue interface{}) *MultiSelectTask {
+	t.BaseTask.WithTimeout(duration, defaultValue)
+	return t
 }
 
 // GetSelected возвращает список выбранных элементов

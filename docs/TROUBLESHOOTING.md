@@ -25,9 +25,9 @@
   - Убедитесь, что терминал пропускает нажатия (нет конфликтов в tmux/привязках).
 
 - Space/Enter не подтверждают
-  - `SingleSelectTask`: enter/space — подтвердить.
-  - `MultiSelectTask`: space — переключить, enter — подтвердить.
-  - `YesNoTask`: enter/space — подтвердить текущий выбор.
+  - `SingleSelectTask`: enter/space — подтвердить + остановить таймер.
+  - `MultiSelectTask`: space — переключить + остановить таймер, enter — подтвердить.
+  - `YesNoTask`: enter/space — подтвердить выбор + остановить таймер (только 2 опции: "Да"/"Нет").
 
 - Отмена
   - `YesNoTask`: q/esc/ctrl+c — установить ошибку и завершить.

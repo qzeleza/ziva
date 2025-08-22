@@ -3,35 +3,35 @@ package task
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
 )
 
-// YesNoExitOption представляет варианты выбора для YesNoTask
-type YesNoExitOption int
+// YesNoOption представляет варианты выбора для YesNoTask
+type YesNoOption int
 
 const (
-	YesOption YesNoExitOption = iota
+	YesOption YesNoOption = iota
 	NoOption
-	ExitOption
 )
 
-// YesNoTask представляет задачу выбора из трех опций: Да, Нет, Выйти
-// Теперь это обертка над SingleSelectTask для консистентности UI
+// YesNoTask представляет задачу выбора из двух опций: Да, Нет
+// Это обертка над SingleSelectTask для консистентности UI
 type YesNoTask struct {
 	*SingleSelectTask
 	question       string
 	yesLabel       string
 	noLabel        string
-	selectedOption YesNoExitOption
+	selectedOption YesNoOption
 }
 
-// NewYesNoTask создает новую задачу выбора с тремя опциями
+// NewYesNoTask создает новую задачу выбора с двумя опциями
 func NewYesNoTask(title, question string) *YesNoTask {
 	// Создаем варианты выбора
-	options := []string{"Да", "Нет", "Выйти"}
+	options := []string{"Да", "Нет"}
 
 	// Создаем базовую задачу выбора
 	selectTask := NewSingleSelectTask(title, options)
@@ -51,6 +51,20 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		return t, nil
 	}
 
+	// Рассматриваем специальные случаи для YesNoTask
+	switch msg := msg.(type) {
+	case TimeoutMsg:
+		// Когда истекает тайм-аут, применяем значение по умолчанию
+		t.applyDefaultValue()
+		return t, nil
+	case tea.KeyMsg:
+		// Обрабатываем нажатие пробела для отключения таймера
+		if msg.String() == " " && t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
+			t.DisableTimeout()
+			return t, nil
+		}
+	}
+
 	// Делегируем обработку базовому SingleSelectTask
 	updatedTask, cmd := t.SingleSelectTask.Update(msg)
 	t.SingleSelectTask = updatedTask.(*SingleSelectTask)
@@ -66,24 +80,83 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
 			t.SetError(fmt.Errorf("пользователь выбрал \"Нет\""))
 			t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
-		case 2:
-			t.selectedOption = ExitOption
-			// Выбор "Выйти" останавливает выполнение очереди
-			t.SetError(fmt.Errorf("пользователь выбрал \"Выйти\""))
-			t.SetStopOnError(true) // Останавливаем очередь при выборе "Выйти"
 		}
 	}
 
 	return t, cmd
 }
 
+// Run запускает задачу выбора
+func (t *YesNoTask) Run() tea.Cmd {
+	// Запускаем таймер и тикер, если они включены
+	if t.timeoutEnabled && t.timeoutManager != nil {
+		return t.timeoutManager.StartTickerAndTimeout()
+	}
+	return nil
+}
+
 // View отображает текущее состояние задачи, делегируя логику базовому SingleSelectTask
+// applyDefaultValue применяет значение по умолчанию при истечении таймера
+func (t *YesNoTask) applyDefaultValue() {
+	// Если есть значение по умолчанию
+	if t.defaultValue != nil {
+		switch val := t.defaultValue.(type) {
+		case int:
+			// Если это индекс (0 - Да, 1 - Нет)
+			if val >= 0 && val < len(t.choices) {
+				// Устанавливаем курсор на выбранный индекс
+				t.cursor = val
+				// Выбираем соответствующий вариант
+				t.done = true
+				t.icon = ui.IconDone
+				t.finalValue = t.choices[t.cursor]
+				
+				// Устанавливаем выбранную опцию
+				switch val {
+				case 0: // Да
+					t.selectedOption = YesOption
+				case 1: // Нет
+					t.selectedOption = NoOption
+					// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
+					t.SetError(fmt.Errorf("пользователь выбрал \"Нет\""))
+					t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+				}
+			}
+		case string:
+			// Если это строка (Да, Нет)
+			var selectedIndex int
+			for i, choice := range t.choices {
+				if strings.EqualFold(choice, val) { // Сравниваем без учета регистра
+					// Устанавливаем курсор на выбранный вариант
+					t.cursor = i
+					selectedIndex = i
+					// Выбираем вариант
+					t.done = true
+					t.icon = ui.IconDone
+					t.finalValue = choice
+					break
+				}
+			}
+			
+			// Устанавливаем выбранную опцию
+			switch selectedIndex {
+			case 0: // Да
+				t.selectedOption = YesOption
+			case 1: // Нет
+				t.selectedOption = NoOption
+				// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
+				t.SetError(fmt.Errorf("пользователь выбрал \"Нет\""))
+				t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+			}
+		}
+	}
+}
+
 func (t *YesNoTask) View(width int) string {
 	if t.IsDone() {
 		return t.FinalView(width)
 	}
 
-	// return ""
 	// Делегируем отображение базовому SingleSelectTask
 	return t.SingleSelectTask.View(width)
 }
@@ -106,9 +179,6 @@ func (t *YesNoTask) FinalView(width int) string {
 	} else if t.selectedOption == NoOption {
 		// Для "Нет" выводим слово ОТКАЗ стилем ошибки
 		right = ui.GetErrorStatusStyle().Render(DefaultNoLabel)
-	} else {
-		// Для "Выйти" выводим слово ВЫХОД стилем ошибки
-		right = ui.GetErrorStatusStyle().Render("ВЫХОД")
 	}
 
 	var result string
@@ -150,7 +220,7 @@ func (t *YesNoTask) WithCustomLabelsAll(yesLabel, noLabel string) *YesNoTask {
 	return t
 }
 
-// GetValue возвращает ответ пользователя (true для "Да", false для "Нет", panic для "Выйти")
+// GetValue возвращает ответ пользователя (true для "Да", false для "Нет")
 // @deprecated Рекомендуется использовать GetSelectedOption() для более ясной семантики
 func (t *YesNoTask) GetValue() bool {
 	switch t.selectedOption {
@@ -158,15 +228,13 @@ func (t *YesNoTask) GetValue() bool {
 		return true
 	case NoOption:
 		return false
-	case ExitOption:
-		panic("GetValue() вызван для опции 'Выйти'")
 	default:
 		return false
 	}
 }
 
 // GetSelectedOption возвращает выбранную опцию
-func (t *YesNoTask) GetSelectedOption() YesNoExitOption {
+func (t *YesNoTask) GetSelectedOption() YesNoOption {
 	return t.selectedOption
 }
 
@@ -178,11 +246,6 @@ func (t *YesNoTask) IsYes() bool {
 // IsNo возвращает true если выбрано "Нет"
 func (t *YesNoTask) IsNo() bool {
 	return t.selectedOption == NoOption
-}
-
-// IsExit возвращает true если выбрано "Выйти"
-func (t *YesNoTask) IsExit() bool {
-	return t.selectedOption == ExitOption
 }
 
 // SetError устанавливает ошибку для задачи
@@ -198,4 +261,14 @@ func (t *YesNoTask) HasError() bool {
 // Error возвращает ошибку, если она есть
 func (t *YesNoTask) Error() error {
 	return t.SingleSelectTask.Error()
+}
+
+// WithDefaultOption устанавливает вариант по умолчанию и тайм-аут для задачи
+// @param defaultOption Может быть индексом (0 - Да, 1 - Нет) или строкой ("Да", "Нет")
+// @param timeout Время ожидания в секундах до автовыбора
+// @return Указатель на задачу для цепочки вызовов
+func (t *YesNoTask) WithDefaultOption(defaultOption interface{}, timeout time.Duration) *YesNoTask {
+	// Используем метод базового класса для установки тайм-аута
+	t.SingleSelectTask.WithTimeout(timeout, defaultOption)
+	return t
 }

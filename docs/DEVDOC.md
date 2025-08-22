@@ -88,16 +88,16 @@ type Task interface {
 
 All constructors return concrete task types that embed `BaseTask` and implement `common.Task`.
 
-- Yes/No – `task.NewYesNoTask(question, description string) *YesNoTask`
-  - Keys: up/k/left/h to choose “Да”, down/j/right/l to choose “Нет”, enter/space confirm, q/esc/ctrl+c cancel (sets error)
-  - Result: `GetChoice() bool` returns true only if “Да” was chosen and confirmed
+- Yes/No – `task.NewYesNoTask(question, description string) *YesNoTask` (только 2 опции: "Да" и "Нет")
+  - Keys: up/k/left/h to choose "Да", down/j/right/l to choose "Нет", enter/space confirm + stop timer, q/esc/ctrl+c cancel (sets error)
+  - Results: `GetValue() bool` (true for "Да", false for "Нет"), `IsYes()`, `IsNo()`
 
 - Single Select – `task.NewSingleSelectTask(prompt string, options []string) *SingleSelectTask`
-  - Keys: up/k, down/j, enter/space confirm
+  - Keys: up/k, down/j, enter/space confirm + stop timer
   - Results: `GetSelectedOption() string`, `GetSelectedIndex() int`
 
 - Multi Select – `task.NewMultiSelectTask(prompt string, options []string) *MultiSelectTask`
-  - Keys: up/k, down/j, space toggle current, enter confirm
+  - Keys: up/k, down/j, space toggle current + stop timer, enter confirm
   - Results: `GetSelectedOptions() []string`, `GetSelectedIndices() []int`
 
 - Input (new) – `task.NewInputTaskNew(prompt, placeholder string, validator func(string) error) *InputTaskNew`

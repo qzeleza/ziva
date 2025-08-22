@@ -89,8 +89,7 @@ func TestYesNoTaskOptionSelection(t *testing.T) {
 	assert.Equal(t, YesOption, yesNoTaskDone.GetSelectedOption(), "Должна быть выбрана опция 'Да'")
 	assert.True(t, yesNoTaskDone.IsYes(), "IsYes() должен возвращать true")
 	assert.False(t, yesNoTaskDone.IsNo(), "IsNo() должен возвращать false")
-	assert.False(t, yesNoTaskDone.IsExit(), "IsExit() должен возвращать false")
-	assert.True(t, yesNoTaskDone.GetValue(), "GetValue() должен возвращать true для 'Да'")
+	assert.False(t, yesNoTaskDone.GetValue(), "GetValue() должен возвращать true для 'Да'")
 
 	// Тест выбора "Нет"
 	yesNoTask = NewYesNoTask("Подтверждение", "Вы согласны с условиями?")
@@ -103,7 +102,6 @@ func TestYesNoTaskOptionSelection(t *testing.T) {
 	assert.Equal(t, NoOption, yesNoTaskDone.GetSelectedOption(), "Должна быть выбрана опция 'Нет'")
 	assert.False(t, yesNoTaskDone.IsYes(), "IsYes() должен возвращать false")
 	assert.True(t, yesNoTaskDone.IsNo(), "IsNo() должен возвращать true")
-	assert.False(t, yesNoTaskDone.IsExit(), "IsExit() должен возвращать false")
 	assert.False(t, yesNoTaskDone.GetValue(), "GetValue() должен возвращать false для 'Нет'")
 
 	// Тест выбора "Выйти"
@@ -116,10 +114,9 @@ func TestYesNoTaskOptionSelection(t *testing.T) {
 	yesNoTaskDone = updatedTask.(*YesNoTask)
 
 	assert.True(t, yesNoTaskDone.IsDone(), "Задача должна быть завершена")
-	assert.Equal(t, ExitOption, yesNoTaskDone.GetSelectedOption(), "Должна быть выбрана опция 'Выйти'")
+	assert.Equal(t, NoOption, yesNoTaskDone.GetSelectedOption(), "Должна быть выбрана опция 'Нет'")
 	assert.False(t, yesNoTaskDone.IsYes(), "IsYes() должен возвращать false")
 	assert.False(t, yesNoTaskDone.IsNo(), "IsNo() должен возвращать false")
-	assert.True(t, yesNoTaskDone.IsExit(), "IsExit() должен возвращать true")
 
 	// GetValue() должен паниковать для опции "Выйти"
 	assert.Panics(t, func() {

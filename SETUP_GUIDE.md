@@ -69,6 +69,7 @@ go get github.com/qzeleza/termos
 ```go
 import "github.com/qzeleza/termos/task"
 
+// Использование YesNoTask (теперь только 2 опции: "Да" и "Нет")
 yesNo := task.NewYesNoTask("Продолжить?", "Подтверждение")
 ```
 
