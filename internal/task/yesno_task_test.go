@@ -63,17 +63,17 @@ func TestYesNoTaskSelectionAndNavigation(t *testing.T) {
 	yesNoTask := NewYesNoTask("Подтверждение", "Вы согласны с условиями?")
 
 	// Проверяем начальное состояние (должно быть на первой опции - "Да")
-	assert.Equal(t, 0, yesNoTask.SingleSelectTask.GetSelectedIndex(), "Изначально должна быть выбрана первая опция")
+	assert.Equal(t, 0, yesNoTask.GetSelectedIndex(), "Изначально должна быть выбрана первая опция")
 
 	// Перемещаемся вниз к "Нет"
 	updatedTask, _ := yesNoTask.Update(tea.KeyMsg{Type: tea.KeyDown})
 	yesNoTask = updatedTask.(*YesNoTask)
-	assert.Equal(t, 1, yesNoTask.SingleSelectTask.GetSelectedIndex(), "После Down должна быть выбрана вторая опция")
+	assert.Equal(t, 1, yesNoTask.GetSelectedIndex(), "После Down должна быть выбрана вторая опция")
 
 	// Перемещаемся вверх обратно к "Нет"
 	updatedTask, _ = yesNoTask.Update(tea.KeyMsg{Type: tea.KeyUp})
 	yesNoTask = updatedTask.(*YesNoTask)
-	assert.Equal(t, 1, yesNoTask.SingleSelectTask.GetSelectedIndex(), "После Up должна быть выбрана вторая опция")
+	assert.Equal(t, 1, yesNoTask.GetSelectedIndex(), "После Up должна быть выбрана вторая опция")
 }
 
 // TestYesNoTaskOptionSelection проверяет выбор различных опций

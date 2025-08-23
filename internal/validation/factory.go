@@ -153,7 +153,7 @@ func (f *ValidatorFactory) AlphaNumeric() Validator {
 		}
 
 		for _, char := range input {
-			if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9')) {
+			if (char < 'a' || char > 'z') && (char < 'A' || char > 'Z') && (char < '0' || char > '9') {
 				return errors.New("значение должно содержать только буквы и цифры")
 			}
 		}

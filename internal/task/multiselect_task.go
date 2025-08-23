@@ -259,7 +259,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			// Отмена пользователем
 			cancelErr := fmt.Errorf("отменено пользователем")
 			t.done = true
-			t.BaseTask.err = cancelErr
+			t.err = cancelErr
 			t.icon = ui.IconCancelled
 			t.finalValue = ui.CancelStyle.Render(cancelErr.Error())
 			t.SetStopOnError(true)

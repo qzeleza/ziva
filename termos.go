@@ -98,7 +98,7 @@ type YesNoTask struct {
 
 // WithTimeout устанавливает тайм-аут для задачи с значением по умолчанию
 func (t *YesNoTask) WithTimeout(duration time.Duration, defaultValue interface{}) *YesNoTask {
-	t.YesNoTask.WithDefaultOption(defaultValue, duration)
+	t.WithDefaultOption(defaultValue, duration)
 	return t
 }
 
@@ -238,7 +238,7 @@ type FuncTask struct {
 
 // WithStopOnError устанавливает флаг остановки очереди при ошибке
 func (t *FuncTask) WithStopOnError(stop bool) *FuncTask {
-	t.FuncTask.SetStopOnError(stop)
+	t.SetStopOnError(stop)
 	return t
 }
 

@@ -35,9 +35,6 @@ func TestOptimizedEmbeddedConfig(t *testing.T) {
 }
 
 func TestApplyEmbeddedConfig(t *testing.T) {
-	// Сохраняем исходное состояние
-	originalColorMode := ui.IsEmbeddedColorMode()
-
 	// Тестируем применение конфигурации
 	config := DefaultEmbeddedConfig()
 	ApplyEmbeddedConfig(config)
@@ -48,11 +45,6 @@ func TestApplyEmbeddedConfig(t *testing.T) {
 	// Тестируем применение с nil конфигурацией
 	ApplyEmbeddedConfig(nil)
 	// Должно работать без паники
-
-	// Восстанавливаем состояние если нужно
-	if !originalColorMode {
-		// При необходимости можно добавить функцию отключения embedded режима
-	}
 }
 
 func TestGetMemoryFootprintEstimate(t *testing.T) {
@@ -145,7 +137,9 @@ func TestEmbeddedConfigEdgeCases(t *testing.T) {
 		StringCacheSize:    0,
 	}
 
-	ValidateEmbeddedConfig(tinyConfig)
+	if err := ValidateEmbeddedConfig(tinyConfig); err != nil {
+		t.Errorf("Ошибка валидации конфигурации: %v", err)
+	}
 
 	// Все значения должны быть исправлены до минимальных
 	assert.GreaterOrEqual(t, tinyConfig.MaxCompletedTasks, 5)

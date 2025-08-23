@@ -64,12 +64,12 @@ func (te *TaskError) Error() string {
 
 	// Добавляем тип ошибки если он не неизвестный
 	if te.Type != ErrorTypeUnknown {
-		builder.WriteString(fmt.Sprintf("[%s] ", te.Type.String()))
+		fmt.Fprintf(builder, "[%s] ", te.Type.String())
 	}
 
 	// Добавляем контекст задачи
 	if te.TaskTitle != "" {
-		builder.WriteString(fmt.Sprintf("задача '%s': ", te.TaskTitle))
+		fmt.Fprintf(builder, "задача '%s': ", te.TaskTitle)
 	}
 
 	// Добавляем основное сообщение об ошибке

@@ -79,12 +79,6 @@ func (t *BaseTask) View(_ int) string {
 	return t.title
 }
 
-// applyDefaultValue применяет значение по умолчанию
-// Этот метод должен быть переопределен в конкретных задачах
-func (t *BaseTask) applyDefaultValue() {
-	// Базовая реализация пустая
-}
-
 // WithTimeout устанавливает тайм-аут для задачи
 // @param duration Длительность тайм-аута
 // @param defaultValue Значение, которое будет выбрано при тайм-ауте

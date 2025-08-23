@@ -23,9 +23,9 @@ func TestPasswordValidator(t *testing.T) {
 	}
 	for _, password := range validPasswords {
 		// Проверяем, что валидатор не паникует
-		assert.NotPanics(t, func() {
-			validator.Validate(password)
-		})
+		if err := validator.Validate(password); err != nil {
+			t.Errorf("Ошибка валидации пароля: %v", err)
+		}
 	}
 
 	// Тест невалидных паролей
@@ -281,7 +281,9 @@ func TestEdgeCases(t *testing.T) {
 	domainValidator := NewDomainValidator()
 	// Просто проверяем, что не паникует
 	assert.NotPanics(t, func() {
-		domainValidator.Validate("special-domain.com")
+		if err := domainValidator.Validate("special-domain.com"); err != nil {
+				t.Errorf("Ошибка валидации домена: %v", err)
+			}
 	})
 }
 

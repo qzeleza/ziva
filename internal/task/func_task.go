@@ -56,7 +56,7 @@ func WithSummaryFunction(summaryFunc func() []string) FuncTaskOption {
  */
 func WithStopOnError(stop bool) FuncTaskOption {
 	return func(t *FuncTask) {
-		t.BaseTask.stopOnError = stop
+		t.stopOnError = stop
 	}
 }
 
@@ -159,7 +159,7 @@ func NewFuncTask(title string, funcAction func() error, params ...interface{}) *
 		switch p := param.(type) {
 		case bool:
 			// Устанавливаем флаг stopOnError
-			task.BaseTask.stopOnError = p
+			task.stopOnError = p
 		case func() []string:
 			// Устанавливаем функцию для получения дополнительной информации
 			task.summaryFunc = p

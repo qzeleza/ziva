@@ -71,7 +71,7 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 
 	// Если задача завершена, определяем выбранную опцию
 	if t.IsDone() {
-		selectedIndex := t.SingleSelectTask.GetSelectedIndex()
+		selectedIndex := t.GetSelectedIndex()
 		switch selectedIndex {
 		case 0:
 			t.selectedOption = YesOption
@@ -174,9 +174,10 @@ func (t *YesNoTask) FinalView(width int) string {
 	left := fmt.Sprintf("%s %s", prefix, t.title)
 
 	var right string
-	if t.selectedOption == YesOption {
+	switch t.selectedOption {
+	case YesOption:
 		right = ui.SelectionStyle.Render(DefaultYesLabel)
-	} else if t.selectedOption == NoOption {
+	case NoOption:
 		// Для "Нет" выводим слово ОТКАЗ стилем ошибки
 		right = ui.GetErrorStatusStyle().Render(DefaultNoLabel)
 	}
@@ -197,11 +198,11 @@ func (t *YesNoTask) FinalView(width int) string {
 func (t *YesNoTask) WithCustomLabels(yesLabel, noLabel string) *YesNoTask {
 	if strings.TrimSpace(yesLabel) != "" {
 		t.yesLabel = yesLabel
-		t.SingleSelectTask.choices[0] = yesLabel
+		t.choices[0] = yesLabel
 	}
 	if strings.TrimSpace(noLabel) != "" {
 		t.noLabel = noLabel
-		t.SingleSelectTask.choices[1] = noLabel
+		t.choices[1] = noLabel
 	}
 	return t
 }
@@ -211,11 +212,11 @@ func (t *YesNoTask) WithCustomLabels(yesLabel, noLabel string) *YesNoTask {
 func (t *YesNoTask) WithCustomLabelsAll(yesLabel, noLabel string) *YesNoTask {
 	if strings.TrimSpace(yesLabel) != "" {
 		t.yesLabel = yesLabel
-		t.SingleSelectTask.choices[0] = yesLabel
+		t.choices[0] = yesLabel
 	}
 	if strings.TrimSpace(noLabel) != "" {
 		t.noLabel = noLabel
-		t.SingleSelectTask.choices[1] = noLabel
+		t.choices[1] = noLabel
 	}
 	return t
 }
@@ -269,6 +270,6 @@ func (t *YesNoTask) Error() error {
 // @return Указатель на задачу для цепочки вызовов
 func (t *YesNoTask) WithDefaultOption(defaultOption interface{}, timeout time.Duration) *YesNoTask {
 	// Используем метод базового класса для установки тайм-аута
-	t.SingleSelectTask.WithTimeout(timeout, defaultOption)
+	t.WithTimeout(timeout, defaultOption)
 	return t
 }

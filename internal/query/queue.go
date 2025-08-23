@@ -332,7 +332,7 @@ func (m *Model) View() string {
 			view := t.View(layoutWidth)
 			sb.WriteString(view + "\n")
 			// Добавляем разделитель, если есть ожидающие задачи и нет ошибки
-			if i+1 < len(m.tasks) && !(m.stoppedOnError && t.HasError()) {
+			if i+1 < len(m.tasks) && (!m.stoppedOnError && !t.HasError()) {
 				sb.WriteString(ui.DrawLine(layoutWidth))
 			}
 		}
@@ -355,21 +355,23 @@ func (m *Model) View() string {
 
 			// Определяем стиль для правой части в зависимости от статуса
 			var rightStyle lipgloss.Style
-			if rightStatus == "УСПЕШНО" {
+			switch rightStatus {
+			case "УСПЕШНО":
 				rightStyle = ui.SuccessLabelStyle
-			} else if rightStatus == "С ОШИБКАМИ" {
+			case "С ОШИБКАМИ":
 				rightStyle = ui.GetErrorStatusStyle()
-			} else {
+			default:
 				rightStyle = ui.SubtleStyle
 			}
 
 			// Определяем стиль для левой части (summary) в зависимости от результатов
 			var summaryStyle lipgloss.Style
-			if rightStatus == "УСПЕШНО" {
+			switch rightStatus {
+			case "УСПЕШНО":
 				summaryStyle = ui.SuccessLabelStyle
-			} else if rightStatus == "С ОШИБКАМИ" {
+			case "С ОШИБКАМИ":
 				summaryStyle = ui.GetErrorStatusStyle()
-			} else {
+			default:
 				// Для состояния "В ПРОЦЕССЕ" используем оригинальный стиль или стиль по умолчанию
 				if m.summaryStyle.GetForeground() != nil {
 					summaryStyle = m.summaryStyle
