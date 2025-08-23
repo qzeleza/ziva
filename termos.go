@@ -31,6 +31,7 @@ package termos
 import (
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/qzeleza/termos/internal/common"
 	"github.com/qzeleza/termos/internal/query"
 	"github.com/qzeleza/termos/internal/task"
@@ -81,9 +82,27 @@ func (q *Queue) WithSummary(show bool) *Queue {
 	return q
 }
 
+// WithAppNameColor устанавливает цвет текста и стиль названия приложения.
+func (q *Queue) WithAppNameColor(textColor lipgloss.TerminalColor, bold bool) *Queue {
+	q.model.WithAppNameColor(textColor, bold)
+	return q
+}
+
+// WithTitleColor устанавливает цвет заголовка.
+func (q *Queue) WithTitleColor(titleColor lipgloss.TerminalColor, bold bool) *Queue {
+	q.model.WithTitleColor(titleColor, bold)
+	return q
+}
+
 // WithClearScreen включает/выключает очистку экрана перед запуском очереди задач
 func (q *Queue) WithClearScreen(clear bool) *Queue {
 	q.model.WithClearScreen(clear)
+	return q
+}
+
+// SetErrorColor устанавливает цвет для отображения ошибок в очереди.
+func (q *Queue) SetErrorColor(color query.ErrorColor) *Queue {
+	q.model.SetErrorColor(color)
 	return q
 }
 
