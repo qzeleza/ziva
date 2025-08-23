@@ -81,6 +81,12 @@ func (q *Queue) WithSummary(show bool) *Queue {
 	return q
 }
 
+// WithClearScreen включает/выключает очистку экрана перед запуском очереди задач
+func (q *Queue) WithClearScreen(clear bool) *Queue {
+	q.model.WithClearScreen(clear)
+	return q
+}
+
 // Run запускает выполнение очереди задач
 func (q *Queue) Run() error {
 	return q.model.Run()

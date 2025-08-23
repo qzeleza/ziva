@@ -1,6 +1,7 @@
 package query
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 	"strconv"
@@ -105,6 +106,7 @@ type Model struct {
 	appName        string         // Название приложения.
 	appNameStyle   lipgloss.Style // Стиль названия приложения.
 	errorTask      common.Task    // Задача, вызвавшая прерывание очереди.
+	clearScreen    bool           // Флаг очистки экрана перед запуском
 
 	// Счетчики для подсчета результатов выполнения
 	successCount int  // Количество успешно выполненных задач
@@ -119,6 +121,7 @@ func New(title string) *Model {
 		summary:      "Обработка операций прошла",
 		width:        common.DefaultWidth, // Начальная ширина
 		showSummary:  true,                // По умолчанию сводка отображается
+		clearScreen:  false,               // По умолчанию экран не очищается
 		appNameStyle: lipgloss.NewStyle().Foreground(ui.ColorDarkGray).Background(ui.ColorBrightWhite).Bold(false),
 	}
 }
@@ -183,6 +186,12 @@ func (m *Model) formatSummaryWithStats() (string, string) {
 
 // Запускает очередь задач
 func (m *Model) Run() error {
+	// Если установлен флаг очистки экрана, очищаем экран перед запуском
+	if m.clearScreen {
+		// Используем ANSI-последовательность для очистки экрана
+		fmt.Print("\033[H\033[2J")
+	}
+	
 	_, err := tea.NewProgram(m).Run()
 	return err
 }
@@ -208,6 +217,12 @@ func (m *Model) WithAppNameColor(textColor lipgloss.TerminalColor, bold bool) *M
 // WithSummary устанавливает флаг отображения сводки.
 func (m *Model) WithSummary(show bool) *Model {
 	m.showSummary = show
+	return m
+}
+
+// WithClearScreen устанавливает флаг очистки экрана перед запуском очереди задач.
+func (m *Model) WithClearScreen(clear bool) *Model {
+	m.clearScreen = clear
 	return m
 }
 
