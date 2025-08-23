@@ -45,6 +45,15 @@ func NewYesNoTask(title, question string) *YesNoTask {
 	}
 }
 
+// stopTimeout останавливает таймер
+func (t *YesNoTask) stopTimeout() {
+	// Если таймер активен, останавливаем его
+	if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
+		t.timeoutManager.StopTimeout()
+		t.showTimeout = false
+	}
+}
+
 // Update обновляет состояние задачи, делегируя логику базовому SingleSelectTask
 func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 	if t.IsDone() {
@@ -58,9 +67,10 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		t.applyDefaultValue()
 		return t, nil
 	case tea.KeyMsg:
-		// Обрабатываем нажатие пробела для отключения таймера
-		if msg.String() == " " && t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
-			t.DisableTimeout()
+		// Обрабатываем нажатие упрвляющих клавиш для отключения таймера
+		switch msg.String() {
+		case " ", "up", "down", "j", "k", "enter":
+			t.stopTimeout()
 			return t, nil
 		}
 	}
@@ -110,7 +120,7 @@ func (t *YesNoTask) applyDefaultValue() {
 				t.done = true
 				t.icon = ui.IconDone
 				t.finalValue = t.choices[t.cursor]
-				
+
 				// Устанавливаем выбранную опцию
 				switch val {
 				case 0: // Да
@@ -137,7 +147,7 @@ func (t *YesNoTask) applyDefaultValue() {
 					break
 				}
 			}
-			
+
 			// Устанавливаем выбранную опцию
 			switch selectedIndex {
 			case 0: // Да

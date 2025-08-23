@@ -32,6 +32,15 @@ func NewSingleSelectTask(title string, choices []string) *SingleSelectTask {
 	}
 }
 
+// stopTimeout останавливает таймер
+func (t *SingleSelectTask) stopTimeout() {
+	// Если таймер активен, останавливаем его
+	if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
+		t.timeoutManager.StopTimeout()
+		t.showTimeout = false
+	}
+}
+
 // Update обрабатывает нажатия клавиш для навигации и выбора.
 func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 	if t.done {
@@ -55,10 +64,14 @@ func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		// При нажатии клавиш НЕ сбрасываем таймер - пусть продолжает работать
 		switch msg.String() {
 		case "up", "k":
+			// Если таймер активен, останавливаем его
+			t.stopTimeout()
 			if t.cursor > 0 {
 				t.cursor--
 			}
 		case "down", "j":
+			// Если таймер активен, останавливаем его
+			t.stopTimeout()
 			if t.cursor < len(t.choices)-1 {
 				t.cursor++
 			}
@@ -73,16 +86,15 @@ func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			return t, nil
 
 		case "enter":
+			// Если таймер активен, останавливаем его
+			t.stopTimeout()
 			t.done = true
 			t.icon = ui.IconDone
 			t.finalValue = t.choices[t.cursor]
 			return t, nil
 		case " ":
 			// Если таймер активен, останавливаем его
-			if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
-				t.timeoutManager.StopTimeout()
-				t.showTimeout = false
-			}
+			t.stopTimeout()
 			// В любом случае выбираем текущий элемент
 			t.done = true
 			t.icon = ui.IconDone

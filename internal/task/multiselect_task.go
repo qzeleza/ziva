@@ -197,6 +197,15 @@ func (t *MultiSelectTask) isSelected(index int) bool {
 	return t.selected.IsSet(index)
 }
 
+// stopTimeout останавливает таймер
+func (t *MultiSelectTask) stopTimeout() {
+	// Если таймер активен, останавливаем его
+	if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
+		t.timeoutManager.StopTimeout()
+		t.showTimeout = false
+	}
+}
+
 // Update handles key presses for navigation and selection.
 func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 	if t.done {
@@ -226,6 +235,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 
 		switch msg.String() {
 		case "up", "k":
+			t.stopTimeout()
 			if t.cursor > 0 {
 				t.cursor--
 			} else if t.hasSelectAll {
@@ -234,6 +244,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 				t.cursor = -1
 			}
 		case "down", "j":
+			t.stopTimeout()
 			if t.hasSelectAll && t.cursor == -1 {
 				// С опции "Выбрать все" переходим к первому элементу списка
 				t.cursor = 0
@@ -241,11 +252,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 				t.cursor++
 			}
 		case " ":
-			// Если таймер активен, останавливаем его
-			if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
-				t.timeoutManager.StopTimeout()
-				t.showTimeout = false
-			}
+			t.stopTimeout()
 
 			// В любом случае выполняем выбор/переключение
 			if t.hasSelectAll && t.cursor == -1 {
@@ -266,6 +273,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			return t, nil
 
 		case "enter":
+			t.stopTimeout()
 			// Собираем выбранные элементы
 			var selectedChoices []string
 			for i := range t.choices {

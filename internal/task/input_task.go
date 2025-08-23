@@ -172,12 +172,12 @@ func (t *InputTaskNew) Run() tea.Cmd {
 	// Запускаем мигание курсора и таймер, если он включен
 	var cmds []tea.Cmd
 	cmds = append(cmds, textinput.Blink)
-	
+
 	// Запускаем таймер и тикер, если они включены
 	if t.timeoutEnabled && t.timeoutManager != nil {
 		cmds = append(cmds, t.timeoutManager.StartTickerAndTimeout())
 	}
-	
+
 	return tea.Batch(cmds...)
 }
 
@@ -208,7 +208,7 @@ func (t *InputTaskNew) Update(msg tea.Msg) (Task, tea.Cmd) {
 				t.DisableTimeout()
 			}
 		}
-		
+
 		switch msg.String() {
 		case "ctrl+c", "esc":
 			// Отмена ввода
@@ -350,7 +350,7 @@ func (t *InputTaskNew) applyDefaultValue() {
 	// Если есть значение по умолчанию
 	if t.defaultValue != nil {
 		var valueToSet string
-		
+
 		switch val := t.defaultValue.(type) {
 		case string:
 			valueToSet = val
@@ -362,7 +362,7 @@ func (t *InputTaskNew) applyDefaultValue() {
 			// Попытаемся преобразовать любое значение в строку
 			valueToSet = fmt.Sprintf("%v", val)
 		}
-		
+
 		// Проверяем валидность значения по умолчанию
 		if t.validator != nil {
 			if err := t.validator.Validate(valueToSet); err != nil {
@@ -378,7 +378,7 @@ func (t *InputTaskNew) applyDefaultValue() {
 				return
 			}
 		}
-		
+
 		// Проверяем на пустоту, если пустые значения не разрешены
 		if !t.allowEmpty && performance.TrimSpaceEfficient(valueToSet) == "" {
 			emptyErr := terrors.NewValidationError(t.title, errors.New("поле не может быть пустым")).
@@ -390,7 +390,7 @@ func (t *InputTaskNew) applyDefaultValue() {
 			t.finalValue = ui.GetErrorMessageStyle().Render("значение по умолчанию пусто")
 			return
 		}
-		
+
 		// Устанавливаем значение и завершаем задачу
 		t.textInput.SetValue(valueToSet)
 		t.value = valueToSet
@@ -515,7 +515,7 @@ func (b *InputTaskBuilder) Build() *InputTaskNew {
 }
 
 // WithTimeout устанавливает тайм-аут для задачи ввода
-// @param duration Длительность тайм-аута  
+// @param duration Длительность тайм-аута
 // @param defaultValue Значение по умолчанию (строка)
 // @return Указатель на задачу для цепочки вызовов
 func (t *InputTaskNew) WithTimeout(duration time.Duration, defaultValue interface{}) *InputTaskNew {
