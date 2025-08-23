@@ -29,7 +29,7 @@ func TestFuncTaskCreation(t *testing.T) {
 	// Создаем задачу FuncTask с указанием флага stopOnError = false
 	funcTaskNoStop := NewFuncTask(title, func() error {
 		return nil
-	}, false)
+	}, WithStopOnError(false))
 
 	// Проверяем значение флага stopOnError
 	assert.False(t, funcTaskNoStop.StopOnError(), "stopOnError должен быть false")

@@ -106,7 +106,7 @@ func main() {
 	// 4) Задача-выполнение функции (FuncTask)
 	//    Выполняет полезную работу и выводит результат в финальном представлении задачи (без fmt.Print)
 	data := pingResult{}
-	fn := termos.NewFuncTaskWithOptions(
+	fn := termos.NewFuncTask(
 		"Проверка соединения",
 		func() error {
 			return checkConnection(&data)

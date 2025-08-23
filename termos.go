@@ -248,13 +248,8 @@ const (
 )
 
 // NewFuncTask создает новую задачу выполнения функции
-func NewFuncTask(title string, fn func() error) *FuncTask {
-	return &FuncTask{task.NewFuncTask(title, fn)}
-}
-
-// NewFuncTaskWithOptions создает новую задачу выполнения функции с дополнительными опциями
-func NewFuncTaskWithOptions(title string, fn func() error, opts ...task.FuncTaskOption) *FuncTask {
-	return &FuncTask{task.NewFuncTaskWithOptions(title, fn, opts...)}
+func NewFuncTask(title string, fn func() error, opts ...task.FuncTaskOption) *FuncTask {
+	return &FuncTask{task.NewFuncTask(title, fn, opts...)}
 }
 
 // FuncTask представляет задачу выполнения функции

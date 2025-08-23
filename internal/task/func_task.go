@@ -91,7 +91,7 @@ func WithSuccessLabelOption(label string) FuncTaskOption {
  *     WithSummaryIndent(4),
  * )
  */
-func NewFuncTaskWithOptions(title string, funcAction func() error, options ...FuncTaskOption) *FuncTask {
+func NewFuncTask(title string, funcAction func() error, options ...FuncTaskOption) *FuncTask {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = ui.SpinnerStyle
@@ -115,55 +115,6 @@ func NewFuncTaskWithOptions(title string, funcAction func() error, options ...Fu
 	// Применяем функциональные опции
 	for _, option := range options {
 		option(task)
-	}
-
-	return task
-}
-
-/**
- * @brief Создает новую задачу типа FuncTask (legacy-версия).
- * @param title Заголовок задачи.
- * @param funcAction Функция, которую необходимо выполнить.
- * @param params Вариативные параметры: может содержать func() []string (summaryFunc) и/или bool (stopOnError).
- * @return Указатель на созданную задачу FuncTask.
- * @details Функция поддерживает вариативное количество параметров:
- *   - Если передан только bool, то это stopOnError
- *   - Если передана func() []string, то это summaryFunc
- *   - Если переданы и func() []string и bool, то первый параметр - summaryFunc, второй - stopOnError
- *
- * @deprecated Рекомендуется использовать NewFuncTaskWithOptions для более читаемого кода.
- */
-func NewFuncTask(title string, funcAction func() error, params ...interface{}) *FuncTask {
-	s := spinner.New()
-	s.Spinner = spinner.Dot
-	s.Style = ui.SpinnerStyle
-
-	// Создаем базовую задачу
-	baseTask := NewBaseTask(title)
-
-	// Устанавливаем флаг stopOnError в true по умолчанию
-	baseTask.SetStopOnError(true)
-
-	// Создаем задачу с базовыми значениями
-	task := &FuncTask{
-		BaseTask:     baseTask,
-		spinner:      s,
-		function:     funcAction,
-		summaryFunc:  nil,
-		summaryLines: nil,
-		successLabel: "Готово",
-	}
-
-	// Разбираем вариативные параметры
-	for _, param := range params {
-		switch p := param.(type) {
-		case bool:
-			// Устанавливаем флаг stopOnError
-			task.stopOnError = p
-		case func() []string:
-			// Устанавливаем функцию для получения дополнительной информации
-			task.summaryFunc = p
-		}
 	}
 
 	return task

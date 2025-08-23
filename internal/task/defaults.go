@@ -68,7 +68,7 @@ const (
 	DefaultCancelLabel = "Отменено пользователем"
 
 	// DefaultYesNoLabel метка успешного завершения по умолчанию
-	DefaultYesLabel = "СОГЛАСИЕ"
+	DefaultYesLabel = "УСПЕШНО"
 	DefaultNoLabel  = "ОТКАЗ"
 )
 
