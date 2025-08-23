@@ -35,6 +35,7 @@ import (
 	"github.com/qzeleza/termos/internal/common"
 	"github.com/qzeleza/termos/internal/query"
 	"github.com/qzeleza/termos/internal/task"
+	"github.com/qzeleza/termos/internal/ui"
 	"github.com/qzeleza/termos/internal/validation"
 )
 
@@ -277,4 +278,43 @@ type FuncTaskOption = task.FuncTaskOption
 var (
 	WithSummaryFunction = task.WithSummaryFunction
 	WithStopOnError     = task.WithStopOnError
+)
+
+// Стили для текста
+var (
+	ErrorStatusStyle   = ui.ErrorStatusStyle
+	ErrorMessageStyle  = ui.ErrorMessageStyle
+	CancelStyle        = ui.CancelStyle
+	SubtleStyle        = ui.SubtleStyle
+	SelectionStyle     = ui.SelectionStyle
+	SelectionNoStyle   = ui.SelectionNoStyle
+	ActiveStyle        = ui.ActiveStyle
+	InputStyle         = ui.InputStyle
+	SpinnerStyle       = ui.SpinnerStyle
+	ActiveTitleStyle   = ui.ActiveTitleStyle
+	ActiveTaskStyle    = ui.ActiveTaskStyle
+	SuccessLabelStyle  = ui.SuccessLabelStyle
+	FinishedLabelStyle = ui.FinishedLabelStyle
+)
+
+// Коды цветов
+var (
+	ColorBrightGreen   = ui.ColorBrightGreen
+	ColorBrightRed     = ui.ColorBrightRed
+	ColorDarkRed       = ui.ColorDarkRed
+	ColorBrightYellow  = ui.ColorBrightYellow
+	ColorDarkYellow    = ui.ColorDarkYellow
+	ColorBrightOrange  = ui.ColorBrightOrange
+	ColorDarkOrange    = ui.ColorDarkOrange
+	ColorBrightBlue    = ui.ColorBrightBlue
+	ColorDarkBlue      = ui.ColorDarkBlue
+	ColorBrightCyan    = ui.ColorBrightCyan
+	ColorDarkCyan      = ui.ColorDarkCyan
+	ColorBrightMagenta = ui.ColorBrightMagenta
+	ColorBrightWhite   = ui.ColorBrightWhite
+	ColorBrightGray    = ui.ColorBrightGray
+	ColorDarkGray      = ui.ColorDarkGray
+	ColorLightBlue     = ui.ColorLightBlue
+	ColorBlack         = ui.ColorBlack
+	ColorDarkGreen     = ui.ColorDarkGreen
 )
