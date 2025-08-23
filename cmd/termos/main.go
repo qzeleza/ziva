@@ -3,11 +3,20 @@ package main
 import (
 	// Встроенные импорты не требуются
 
-	"time"
 	"log"
+	"os/exec"
+	"strings"
+	"time"
 
 	"github.com/qzeleza/termos"
 )
+
+// pingResult представляет результат проверки подключения
+type pingResult struct {
+	Ping   string
+	Loss   string
+	Status string
+}
 
 func main() {
 	// Заголовок и краткое описание для TUI
@@ -96,17 +105,17 @@ func main() {
 
 	// 4) Задача-выполнение функции (FuncTask)
 	//    Выполняет полезную работу и выводит результат в финальном представлении задачи (без fmt.Print)
+	data := pingResult{}
 	fn := termos.NewFuncTaskWithOptions(
 		"Проверка соединения",
 		func() error {
-			// Здесь могла бы быть реальная проверка, для примера считаем, что всё ок
-			return nil
+			return checkConnection(&data)
 		},
 		// Выводим краткую сводку под заголовком после успеха
 		termos.WithSummaryFunction(func() []string {
 			return []string{
-				"Пинг: 12мс",
-				"Потери пакетов: 0%",
+				"Пинг: " + data.Ping,
+				"Потери пакетов: " + data.Loss,
 			}
 		}),
 		// Не останавливать очередь при ошибке (для демонстрации поведения)
@@ -135,4 +144,45 @@ func main() {
 		// Обработка ошибки
 		log.Fatalf("Ошибка при запуске очереди: %v", err)
 	}
+}
+
+func checkConnection(result *pingResult) error {
+	time.Sleep(2 * time.Second)
+	cmd := exec.Command("ping", "-c", "1", "google.com")
+	output, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+
+	// Парсим результат команды ping
+	outputStr := string(output)
+
+	// Извлекаем время пинга
+	if strings.Contains(outputStr, "time=") {
+		parts := strings.Split(outputStr, "time=")
+		if len(parts) > 1 {
+			timePart := strings.Fields(parts[1])[0]
+			result.Ping = timePart
+		}
+	}
+
+	// Извлекаем потери пакетов
+	if strings.Contains(outputStr, "packet loss") {
+		parts := strings.Split(outputStr, " packet loss")
+		if len(parts) > 0 {
+			lossFields := strings.Fields(parts[0])
+			if len(lossFields) > 0 {
+				result.Loss = lossFields[len(lossFields)-1]
+			}
+		}
+	}
+
+	// Определяем статус на основе успешности команды
+	if !strings.Contains(outputStr, "1 received") {
+		result.Status = "FAILED"
+	} else {
+		result.Status = "OK"
+	}
+
+	return nil
 }
