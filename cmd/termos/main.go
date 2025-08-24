@@ -3,6 +3,7 @@ package main
 import (
 	// Встроенные импорты не требуются
 
+	"errors"
 	"log"
 	"os/exec"
 	"strings"
@@ -24,32 +25,32 @@ func main() {
 
 	// Формируем очередь задач
 	var msel = []string{"CLI", "Сервер", "Агент", "Web UI", "Документация"}
-	var ssel = []string{"development", "staging", "production"}
+	// var ssel = []string{"development", "staging", "production"}
 	// 1) Задачи мультивыбора (без и с пунктом "Выбрать все")
 	//    Пример без "Выбрать все"
 	ms1 := termos.NewMultiSelectTask(
 		"Выберите компоненты установки",
 		msel,
-	).WithTimeout(10*time.Second, []string{msel[0], msel[1]})
+	).WithTimeout(3*time.Second, []string{msel[0], msel[1]})
 	//    Пример с пунктом "Выбрать все"
-	ms2 := termos.NewMultiSelectTask(
-		"Выберите модули для сборки",
-		ssel,
-	).WithSelectAll("Выбрать все").WithTimeout(10*time.Second, []string{ssel[0], ssel[1]})
+	// ms2 := termos.NewMultiSelectTask(
+	// 	"Выберите модули для сборки",
+	// 	ssel,
+	// ).WithSelectAll("Выбрать все").WithTimeout(10*time.Second, []string{ssel[0], ssel[1]})
 
 	// 2) Одиночный выбор
 	ss := termos.NewSingleSelectTask(
 		"Выберите среду развертывания",
 		[]string{"development", "staging", "production"},
-	).WithTimeout(10*time.Second, "staging")
+	) //.WithTimeout(3*time.Second, "staging")
 
 	// 3) Ввод с использованием всех стандартных валидаторов
 	//    Валидация будет происходить в момент подтверждения (Enter)
-	v := termos.DefaultValidators
+	// v := termos.DefaultValidators
 
-	inUsername := termos.NewInputTask("Имя пользователя", "Введите username:").
-		WithValidator(v.Username()).
-		WithTimeout(10*time.Second, "Alex")
+	// inUsername := termos.NewInputTask("Имя пользователя", "Введите username:").
+	// 	WithValidator(v.Username()).
+	// 	WithTimeout(10*time.Second, "Alex")
 
 	// inEmail := task.NewInputTaskNew("Email", "Введите email:").
 	// 	WithInputType(task.InputTypeEmail).WithValidator(v.Email()).
@@ -109,7 +110,8 @@ func main() {
 	fn := termos.NewFuncTask(
 		"Проверка соединения",
 		func() error {
-			return checkConnection(&data)
+			// return checkConnection(&data)
+			return errors.New("симуляция ошибки в середине выполнения очереди")
 		},
 		// Выводим краткую сводку под заголовком после успеха
 		termos.WithSummaryFunction(func() []string {
@@ -119,7 +121,7 @@ func main() {
 			}
 		}),
 		// Не останавливать очередь при ошибке (для демонстрации поведения)
-		termos.WithStopOnError(false),
+		termos.WithStopOnError(true),
 	)
 
 	// 5) Подтверждение Да/Нет (например, для сохранения настроек)
@@ -129,7 +131,9 @@ func main() {
 	queue := termos.NewQueue(header).WithAppName("Термос").WithSummary(true)
 	queue.AddTasks(
 		ss,
-		inUsername, ms1, ms2,
+		// inUsername,
+		ms1,
+		// ms2,
 		//  inEmail, inOptionalEmail,
 		// inPath, inURL, inPort, inRange,
 		// inIPv4, inIPv6, inIPAny, inDomain,

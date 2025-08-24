@@ -7,6 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -90,7 +91,7 @@ func TestFormatSummaryWithStats(t *testing.T) {
 	leftSummary, rightStatus := model.formatSummaryWithStats()
 
 	assert.Contains(t, leftSummary, "Обработка операций прошла (2/2)", "Левая часть должна содержать сводку и статистику")
-	assert.Equal(t, "УСПЕШНО", rightStatus, "Правая часть должна показывать УСПЕШНО")
+	assert.Equal(t, defauilt.StatusSuccess, rightStatus, "Правая часть должна показывать УСПЕШНО")
 
 	// Случай 2: Есть ошибки
 	task3 := NewMockTask("Задача 3").CompleteWithError(errors.New("ошибка"))
@@ -101,7 +102,7 @@ func TestFormatSummaryWithStats(t *testing.T) {
 	leftSummary2, rightStatus2 := model.formatSummaryWithStats()
 
 	assert.Contains(t, leftSummary2, "Обработка операций прошла (2/3)", "Должно показывать 2 успешных из 3 всего")
-	assert.Equal(t, "С ОШИБКАМИ", rightStatus2, "Правая часть должна показывать С ОШИБКАМИ")
+	assert.Equal(t, defauilt.StatusProblem, rightStatus2, "Правая часть должна показывать С ОШИБКАМИ")
 }
 
 // TestModelViewWithStats проверяет отображение View с новой статистикой
@@ -125,7 +126,7 @@ func TestModelViewWithStats(t *testing.T) {
 
 	// Проверяем, что View содержит статистику
 	assert.Contains(t, view, "(1/2)", "View должен содержать статистику (1/2)")
-	assert.Contains(t, view, "С ОШИБКАМИ", "View должен показывать статус С ОШИБКАМИ")
+	assert.Contains(t, view, defauilt.StatusProblem, "View должен показывать статус С ОШИБКАМИ")
 	assert.Contains(t, view, "Обработка операций прошла", "View должен содержать оригинальную сводку")
 }
 
@@ -195,7 +196,7 @@ func TestViewWithSummaryFlag(t *testing.T) {
 	view := model.View()
 
 	// Проверяем, что View НЕ содержит сводку
-	assert.NotContains(t, view, "УСПЕШНО", "При showSummary=false View не должен содержать статус")
+	assert.NotContains(t, view, defauilt.StatusSuccess, "При showSummary=false View не должен содержать статус")
 	assert.NotContains(t, view, "(1/1)", "При showSummary=false View не должен содержать статистику")
 
 	// Тест с включенной сводкой (по умолчанию)
@@ -208,7 +209,7 @@ func TestViewWithSummaryFlag(t *testing.T) {
 
 	// Проверяем, что View содержит сводку
 	assert.Contains(t, view2, "Обработка операций прошла", "При showSummary=true View должен содержать сводку")
-	assert.Contains(t, view2, "УСПЕШНО", "При showSummary=true View должен содержать статус")
+	assert.Contains(t, view2, defauilt.StatusSuccess, "При showSummary=true View должен содержать статус")
 	assert.Contains(t, view2, "(1/1)", "При showSummary=true View должен содержать статистику")
 }
 

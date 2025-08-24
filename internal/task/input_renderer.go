@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/qzeleza/termos/internal/defauilt"
 	terrors "github.com/qzeleza/termos/internal/errors"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
@@ -46,7 +47,7 @@ func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, val
 
 	// Формируем заголовок с префиксом
 	titleWithPrefix := fmt.Sprintf("%s%s", prefix, ui.ActiveTaskStyle.Render(title))
-	
+
 	// Если передан таймер, выравниваем его справа
 	var titleView string
 	if len(timerStr) > 0 && timerStr[0] != "" {
@@ -139,7 +140,7 @@ func (r *InputRenderer) RenderFinal(title string, value string, hasError bool, e
 		valueToShow = err.Error()
 	} else {
 		statusStyle = ui.SuccessLabelStyle
-		valueToShow = strings.ToUpper(DefaultSuccessLabel)
+		valueToShow = strings.ToUpper(defauilt.DefaultSuccessLabel)
 
 		// Для паролей показываем звездочки вместо реального значения
 		if r.looksLikePassword(title, value) {

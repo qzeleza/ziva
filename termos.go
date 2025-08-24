@@ -294,22 +294,22 @@ var (
 
 // Коды цветов
 var (
-	ColorBrightGreen   = ui.ColorBrightGreen
-	ColorBrightRed     = ui.ColorBrightRed
-	ColorDarkRed       = ui.ColorDarkRed
-	ColorBrightYellow  = ui.ColorBrightYellow
-	ColorDarkYellow    = ui.ColorDarkYellow
-	ColorBrightOrange  = ui.ColorBrightOrange
-	ColorDarkOrange    = ui.ColorDarkOrange
-	ColorBrightBlue    = ui.ColorBrightBlue
-	ColorDarkBlue      = ui.ColorDarkBlue
-	ColorBrightCyan    = ui.ColorBrightCyan
-	ColorDarkCyan      = ui.ColorDarkCyan
-	ColorBrightMagenta = ui.ColorBrightMagenta
-	ColorBrightWhite   = ui.ColorBrightWhite
-	ColorBrightGray    = ui.ColorBrightGray
-	ColorDarkGray      = ui.ColorDarkGray
-	ColorLightBlue     = ui.ColorLightBlue
-	ColorBlack         = ui.ColorBlack
-	ColorDarkGreen     = ui.ColorDarkGreen
+	GreenBright   = ui.ColorBrightGreen
+	RedBright     = ui.ColorBrightRed
+	RedDark       = ui.ColorDarkRed
+	YellowBright  = ui.ColorBrightYellow
+	YellowDark    = ui.ColorDarkYellow
+	OrangeBright  = ui.ColorBrightOrange
+	OrangeDark    = ui.ColorDarkOrange
+	BlueBright    = ui.ColorBrightBlue
+	BlueDark      = ui.ColorDarkBlue
+	CyanBright    = ui.ColorBrightCyan
+	CyanDark      = ui.ColorDarkCyan
+	MagentaBright = ui.ColorBrightMagenta
+	WhiteBright   = ui.ColorBrightWhite
+	GrayBright    = ui.ColorBrightGray
+	GrayDark      = ui.ColorDarkGray
+	LightBlue     = ui.ColorLightBlue
+	Black         = ui.ColorBlack
+	DarkGreen     = ui.ColorDarkGreen
 )

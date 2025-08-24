@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/qzeleza/termos/internal/ui"
 	"github.com/stretchr/testify/assert"
 )
@@ -70,7 +71,7 @@ func TestSetErrorColorInQueue(t *testing.T) {
 	view := model.View()
 
 	// Проверяем, что в представлении есть статус с ошибками
-	assert.Contains(t, view, "С ОШИБКАМИ", "View должен содержать статус ошибки")
+	assert.Contains(t, view, defauilt.StatusProblem, "View должен содержать статус ошибки")
 	assert.Contains(t, view, "(1/2)", "View должен показывать правильную статистику")
 
 	// Восстанавливаем исходные стили
@@ -150,7 +151,7 @@ func TestErrorColorWithDifferentTasks(t *testing.T) {
 	// Получаем представление
 	view := model.View()
 	assert.Contains(t, view, "(2/4)", "Должно быть 2 успешных из 4")
-	assert.Contains(t, view, "С ОШИБКАМИ", "Должен быть статус с ошибками")
+	assert.Contains(t, view, defauilt.StatusProblem, "Должен быть статус с ошибками")
 
 	// Проверяем, что цвет установился правильно
 	assert.Equal(t, Orange, ui.GetErrorStatusStyle().GetForeground())

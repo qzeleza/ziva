@@ -14,7 +14,7 @@ const (
 // CalculateLayoutWidth вычисляет оптимальную ширину макета на основе ширины экрана.
 // Это максимальное значение из DefaultWidth символов или MinRatio от ширины экрана.
 // Эта функция доступна для использования в других пакетах.
-// 
+//
 // @param screenWidth Ширина экрана в символах
 // @return Оптимальная ширина макета в символах
 func CalculateLayoutWidth(screenWidth int) int {

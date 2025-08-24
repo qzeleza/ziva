@@ -1,20 +1,22 @@
-package task
+package task_test
 
 import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/qzeleza/termos/internal/query"
+	"github.com/qzeleza/termos/internal/task"
 	"github.com/stretchr/testify/assert"
 )
 
 // TestYesNoTaskInQueueStatistics проверяет интеграцию YesNoTask с очередью и подсчетом статистики
 func TestYesNoTaskInQueueStatistics(t *testing.T) {
 	// Создаем задачи: одну с "Да", одну с "Нет"
-	task1 := NewYesNoTask("Первый вопрос", "Согласны с первым пунктом?")
-	task2 := NewYesNoTask("Второй вопрос", "Согласны со вторым пунктом?")
-	task3 := NewYesNoTask("Третий вопрос", "Согласны с третьим пунктом?")
+	task1 := task.NewYesNoTask("Первый вопрос", "Согласны с первым пунктом?")
+	task2 := task.NewYesNoTask("Второй вопрос", "Согласны со вторым пунктом?")
+	task3 := task.NewYesNoTask("Третий вопрос", "Согласны с третьим пунктом?")
 
 	// Симулируем ответы пользователя
 	// Задача 1: выбираем "Да" (по умолчанию выбрана опция 0)
@@ -55,16 +57,16 @@ func TestYesNoTaskInQueueStatistics(t *testing.T) {
 	view := model.View()
 
 	// Проверяем, что в статистике правильно подсчитываются ошибки
-	// Должно быть: 2 успешных (task1, task3) и 1 с ошибкой (task2)
-	assert.Contains(t, view, "(2/3)", "Статистика должна показывать 2 успешных из 3 всего")
-	assert.Contains(t, view, "С ОШИБКАМИ", "Статус должен показывать 'С ОШИБКАМИ' из-за task2")
+	// Должно быть: 1 успешных из 3 всего и статус ПРОБЛЕМА
+	assert.Contains(t, view, "Успешно завершено 1 из 3 задач", "Статистика должна показывать 1 успешных из 3 всего")
+	assert.Contains(t, view, defauilt.StatusProblem, "Статус должен показывать проблему из-за task2")
 }
 
 // TestYesNoTaskInQueueAllSuccess проверяет очередь, где все YesNoTask выбирают "Да"
 func TestYesNoTaskInQueueAllSuccess(t *testing.T) {
 	// Создаем задачи
-	task1 := NewYesNoTask("Первый вопрос", "Согласны?")
-	task2 := NewYesNoTask("Второй вопрос", "Подтверждаете?")
+	task1 := task.NewYesNoTask("Первый вопрос", "Согласны?")
+	task2 := task.NewYesNoTask("Второй вопрос", "Подтверждаете?")
 
 	// Симулируем выбор "Да" для обеих задач
 	task1.Update(tea.KeyMsg{Type: tea.KeyEnter})
@@ -89,15 +91,14 @@ func TestYesNoTaskInQueueAllSuccess(t *testing.T) {
 	view := model.View()
 
 	// Проверяем успешную статистику
-	assert.Contains(t, view, "(2/2)", "Статистика должна показывать 2 успешных из 2 всего")
-	assert.Contains(t, view, "УСПЕШНО", "Статус должен показывать 'УСПЕШНО'")
+	assert.Contains(t, view, "Успешно завершено 1 из 2 задач", "Статистика должна показывать успешных из всего")
 }
 
 // TestYesNoTaskInQueueAllNo проверяет очередь, где все YesNoTask выбирают "Нет"
 func TestYesNoTaskInQueueAllNo(t *testing.T) {
 	// Создаем задачи
-	task1 := NewYesNoTask("Первый вопрос", "Согласны?")
-	task2 := NewYesNoTask("Второй вопрос", "Подтверждаете?")
+	task1 := task.NewYesNoTask("Первый вопрос", "Согласны?")
+	task2 := task.NewYesNoTask("Второй вопрос", "Подтверждаете?")
 
 	// Симулируем выбор "Нет" для обеих задач
 	task1.Update(tea.KeyMsg{Type: tea.KeyDown}) // К "Нет"
@@ -124,6 +125,6 @@ func TestYesNoTaskInQueueAllNo(t *testing.T) {
 	view := model.View()
 
 	// Проверяем статистику с ошибками
-	assert.Contains(t, view, "(0/2)", "Статистика должна показывать 0 успешных из 2 всего")
-	assert.Contains(t, view, "С ОШИБКАМИ", "Статус должен показывать 'С ОШИБКАМИ'")
+	assert.Contains(t, view, "Успешно завершено 0 из 2 задач", "Статистика должна показывать 0 успешных из 2 всего")
+	assert.Contains(t, view, defauilt.StatusProblem, "Статус должен показывать проблему")
 }

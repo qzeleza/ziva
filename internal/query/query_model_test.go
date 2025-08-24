@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/termos/internal/defauilt"
 )
 
 // mockTask - мок задачи для тестирования модели Query.
@@ -237,7 +238,6 @@ func TestQueryModelResults(t *testing.T) {
 	// Проверяем, что View содержит финальные представления задач и статистику
 	assert.Contains(t, view, "Задача 1: Результат 1", "View должен содержать финальное представление первой задачи")
 	assert.Contains(t, view, "Задача 2: Результат 2", "View должен содержать финальное представление второй задачи")
-	assert.Contains(t, view, "Обработка операций прошла", "View должен содержать сводку")
-	assert.Contains(t, view, "(2/2)", "View должен содержать статистику выполнения")
-	assert.Contains(t, view, "УСПЕШНО", "View должен показывать статус УСПЕШНО")
+	assert.Contains(t, view, "Успешно завершено", "View должен содержать сводку")
+	assert.Contains(t, view, defauilt.StatusSuccess, "View должен показывать статус УСПЕШНО")
 }

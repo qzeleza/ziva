@@ -9,6 +9,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/qzeleza/termos/internal/ui"
 )
 
@@ -23,25 +24,25 @@ type BaseTask struct {
 	finalValue  string // The final value to display (e.g., "Yes", "Option 1")
 	err         error  // Ошибка, если задача завершилась с ошибкой
 	stopOnError bool   // Флаг, указывающий, нужно ли останавливать очередь при ошибке
-	
+
 	// Поля для управления тайм-аутом
 	timeoutManager *TimeoutManager // Менеджер тайм-аута
-	timeoutEnabled bool           // Флаг, указывающий, включен ли тайм-аут
-	defaultValue  interface{}     // Значение по умолчанию, которое будет выбрано при тайм-ауте
-	showTimeout   bool           // Флаг, указывающий, нужно ли отображать оставшееся время
+	timeoutEnabled bool            // Флаг, указывающий, включен ли тайм-аут
+	defaultValue   interface{}     // Значение по умолчанию, которое будет выбрано при тайм-ауте
+	showTimeout    bool            // Флаг, указывающий, нужно ли отображать оставшееся время
 }
 
 func NewBaseTask(title string) BaseTask {
 	return BaseTask{
-		title:       title,
-		stopOnError: true, // По умолчанию останавливаем очередь при ошибке
+		title:          title,
+		stopOnError:    true, // По умолчанию останавливаем очередь при ошибке
 		timeoutEnabled: false,
-		showTimeout:   true, // По умолчанию отображаем оставшееся время
+		showTimeout:    true, // По умолчанию отображаем оставшееся время
 	}
 }
 
-func (t *BaseTask) Title() string                      { return t.title }
-func (t *BaseTask) IsDone() bool                       { return t.done }
+func (t *BaseTask) Title() string { return t.title }
+func (t *BaseTask) IsDone() bool  { return t.done }
 
 func (t *BaseTask) Run() tea.Cmd {
 	// Если тайм-аут включен, запускаем таймер
@@ -129,12 +130,12 @@ func (t *BaseTask) RenderTimer() string {
 	if !t.timeoutEnabled || !t.showTimeout || t.timeoutManager == nil || !t.timeoutManager.IsActive() {
 		return ""
 	}
-	
+
 	remaining := t.GetRemainingTimeFormatted()
 	if remaining == "" {
 		return ""
 	}
-	
+
 	return ui.SubtleStyle.Render(fmt.Sprintf("[%s]", remaining))
 }
 
@@ -150,7 +151,7 @@ func (t *BaseTask) FinalView(width int) string {
 	}
 
 	// Определяем успешность выполнения задачи
-	success := !t.HasError() && t.finalValue != "Отменено"
+	success := !t.HasError() && t.finalValue != defauilt.TaskStatusCancelled
 
 	// Определяем тип задачи для выбора правильного префикса
 	isTextInputTask := IsTextInputTask(t)
@@ -164,10 +165,10 @@ func (t *BaseTask) FinalView(width int) string {
 	}
 
 	// Для простых значений Yes/No используем отдельные стили для "Да" и "Нет"
-	if t.finalValue == "Да" || t.finalValue == "Нет" {
+	if t.finalValue == defauilt.DefaultYes || t.finalValue == defauilt.DefaultNo {
 		left := fmt.Sprintf("%s %s", prefix, t.title)
 		var right string
-		if t.finalValue == "Да" {
+		if t.finalValue == defauilt.DefaultYes {
 			right = ui.SelectionStyle.Render(t.finalValue)
 		} else {
 			right = ui.GetErrorStatusStyle().Render(t.finalValue)
@@ -181,7 +182,7 @@ func (t *BaseTask) FinalView(width int) string {
 		left := fmt.Sprintf("%s %s", prefix, t.title)
 
 		// Создаем правую часть со словом "Ошибка"
-		right := ui.GetErrorStatusStyle().Render("ОШИБКА")
+		right := ui.GetErrorStatusStyle().Render(defauilt.TaskStatusError)
 
 		// Создаем верхнюю строку с выравниванием
 		result := ui.AlignTextToRight(left, right, width) + "\n"
@@ -206,7 +207,7 @@ func (t *BaseTask) FinalView(width int) string {
 	if t.finalValue != "" && !strings.Contains(t.finalValue, t.title) {
 		left := fmt.Sprintf("%s %s", prefix, t.title)
 		// right := ui.SelectionStyle.Render(t.finalValue)
-		ready := strings.ToUpper(DefaultSuccessLabel)
+		ready := strings.ToUpper(defauilt.DefaultSuccessLabel)
 		right := ui.SelectionStyle.Render(ready)
 		//
 		return ui.AlignTextToRight(left, right, width)

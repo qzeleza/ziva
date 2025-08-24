@@ -6,6 +6,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
 )
@@ -31,7 +32,7 @@ type YesNoTask struct {
 // NewYesNoTask создает новую задачу выбора с двумя опциями
 func NewYesNoTask(title, question string) *YesNoTask {
 	// Создаем варианты выбора
-	options := []string{"Да", "Нет"}
+	options := []string{defauilt.DefaultYes, defauilt.DefaultNo}
 
 	// Создаем базовую задачу выбора
 	selectTask := NewSingleSelectTask(title, options)
@@ -39,8 +40,8 @@ func NewYesNoTask(title, question string) *YesNoTask {
 	return &YesNoTask{
 		SingleSelectTask: selectTask,
 		question:         question,
-		yesLabel:         "Да",
-		noLabel:          "Нет",
+		yesLabel:         defauilt.DefaultYes,
+		noLabel:          defauilt.DefaultNo,
 		selectedOption:   YesOption,
 	}
 }
@@ -87,7 +88,7 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		case 1:
 			t.selectedOption = NoOption
 			// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-			t.SetError(fmt.Errorf("пользователь выбрал \"Нет\""))
+			t.SetError(fmt.Errorf("%s \"%s\"", defauilt.DefaultSelectedLabel, defauilt.DefaultNo))
 			t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
 		}
 	}
@@ -127,7 +128,7 @@ func (t *YesNoTask) applyDefaultValue() {
 				case 1: // Нет
 					t.selectedOption = NoOption
 					// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-					t.SetError(fmt.Errorf("пользователь выбрал \"Нет\""))
+					t.SetError(fmt.Errorf("%s \"%s\"", defauilt.DefaultSelectedLabel, defauilt.DefaultNo))
 					t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
 				}
 			}
@@ -154,7 +155,7 @@ func (t *YesNoTask) applyDefaultValue() {
 			case 1: // Нет
 				t.selectedOption = NoOption
 				// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-				t.SetError(fmt.Errorf("пользователь выбрал \"Нет\""))
+				t.SetError(fmt.Errorf("%s \"%s\"", defauilt.DefaultSelectedLabel, defauilt.DefaultNo))
 				t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
 			}
 		}
@@ -185,10 +186,10 @@ func (t *YesNoTask) FinalView(width int) string {
 	var right string
 	switch t.selectedOption {
 	case YesOption:
-		right = ui.SelectionStyle.Render(DefaultYesLabel)
+		right = ui.SelectionStyle.Render(defauilt.DefaultYesLabel)
 	case NoOption:
 		// Для "Нет" выводим слово ОТКАЗ стилем ошибки
-		right = ui.GetErrorStatusStyle().Render(DefaultNoLabel)
+		right = ui.GetErrorStatusStyle().Render(defauilt.DefaultNoLabel)
 	}
 
 	var result string

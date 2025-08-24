@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/qzeleza/termos/internal/defauilt"
 	terrors "github.com/qzeleza/termos/internal/errors"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
@@ -59,10 +60,10 @@ func NewInputTaskNew(title, prompt string) *InputTaskNew {
 
 	// Инициализируем компонент ввода
 	ti := textinput.New()
-	ti.Placeholder = DefaultPlaceholder
+	ti.Placeholder = defauilt.DefaultPlaceholder
 	ti.Focus()
-	ti.CharLimit = MaxInputLength
-	ti.Width = DefaultInputWidth
+	ti.CharLimit = defauilt.MaxInputLength
+	ti.Width = defauilt.DefaultInputWidth
 
 	return &InputTaskNew{
 		BaseTask:     baseTask,
@@ -71,8 +72,8 @@ func NewInputTaskNew(title, prompt string) *InputTaskNew {
 		errorHandler: terrors.DefaultErrorHandler,
 		inputType:    InputTypeText,
 		prompt:       prompt,
-		placeholder:  DefaultPlaceholder,
-		width:        DefaultInputWidth,
+		placeholder:  defauilt.DefaultPlaceholder,
+		width:        defauilt.DefaultInputWidth,
 		maskInput:    false,
 		allowEmpty:   false,
 	}
@@ -93,7 +94,7 @@ func (t *InputTaskNew) WithInputType(inputType InputType) *InputTaskNew {
 	case InputTypePassword:
 		t.maskInput = true
 		t.textInput.EchoMode = textinput.EchoPassword
-		t.textInput.EchoCharacter = PasswordMask
+		t.textInput.EchoCharacter = defauilt.PasswordMask
 
 		// Если валидатор не установлен, используем стандартный валидатор паролей
 		if t.validator == nil {
@@ -107,7 +108,7 @@ func (t *InputTaskNew) WithInputType(inputType InputType) *InputTaskNew {
 
 	case InputTypeNumber:
 		if t.validator == nil {
-			t.validator = validation.NewNumberValidator(DefaultNumberMin, DefaultNumberMax)
+			t.validator = validation.NewNumberValidator(defauilt.DefaultNumberMin, defauilt.DefaultNumberMax)
 		}
 
 	case InputTypeIP:
@@ -126,10 +127,10 @@ func (t *InputTaskNew) WithInputType(inputType InputType) *InputTaskNew {
 
 // WithWidth устанавливает ширину поля ввода
 func (t *InputTaskNew) WithWidth(width int) *InputTaskNew {
-	if width < MinInputWidth {
-		width = MinInputWidth
-	} else if width > MaxInputWidth {
-		width = MaxInputWidth
+	if width < defauilt.MinInputWidth {
+		width = defauilt.MinInputWidth
+	} else if width > defauilt.MaxInputWidth {
+		width = defauilt.MaxInputWidth
 	}
 
 	t.width = width
@@ -340,7 +341,7 @@ func (t *InputTaskNew) handleCancel() (Task, tea.Cmd) {
 // getDisplayValue возвращает значение для отображения (маскирует пароли)
 func (t *InputTaskNew) getDisplayValue() string {
 	if t.maskInput {
-		return performance.RepeatEfficient(string(PasswordMask), len(t.value))
+		return performance.RepeatEfficient(string(defauilt.PasswordMask), len(t.value))
 	}
 	return t.value
 }

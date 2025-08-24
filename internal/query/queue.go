@@ -12,6 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
 )
@@ -118,7 +119,7 @@ type Model struct {
 func New(title string) *Model {
 	return &Model{
 		title:        title,
-		summary:      "Обработка операций прошла",
+		summary:      defauilt.SummaryCompleted,
 		width:        common.DefaultWidth, // Начальная ширина
 		showSummary:  true,                // По умолчанию сводка отображается
 		clearScreen:  false,               // По умолчанию экран не очищается
@@ -152,6 +153,18 @@ func (m *Model) updateTaskStats() {
 			}
 		}
 	}
+
+	// Если очередь была остановлена из-за ошибки, и задача с ошибкой сохранена,
+	// проверяем, учтена ли она в счетчике ошибок
+	if m.stoppedOnError && m.errorTask != nil {
+		// Проверяем, является ли задача с ошибкой текущей задачей
+		if m.current < len(m.tasks) && m.tasks[m.current] == m.errorTask && m.errorTask.HasError() {
+			// Если текущая задача с ошибкой не была учтена в цикле выше, учитываем её
+			if m.current >= completedTasks {
+				m.errorCount++
+			}
+		}
+	}
 }
 
 // formatSummaryWithStats форматирует сводку с учетом статистики
@@ -162,23 +175,25 @@ func (m *Model) formatSummaryWithStats() (string, string) {
 	// Формируем левую часть: summary + (успешных/всего)
 	leftSummary := performance.FastConcat(
 		m.summary,
-		" (",
+		" ",
 		performance.FastConcat(
 			performance.IntToString(m.successCount),
-			"/",
+			" ",
+			defauilt.DefaultFromSummaryLabel,
+			" ",
 			performance.IntToString(totalTasks),
 		),
-		")",
+		" ",
+		defauilt.DefaultTasksSummaryLabel,
 	)
 
 	// Формируем правую часть: УСПЕШНО или С ОШИБКАМИ
 	var rightStatus string
 	if m.errorCount > 0 {
-		rightStatus = "С ОШИБКАМИ"
+		rightStatus = defauilt.StatusProblem
 	} else if completedTasks == totalTasks && completedTasks > 0 {
-		rightStatus = "УСПЕШНО"
-	} else {
-		rightStatus = "В ПРОЦЕССЕ"
+		rightStatus = defauilt.StatusSuccess
+
 	}
 
 	return leftSummary, rightStatus
@@ -189,9 +204,9 @@ func (m *Model) Run() error {
 	// Если установлен флаг очистки экрана, очищаем экран перед запуском
 	if m.clearScreen {
 		// Используем ANSI-последовательность для очистки экрана
-		fmt.Print("\033[H\033[2J")
+		fmt.Print(defauilt.ClearScreen)
 	}
-	
+
 	_, err := tea.NewProgram(m).Run()
 	return err
 }
@@ -274,7 +289,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = size.Width
 	}
 
-	if msg, ok := msg.(tea.KeyMsg); ok && msg.String() == "ctrl+c" {
+	if msg, ok := msg.(tea.KeyMsg); ok && msg.String() == "Ctrl+c" {
 		m.quitting = true
 		return m, tea.Quit
 	}
@@ -301,6 +316,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// прекращаем выполнение очереди и сохраняем информацию об ошибке
 			m.stoppedOnError = true
 			m.errorTask = currentTask
+
+			// Явно увеличиваем счетчик ошибок для текущей задачи
+			m.errorCount++
+
+			// Финальное обновление статистики перед остановкой из-за ошибки
+			// m.updateTaskStats()
 			return m, tea.Quit
 		}
 
@@ -311,7 +332,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Batch(cmd, nextCmd)
 		}
 		// Финальное обновление статистики при завершении всех задач
-		m.updateTaskStats()
+		// m.updateTaskStats()
 		return m, tea.Quit
 	}
 
@@ -359,7 +380,7 @@ func (m *Model) View() string {
 	// Добавляем финальную разделительную линию
 	// Если есть активная задача, добавляем обычную линию
 	// Иначе добавляем специальную линию
-	if m.current < len(m.tasks) {
+	if m.current < len(m.tasks) && !m.stoppedOnError {
 		sb.WriteString(ui.DrawLine(layoutWidth))
 	} else {
 
@@ -371,9 +392,9 @@ func (m *Model) View() string {
 			// Определяем стиль для правой части в зависимости от статуса
 			var rightStyle lipgloss.Style
 			switch rightStatus {
-			case "УСПЕШНО":
+			case defauilt.StatusSuccess:
 				rightStyle = ui.SuccessLabelStyle
-			case "С ОШИБКАМИ":
+			case defauilt.StatusProblem:
 				rightStyle = ui.GetErrorStatusStyle()
 			default:
 				rightStyle = ui.SubtleStyle
@@ -382,9 +403,9 @@ func (m *Model) View() string {
 			// Определяем стиль для левой части (summary) в зависимости от результатов
 			var summaryStyle lipgloss.Style
 			switch rightStatus {
-			case "УСПЕШНО":
+			case defauilt.StatusSuccess:
 				summaryStyle = ui.SuccessLabelStyle
-			case "С ОШИБКАМИ":
+			case defauilt.StatusProblem:
 				summaryStyle = ui.GetErrorStatusStyle()
 			default:
 				// Для состояния "В ПРОЦЕССЕ" используем оригинальный стиль или стиль по умолчанию

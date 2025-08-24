@@ -7,6 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
 )
@@ -291,7 +292,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			// Если есть выбранные элементы, завершаем задачу успешно
 			t.done = true
 			t.icon = ui.IconDone
-			t.finalValue = strings.Join(selectedChoices, DefaultSeparator)
+			t.finalValue = strings.Join(selectedChoices, defauilt.DefaultSeparator)
 			// Убеждаемся, что ошибка очищена
 			t.SetError(nil)
 			t.showHelpMessage = false
@@ -377,7 +378,7 @@ func (t *MultiSelectTask) applyDefaultValue() {
 			// Завершаем задачу
 			t.done = true
 			t.icon = ui.IconDone
-			t.finalValue = strings.Join(selectedChoices, DefaultSeparator)
+			t.finalValue = strings.Join(selectedChoices, defauilt.DefaultSeparator)
 			t.SetError(nil)
 		}
 	}
@@ -528,7 +529,7 @@ func (t *MultiSelectTask) GetSelected() []string {
 	// Если задача завершена и есть финальное значение, разбираем его на список
 	if t.done && t.finalValue != "" {
 		// Разбиваем строку по запятой и пробелу
-		parts := strings.Split(t.finalValue, DefaultSeparator)
+		parts := strings.Split(t.finalValue, defauilt.DefaultSeparator)
 		// Удаляем пустые элементы
 		var result []string
 		for _, part := range parts {

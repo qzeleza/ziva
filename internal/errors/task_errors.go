@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/qzeleza/termos/internal/performance"
 )
 
@@ -69,14 +70,14 @@ func (te *TaskError) Error() string {
 
 	// Добавляем контекст задачи
 	if te.TaskTitle != "" {
-		fmt.Fprintf(builder, "задача '%s': ", te.TaskTitle)
+		fmt.Fprintf(builder, defauilt.ErrorMsgTaskPrefix, te.TaskTitle)
 	}
 
 	// Добавляем основное сообщение об ошибке
 	if te.Err != nil {
 		builder.WriteString(te.Err.Error())
 	} else {
-		builder.WriteString("неизвестная ошибка")
+		builder.WriteString(defauilt.ErrorMsgUnknown)
 	}
 
 	return builder.String()
@@ -91,21 +92,21 @@ func (te *TaskError) Unwrap() error {
 func (et ErrorType) String() string {
 	switch et {
 	case ErrorTypeValidation:
-		return "ВАЛИДАЦИЯ"
+		return defauilt.ErrorTypeValidation
 	case ErrorTypeUserCancel:
-		return "ОТМЕНА"
+		return defauilt.ErrorTypeUserCancel
 	case ErrorTypeTimeout:
-		return "ТАЙМАУТ"
+		return defauilt.ErrorTypeTimeout
 	case ErrorTypeNetwork:
-		return "СЕТЬ"
+		return defauilt.ErrorTypeNetwork
 	case ErrorTypeFileSystem:
-		return "ФАЙЛ"
+		return defauilt.ErrorTypeFileSystem
 	case ErrorTypePermission:
-		return "ДОСТУП"
+		return defauilt.ErrorTypePermission
 	case ErrorTypeConfiguration:
-		return "КОНФИГ"
+		return defauilt.ErrorTypeConfig
 	default:
-		return "ОШИБКА"
+		return defauilt.ErrorTypeUnknown
 	}
 }
 
@@ -148,24 +149,24 @@ func (te *TaskError) IsRetryable() bool {
 func (te *TaskError) GetUserFriendlyMessage() string {
 	switch te.Type {
 	case ErrorTypeValidation:
-		return "Проверьте правильность введенных данных"
+		return defauilt.ErrorUserMsgValidation
 	case ErrorTypeUserCancel:
-		return "Операция отменена"
+		return defauilt.ErrorUserMsgCancel
 	case ErrorTypeTimeout:
-		return "Операция заняла слишком много времени"
+		return defauilt.ErrorUserMsgTimeout
 	case ErrorTypeNetwork:
-		return "Проблема с сетевым соединением"
+		return defauilt.ErrorUserMsgNetwork
 	case ErrorTypeFileSystem:
-		return "Проблема доступа к файлу"
+		return defauilt.ErrorUserMsgFileSystem
 	case ErrorTypePermission:
-		return "Недостаточно прав для выполнения операции"
+		return defauilt.ErrorUserMsgPermission
 	case ErrorTypeConfiguration:
-		return "Ошибка в настройках"
+		return defauilt.ErrorUserMsgConfiguration
 	default:
 		if te.Err != nil {
 			return te.Err.Error()
 		}
-		return "Произошла неизвестная ошибка"
+		return defauilt.ErrorUserMsgUnknown
 	}
 }
 
@@ -178,12 +179,12 @@ func NewValidationError(taskTitle string, err error) *TaskError {
 
 // NewCancelError создает ошибку отмены пользователем
 func NewCancelError(taskTitle string) *TaskError {
-	return NewTaskError(taskTitle, errors.New("отменено пользователем"), ErrorTypeUserCancel)
+	return NewTaskError(taskTitle, errors.New(defauilt.ErrorMsgCanceled), ErrorTypeUserCancel)
 }
 
 // NewTimeoutError создает ошибку таймаута
 func NewTimeoutError(taskTitle string, duration time.Duration) *TaskError {
-	err := fmt.Errorf("операция не завершилась за %v", duration)
+	err := fmt.Errorf(defauilt.ErrorMsgTimeout, duration)
 	return NewTaskError(taskTitle, err, ErrorTypeTimeout).
 		WithContext("duration", duration)
 }
@@ -201,7 +202,7 @@ func NewFileSystemError(taskTitle string, err error, path string) *TaskError {
 
 // NewPermissionError создает ошибку прав доступа
 func NewPermissionError(taskTitle string, resource string) *TaskError {
-	err := fmt.Errorf("недостаточно прав для доступа к %s", resource)
+	err := fmt.Errorf(defauilt.ErrorMsgPermission, resource)
 	return NewTaskError(taskTitle, err, ErrorTypePermission).
 		WithContext("resource", resource)
 }
