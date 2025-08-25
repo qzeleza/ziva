@@ -44,7 +44,8 @@ func FormatErrorMessage(errMsg string, layoutWidth int) string {
 	// SeparatorLine := indent + BranchSymbol + DrawLine(effectiveWidth+rightMargin-numIndent*2+1)
 
 	// Создаем форматированный результат с учётом новой ширины
-	errorMsg := formatErrorEveryLine(cleanedMsg, wrapWidth, indent)
+	errorMsg := formatErrorEveryLine(cleanedMsg, 300, indent)
+	// errorMsg := formatErrorEveryLine(cleanedMsg, wrapWidth, indent)
 	//  + GetTaskBelowPrefix()
 
 	// удаляем крайний перенос строки
