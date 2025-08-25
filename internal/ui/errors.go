@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"unicode/utf8"
 
 	"github.com/qzeleza/termos/internal/performance"
@@ -44,8 +45,8 @@ func FormatErrorMessage(errMsg string, layoutWidth int) string {
 	// SeparatorLine := indent + BranchSymbol + DrawLine(effectiveWidth+rightMargin-numIndent*2+1)
 
 	// Создаем форматированный результат с учётом новой ширины
-	errorMsg := formatErrorEveryLine(cleanedMsg, 300, indent)
-	// errorMsg := formatErrorEveryLine(cleanedMsg, wrapWidth, indent)
+	errorMsg := formatErrorEveryLine(cleanedMsg, wrapWidth, indent, true)
+	// errorMsg := formatErrorEveryLine(cleanedMsg, wrapWidth, indent, true)
 	//  + GetTaskBelowPrefix()
 
 	// удаляем крайний перенос строки
@@ -55,14 +56,30 @@ func FormatErrorMessage(errMsg string, layoutWidth int) string {
 }
 
 // formatErrorEveryLine создает отформатированное сообщение с разделительными линиями и отступами
-func formatErrorEveryLine(msg string, effectiveWidth int, indent string) string {
+// Если delNewLines=true, то переносы строк удаляются и текст переформатируется
+// Если delNewLines=false, то сохраняются оригинальные переносы строк
+func formatErrorEveryLine(msg string, effectiveWidth int, indent string, delNewLines bool) string {
 
 	result := performance.GetBuffer()
 	defer performance.PutBuffer(result)
-	// Убираем перенос строк, чтобы сообщение выводилось сразу после линии
 
 	// Делаем первую букву в предложении заглавной
 	msg = CapitalizeFirst(msg)
+
+	// Если не нужно удалять переносы строк, обрабатываем каждую строку отдельно
+	if !delNewLines && strings.Contains(msg, "\n") {
+		lines := strings.Split(msg, "\n")
+		for i, line := range lines {
+			if i > 0 {
+				result.WriteString("\n")
+			}
+			result.WriteString(indent)
+			result.WriteString(VerticalLineSymbol)
+			result.WriteString(performance.RepeatEfficient(" ", 3))
+			result.WriteString(GetErrorMessageStyle().Render(line))
+		}
+		return result.String()
+	}
 
 	// Если сообщение помещается в одну строку
 	if utf8.RuneCountInString(msg) <= effectiveWidth {
