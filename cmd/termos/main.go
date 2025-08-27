@@ -24,25 +24,38 @@ func main() {
 	header := "Демонстрация всех типов задач Termos"
 
 	// Формируем очередь задач
-	var msel = []string{"CLI", "Сервер", "Агент", "Web UI", "Документация"}
+	var msel = []string{
+		"CLI",
+		"Сервер",
+		"Агент",
+		"Web UI",
+		"Документация",
+		"Компилировать",
+		"Выходные данные",
+		"Область просмотра",
+		"Поле ввода",
+		"Мультивыбор",
+		"Одиночный выбор",
+		"Проверка ввода"}
+
 	var ssel = []string{"development", "staging", "production"}
 	// 1) Задачи мультивыбора (без и с пунктом "Выбрать все")
 	//    Пример без "Выбрать все"
 	ms1 := termos.NewMultiSelectTask(
 		"Выберите компоненты установки",
 		msel,
-	).WithTimeout(3*time.Second, []string{msel[0], msel[1]})
+	).WithViewport(5).WithTimeout(3*time.Second, []string{msel[0], msel[1]})
 	//    Пример с пунктом "Выбрать все"
 	ms2 := termos.NewMultiSelectTask(
 		"Выберите модули для сборки",
 		ssel,
-	).WithSelectAll("Выбрать все").WithTimeout(10*time.Second, []string{ssel[0], ssel[1]})
+	).WithViewport(3).WithSelectAll("Выбрать все").WithTimeout(10*time.Second, []string{ssel[0], ssel[1]})
 
 	// 2) Одиночный выбор
 	ss := termos.NewSingleSelectTask(
 		"Выберите среду развертывания",
-		[]string{"development", "staging", "production"},
-	).WithTimeout(3*time.Second, "staging")
+		[]string{"development", "staging", "production", "другое", "отмена", "выход"},
+	).WithViewport(3).WithTimeout(3*time.Second, "staging")
 
 	// 3) Ввод с использованием всех стандартных валидаторов
 	//    Валидация будет происходить в момент подтверждения (Enter)

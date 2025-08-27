@@ -211,7 +211,7 @@ func (t *InputTaskNew) Update(msg tea.Msg) (Task, tea.Cmd) {
 		}
 
 		switch msg.String() {
-		case "ctrl+c", "esc":
+		case "ctrl+c", "esc", "Ctrl+C", "Esc":
 			// Отмена ввода
 			return t.handleCancel()
 		case "enter":

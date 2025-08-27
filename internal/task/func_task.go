@@ -204,7 +204,7 @@ func (t *FuncTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 
 		// Сохраняем текст ошибки с применением стиля ErrorMessageStyle
 		// Форматирование с отступом и переносами строк будет выполнено в FinalView
-		t.finalValue = ui.GetErrorStatusStyle().Render(t.err.Error())
+		t.finalValue = ui.GetErrorMessageStyle().Render(t.err.Error())
 		return t, nil
 	case spinner.TickMsg:
 		// Если задача завершена, не обновляем спиннер
@@ -218,7 +218,7 @@ func (t *FuncTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 	case tea.KeyMsg:
 		// Обработка нажатия клавиш для возможности выхода из задачи
 		switch msg.String() {
-		case "q", "Q", "ctrl+c", "esc":
+		case "q", "Q", "Ctrl+c", "Esc", "esc", "Ctrl+C":
 			// Помечаем задачу как выполненную с отменой
 			t.done = true
 			t.icon = ui.IconCancelled

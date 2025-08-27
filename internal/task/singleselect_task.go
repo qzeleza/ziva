@@ -17,6 +17,9 @@ type SingleSelectTask struct {
 	choices     []string       // Список вариантов выбора
 	cursor      int            // Текущая позиция курсора
 	activeStyle lipgloss.Style // Стиль для активного элемента
+	// Viewport (окно просмотра) для ограничения количества отображаемых элементов
+	viewportSize  int // Размер viewport (количество видимых элементов), 0 = показать все
+	viewportStart int // Начальная позиция viewport в списке элементов
 }
 
 // NewSingleSelectTask создает новую задачу выбора одного варианта из списка.
@@ -29,7 +32,75 @@ func NewSingleSelectTask(title string, choices []string) *SingleSelectTask {
 		BaseTask:    NewBaseTask(title),
 		choices:     choices,
 		activeStyle: ui.ActiveStyle,
+		// Viewport по умолчанию отключен (показываем все элементы)
+		viewportSize:  0,
+		viewportStart: 0,
 	}
+}
+
+// WithViewport устанавливает размер viewport (окна просмотра) для ограничения количества отображаемых элементов.
+// Это полезно для длинных списков, когда нужно показывать только часть элементов.
+//
+// @param size Количество элементов для отображения одновременно (0 = показать все)
+// @return Указатель на задачу для цепочки вызовов
+func (t *SingleSelectTask) WithViewport(size int) *SingleSelectTask {
+	if size < 0 {
+		size = 0
+	}
+	t.viewportSize = size
+	return t
+}
+
+// updateViewport обновляет позицию viewport на основе текущего положения курсора
+func (t *SingleSelectTask) updateViewport() {
+	// Если viewport отключен, ничего не делаем
+	if t.viewportSize <= 0 {
+		return
+	}
+
+	// Если курсор выше viewport, сдвигаем viewport вверх
+	if t.cursor < t.viewportStart {
+		t.viewportStart = t.cursor
+	}
+
+	// Если курсор ниже viewport, сдвигаем viewport вниз
+	if t.cursor >= t.viewportStart+t.viewportSize {
+		t.viewportStart = t.cursor - t.viewportSize + 1
+	}
+
+	// Убеждаемся, что viewport не выходит за границы списка
+	if t.viewportStart < 0 {
+		t.viewportStart = 0
+	}
+
+	maxStart := len(t.choices) - t.viewportSize
+	if maxStart < 0 {
+		maxStart = 0
+	}
+	if t.viewportStart > maxStart {
+		t.viewportStart = maxStart
+	}
+}
+
+// getVisibleRange возвращает диапазон видимых элементов с учетом viewport
+// Возвращает: startIdx, endIdx
+func (t *SingleSelectTask) getVisibleRange() (int, int) {
+	// Если viewport отключен, показываем все элементы
+	if t.viewportSize <= 0 {
+		return 0, len(t.choices)
+	}
+
+	startIdx := t.viewportStart
+	if startIdx < 0 {
+		startIdx = 0
+	}
+
+	endIdx := startIdx + t.viewportSize
+	if endIdx > len(t.choices) {
+		endIdx = len(t.choices)
+	}
+
+	return startIdx, endIdx
 }
 
 // stopTimeout останавливает таймер
@@ -61,7 +132,7 @@ func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		}
 		return t, nil
 	case tea.KeyMsg:
-		// При нажатии клавиш НЕ сбрасываем таймер - пусть продолжает работать
+		// При нажатии клавиш сбрасываем таймер
 		switch msg.String() {
 		case "up", "k":
 			// Если таймер активен, останавливаем его
@@ -69,13 +140,19 @@ func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			if t.cursor > 0 {
 				t.cursor--
 			}
+			// Обновляем viewport после изменения позиции курсора
+			t.updateViewport()
+			return t, nil
 		case "down", "j":
 			// Если таймер активен, останавливаем его
 			t.stopTimeout()
 			if t.cursor < len(t.choices)-1 {
 				t.cursor++
 			}
-		case "q", "Q":
+			// Обновляем viewport после изменения позиции курсора
+			t.updateViewport()
+			return t, nil
+		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C":
 			// Отмена пользователем
 			cancelErr := fmt.Errorf("отменено пользователем")
 			t.done = true
@@ -177,7 +254,26 @@ func (t *SingleSelectTask) View(width int) string {
 		sb.WriteString(titleWithPrefix + "\n")
 	}
 
-	for i, choice := range t.choices {
+	// Получаем диапазон видимых элементов с учетом viewport
+	startIdx, endIdx := t.getVisibleRange()
+
+	// Добавляем индикатор прокрутки вверх, если есть скрытые элементы выше
+	if t.viewportSize > 0 && startIdx > 0 {
+		// Используем точно такой же префикс как у элементов "above"
+		indentPrefix := ui.GetSelectItemPrefix("above")
+		// Не добавляем перенос строки в конце, чтобы не нарушать форматирование
+		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s %s %d выше", indentPrefix, ui.UpArrowSymbol, startIdx)))
+		// Добавляем перенос строки отдельно
+		sb.WriteString("\n")
+	}
+
+	// Отображаем только видимые элементы списка
+	for i := startIdx; i < endIdx; i++ {
+		if i >= len(t.choices) {
+			break
+		}
+
+		choice := t.choices[i]
 		checked := ui.IconRadioOff
 		var itemPrefix string
 
@@ -210,10 +306,20 @@ func (t *SingleSelectTask) View(width int) string {
 		}
 	}
 
+	// Добавляем индикатор прокрутки вниз, если есть скрытые элементы ниже
+	if t.viewportSize > 0 && endIdx < len(t.choices) {
+		// Используем точно такой же префикс как у элементов "below"
+		indentPrefix := ui.GetSelectItemPrefix("below")
+		// Не добавляем перенос строки в конце, чтобы не нарушать форматирование
+		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s %s %d ниже", indentPrefix, ui.DownArrowSymbol, len(t.choices)-endIdx)))
+		// Добавляем перенос строки отдельно
+		sb.WriteString("\n")
+	}
+
 	// Добавляем подсказку о навигации с новым отступом
 	helpIndent := performance.RepeatEfficient(" ", ui.MainLeftIndent)
 	sb.WriteString("\n" + ui.DrawLine(width) +
-		ui.SubtleStyle.Render(fmt.Sprintf("%s[↑/↓ для навигации, Enter для выбора]", helpIndent)))
+		ui.SubtleStyle.Render(fmt.Sprintf("%s[↑/↓ навигация, Enter - выбор, Q/Esc - Выход]", helpIndent)))
 
 	return sb.String()
 }

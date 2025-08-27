@@ -94,6 +94,9 @@ type MultiSelectTask struct {
 	selectAllText   string           // Текст опции "Выбрать все"
 	showHelpMessage bool             // Показывать ли сообщение-подсказку
 	helpMessage     string           // Текст сообщения-подсказки
+	// Viewport (окно просмотра) для ограничения количества отображаемых элементов
+	viewportSize  int // Размер viewport (количество видимых элементов), 0 = показать все
+	viewportStart int // Начальная позиция viewport в списке элементов
 }
 
 // NewMultiSelectTask создает новую задачу множественного выбора.
@@ -111,6 +114,9 @@ func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
 		selectAllText:   "Выбрать все",
 		showHelpMessage: false,
 		helpMessage:     "",
+		// Viewport по умолчанию отключен (показываем все элементы)
+		viewportSize:  0,
+		viewportStart: 0,
 	}
 
 	// Для embedded устройств: используем битсет для списков <= 32 элементов,
@@ -120,6 +126,92 @@ func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
 	}
 
 	return task
+}
+
+// WithViewport устанавливает размер viewport (окна просмотра) для ограничения количества отображаемых элементов.
+// Это полезно для длинных списков, когда нужно показывать только часть элементов.
+//
+// @param size Количество элементов для отображения одновременно (0 = показать все)
+// @return Указатель на задачу для цепочки вызовов
+func (t *MultiSelectTask) WithViewport(size int) *MultiSelectTask {
+	if size < 0 {
+		size = 0
+	}
+	t.viewportSize = size
+	return t
+}
+
+// updateViewport обновляет позицию viewport на основе текущего положения курсора
+func (t *MultiSelectTask) updateViewport() {
+	// Если viewport отключен, ничего не делаем
+	if t.viewportSize <= 0 {
+		return
+	}
+
+	// Получаем эффективную позицию курсора (с учетом опции "Выбрать все")
+	effectiveCursor := t.cursor
+	if t.hasSelectAll {
+		effectiveCursor = t.cursor + 1 // +1 потому что опция "Выбрать все" занимает позицию -1
+	}
+
+	// Если курсор выше viewport, сдвигаем viewport вверх
+	if effectiveCursor < t.viewportStart {
+		t.viewportStart = effectiveCursor
+	}
+
+	// Если курсор ниже viewport, сдвигаем viewport вниз
+	if effectiveCursor >= t.viewportStart+t.viewportSize {
+		t.viewportStart = effectiveCursor - t.viewportSize + 1
+	}
+
+	// Убеждаемся, что viewport не выходит за границы списка
+	if t.viewportStart < 0 {
+		t.viewportStart = 0
+	}
+
+	maxStart := len(t.choices) - t.viewportSize
+	if t.hasSelectAll {
+		maxStart = len(t.choices) + 1 - t.viewportSize // +1 для опции "Выбрать все"
+	}
+	if maxStart < 0 {
+		maxStart = 0
+	}
+	if t.viewportStart > maxStart {
+		t.viewportStart = maxStart
+	}
+}
+
+// getVisibleRange возвращает диапазон видимых элементов с учетом viewport
+// Возвращает: startIdx, endIdx, showSelectAll
+func (t *MultiSelectTask) getVisibleRange() (int, int, bool) {
+	// Если viewport отключен, показываем все элементы
+	if t.viewportSize <= 0 {
+		return 0, len(t.choices), t.hasSelectAll
+	}
+
+	// Определяем, показывать ли опцию "Выбрать все"
+	showSelectAll := t.hasSelectAll && t.viewportStart == 0
+
+	// Вычисляем диапазон элементов списка
+	startIdx := t.viewportStart
+	if t.hasSelectAll && startIdx > 0 {
+		startIdx-- // Компенсируем опцию "Выбрать все"
+	}
+
+	if startIdx < 0 {
+		startIdx = 0
+	}
+
+	endIdx := startIdx + t.viewportSize
+	if showSelectAll {
+		endIdx-- // Уменьшаем на 1, так как одно место занимает опция "Выбрать все"
+	}
+
+	if endIdx > len(t.choices) {
+		endIdx = len(t.choices)
+	}
+
+	return startIdx, endIdx, showSelectAll
 }
 
 // WithSelectAll добавляет опцию "Выбрать все" в начало списка.
@@ -227,7 +319,6 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		}
 		return t, nil
 	case tea.KeyMsg:
-		// При нажатии клавиш НЕ сбрасываем таймер - пусть продолжает работать
 		// Сбрасываем сообщение-подсказку при любом нажатии клавиш (кроме Enter)
 		if msg.String() != "enter" {
 			t.showHelpMessage = false
@@ -244,6 +335,9 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 				// переходим к опции "Выбрать все" (позиция -1)
 				t.cursor = -1
 			}
+			// Обновляем viewport после изменения позиции курсора
+			t.updateViewport()
+			return t, nil
 		case "down", "j":
 			t.stopTimeout()
 			if t.hasSelectAll && t.cursor == -1 {
@@ -252,7 +346,11 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			} else if t.cursor < len(t.choices)-1 {
 				t.cursor++
 			}
+			// Обновляем viewport после изменения позиции курсора
+			t.updateViewport()
+			return t, nil
 		case " ":
+			// При выборе останавливаем таймер
 			t.stopTimeout()
 
 			// В любом случае выполняем выбор/переключение
@@ -263,7 +361,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 				// Обычная логика выбора для элементов списка
 				t.toggleSelection(t.cursor)
 			}
-		case "q", "Q":
+		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C":
 			// Отмена пользователем
 			cancelErr := fmt.Errorf("отменено пользователем")
 			t.done = true
@@ -413,8 +511,11 @@ func (t *MultiSelectTask) View(width int) string {
 		sb.WriteString(titleWithPrefix + "\n")
 	}
 
-	// Отображаем опцию "Выбрать все" если она включена
-	if t.hasSelectAll {
+	// Получаем диапазон видимых элементов с учетом viewport
+	startIdx, endIdx, showSelectAll := t.getVisibleRange()
+
+	// Отображаем опцию "Выбрать все" если она включена и видима в viewport
+	if showSelectAll {
 		checked := " "
 		var itemPrefix string
 		selectAllText := t.selectAllText
@@ -439,7 +540,30 @@ func (t *MultiSelectTask) View(width int) string {
 		sb.WriteString(fmt.Sprintf("%s[%s] %s\n", itemPrefix, checked, selectAllText))
 	}
 
-	for i, choice := range t.choices {
+	// Добавляем индикатор прокрутки вверх, если есть скрытые элементы выше
+	// При наличии пункта "Выбрать все" индикатор должен показываться даже если startIdx == 0
+	if t.viewportSize > 0 && (startIdx > 0 || (t.hasSelectAll && t.viewportStart > 0)) {
+		// Используем точно такой же префикс как у элементов "above"
+		indentPrefix := ui.GetSelectItemPrefix("above")
+		// Определяем количество элементов выше
+		itemsAbove := startIdx
+		if t.hasSelectAll && t.viewportStart > 0 {
+			// Если есть пункт "Выбрать все" и он скрыт, добавляем +1 к счетчику
+			itemsAbove = t.viewportStart
+		}
+		// Не добавляем перенос строки в конце, чтобы не нарушать форматирование
+		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s %s %d выше", indentPrefix, ui.UpArrowSymbol, itemsAbove)))
+		// Добавляем перенос строки отдельно
+		sb.WriteString("\n")
+	}
+
+	// Отображаем только видимые элементы списка
+	for i := startIdx; i < endIdx; i++ {
+		if i >= len(t.choices) {
+			break
+		}
+
+		choice := t.choices[i]
 		checked := " "
 		var itemPrefix string
 
@@ -469,6 +593,16 @@ func (t *MultiSelectTask) View(width int) string {
 		sb.WriteString(fmt.Sprintf("%s[%s] %s\n", itemPrefix, checked, choice))
 	}
 
+	// Добавляем индикатор прокрутки вниз, если есть скрытые элементы ниже
+	if t.viewportSize > 0 && endIdx < len(t.choices) {
+		// Используем точно такой же префикс как у элементов "below"
+		indentPrefix := ui.GetSelectItemPrefix("below")
+		// Не добавляем перенос строки в конце, чтобы не нарушать форматирование
+		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s %s %d ниже", indentPrefix, ui.DownArrowSymbol, len(t.choices)-endIdx)))
+		// Добавляем перенос строки отдельно
+		sb.WriteString("\n")
+	}
+
 	// Добавляем подсказку о навигации и управлении с новым отступом
 	helpIndent := performance.RepeatEfficient(" ", ui.MainLeftIndent)
 
@@ -479,9 +613,9 @@ func (t *MultiSelectTask) View(width int) string {
 		warning += "\n"
 	}
 
-	helpText := "[↑/↓ для навигации, пробел для выбора, Enter для подтверждения]"
+	helpText := "[↑/↓ навигация, пробел выбор, Enter подтверждение, Q/Esc - Выход]"
 	if t.hasSelectAll {
-		helpText = "[↑/↓ навигация, пробел выбор/переключение всех, Enter подтверждение]"
+		helpText = "[↑/↓ навигация, пробел выбор/переключение всех, Enter подтверждение, Q/Esc - Выход]"
 	}
 	sb.WriteString("\n" + ui.DrawLine(width) +
 		ui.SubtleStyle.Render(fmt.Sprintf("%s%s%s", warning, helpIndent, helpText)))
