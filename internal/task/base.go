@@ -25,6 +25,9 @@ type BaseTask struct {
 	err         error  // Ошибка, если задача завершилась с ошибкой
 	stopOnError bool   // Флаг, указывающий, нужно ли останавливать очередь при ошибке
 
+	// Флаг, указывающий, нужно ли сохранять переносы строк в сообщениях об ошибках
+	preserveErrorNewLines bool
+
 	// Поля для управления тайм-аутом
 	timeoutManager *TimeoutManager // Менеджер тайм-аута
 	timeoutEnabled bool            // Флаг, указывающий, включен ли тайм-аут
@@ -34,10 +37,11 @@ type BaseTask struct {
 
 func NewBaseTask(title string) BaseTask {
 	return BaseTask{
-		title:          title,
-		stopOnError:    true, // По умолчанию останавливаем очередь при ошибке
-		timeoutEnabled: false,
-		showTimeout:    true, // По умолчанию отображаем оставшееся время
+		title:                 title,
+		stopOnError:           true, // По умолчанию останавливаем очередь при ошибке
+		preserveErrorNewLines: true, // По умолчанию сохраняем переносы строк в ошибках - печатаем "как есть".
+		timeoutEnabled:        false,
+		showTimeout:           true, // По умолчанию отображаем оставшееся время
 	}
 }
 
@@ -70,6 +74,15 @@ func (t *BaseTask) StopOnError() bool { return t.stopOnError }
 
 // SetStopOnError устанавливает флаг остановки очереди при ошибке.
 func (t *BaseTask) SetStopOnError(stop bool) { t.stopOnError = stop }
+
+// WithNewLinesInErrors устанавливает режим сохранения переносов строк в сообщениях об ошибках.
+// Если preserve=true, то оригинальные переносы строк сохраняются.
+// Если preserve=false, то переносы строк удаляются и текст переформатируется.
+// @return Интерфейс Task для цепочки вызовов
+func (t *BaseTask) WithNewLinesInErrors(preserve bool) common.Task { 
+	t.preserveErrorNewLines = preserve 
+	return t
+}
 
 // SetError устанавливает ошибку для задачи
 func (t *BaseTask) SetError(err error) { t.err = err }
@@ -198,7 +211,9 @@ func (t *BaseTask) FinalView(width int) string {
 		}
 
 		// Добавляем отформатированный текст ошибки
-		result += ui.FormatErrorMessage(errText, common.CalculateLayoutWidth(width))
+		// Используем параметр preserveErrorNewLines для управления форматированием
+		errorMsg := ui.FormatErrorMessage(errText, common.CalculateLayoutWidth(width), t.preserveErrorNewLines)
+		result += errorMsg
 
 		return result
 	}

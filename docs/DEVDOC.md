@@ -2,9 +2,9 @@
 
 Это руководство объясняет архитектуру Термос, жизненный цикл `Task`, возможности стилизации и то, как расширять фреймворк. Все ссылки и примеры кода соответствуют текущей кодовой базе.
 
-- Repo root: `github.com/qzeleza/termos`
-- Minimum Go: 1.22+
-- Platforms: Linux, macOS, Windows
+- Корневая директория репозитория: `github.com/qzeleza/termos`
+- Минимальная версия Go: 1.22+
+- Платформы: Linux, macOS, Windows
 
 ## Обзор архитектуры
 
@@ -29,7 +29,7 @@ termos/
 
 ## Интерфейс Task и жизненный цикл
 
-The canonical `Task` interface is defined in `common/task.go`:
+Канонический интерфейс `Task` определен в `common/task.go`:
 
 ```go
 // Task представляет собой интерфейс для выполнения задач в очереди.
@@ -76,33 +76,34 @@ type Task interface {
 
 ## BaseTask
 
-`task/base.go` provides shared state and helpers via `BaseTask`:
-- Error handling: `SetError(err)`, `HasError()`, `Error()`
-- Completion: `done` flag, `IsDone()`
-- Final label and alignment for final view using `ui.AlignTextToRight(left, right, width)`
-- Stop-on-error flag: `StopOnError()` / `SetStopOnError(bool)`
+`task/base.go` предоставляет общее состояние и вспомогательные функции через `BaseTask`:
+- Обработка ошибок: `SetError(err)`, `HasError()`, `Error()`
+- Завершение: `done` flag, `IsDone()`
+- Финальный текст и выравнивание для финального представления с помощью `ui.AlignTextToRight(left, right, width)`
+- Флаг stop-on-error: `StopOnError()` / `SetStopOnError(bool)`
+- Форматирование ошибок: `WithNewLinesInErrors(preserve bool)` - управляет сохранением переносов строк в сообщениях об ошибках
 
 Как правило, встраивайте `BaseTask` в вашу структуру задачи и делегируйте ему базовые вызовы жизненного цикла.
 
 ## Встроенные задачи
 
-All constructors return concrete task types that embed `BaseTask` and implement `common.Task`.
+Все конструкторы возвращают конкретные типы задач, встраивающие `BaseTask` и реализующие `common.Task`.
 
 - Yes/No – `task.NewYesNoTask(question, description string) *YesNoTask` (только 2 опции: "Да" и "Нет")
-  - Keys: up/k/left/h to choose "Да", down/j/right/l to choose "Нет", enter/space confirm + stop timer, q/esc/ctrl+c cancel (sets error)
-  - Results: `GetValue() bool` (true for "Да", false for "Нет"), `IsYes()`, `IsNo()`
+  - Клавиши: up/k/left/h для выбора "Да", down/j/right/l для выбора "Нет", enter/space для подтверждения + остановки таймера, q/esc/ctrl+c для отмены (устанавливает ошибку)
+  - Результаты: `GetValue() bool` (true для "Да", false для "Нет"), `IsYes()`, `IsNo()`
 
 - Single Select – `task.NewSingleSelectTask(prompt string, options []string) *SingleSelectTask`
-  - Keys: up/k, down/j, enter/space confirm + stop timer
-  - Results: `GetSelectedOption() string`, `GetSelectedIndex() int`
+  - Клавиши: up/k, down/j, enter/space для подтверждения + остановки таймера
+  - Результаты: `GetSelectedOption() string`, `GetSelectedIndex() int`
 
 - Multi Select – `task.NewMultiSelectTask(prompt string, options []string) *MultiSelectTask`
-  - Keys: up/k, down/j, space toggle current + stop timer, enter confirm
-  - Results: `GetSelectedOptions() []string`, `GetSelectedIndices() []int`
+  - Клавиши: up/k, down/j, space для переключения текущего + остановки таймера, enter для подтверждения
+  - Результаты: `GetSelectedOptions() []string`, `GetSelectedIndices() []int`
 
 - Input (new) – `task.NewInputTaskNew(prompt, placeholder string, validator func(string) error) *InputTaskNew`
-  - Keys: enter to accept (validator runs if provided), backspace to delete, any other key appends to value
-  - Result: `GetValue() string`
+  - Клавиши: enter для подтверждения (validator runs if provided), backspace для удаления, любая другая клавиша добавляет символ в значение
+  - Результат: `GetValue() string`
 
 Примечания:
 - Все реализации `Run()` во встроенных задачах сейчас возвращают `nil` (нет фоновой работы). Интегрируйте задачи в модель Bubble Tea и управляйте ими через `Update`.
@@ -129,7 +130,7 @@ ui.SelectionNoStyle = ui.SelectionNoStyle.Foreground(ui.ColorBrightRed).Bold(tru
 
 ```go
 ui.SetErrorColor(ui.ColorDarkYellow, ui.ColorBrightYellow)
-// ... later to reset defaults
+// ... позже чтобы вернуть значения по умолчанию
 ui.ResetErrorColors()
 ```
 
@@ -158,10 +159,10 @@ ui.ResetErrorColors()
 
 ## Создание новой задачи
 
-1) Define a struct embedding `BaseTask` and your fields.
-2) Implement `Title()`, `Run() tea.Cmd`, `Update(msg tea.Msg)`, `View(width int)`, `IsDone() bool`, `FinalView(width int)` and error/stop methods (or delegate to `BaseTask`).
-3) Provide a constructor `NewYourTask(...)` returning your task type.
-4) In `Update`, handle relevant keys/events and set `done`, `finalValue`, errors as needed.
+1) Определите структуру, встраивающую `BaseTask` и ваши поля.
+2) Реализуйте `Title()`, `Run() tea.Cmd`, `Update(msg tea.Msg)`, `View(width int)`, `IsDone() bool`, `FinalView(width int)` и методы обработки ошибок/остановки (или делегируйте их `BaseTask`).
+3) Предоставьте конструктор `NewYourTask(...)` возвращающий ваш тип задачи.
+4) В `Update` обрабатывайте релевантные клавиши/события и устанавливайте `done`, `finalValue`, ошибки по необходимости.
 
 Пример «скелета»:
 
@@ -184,7 +185,7 @@ func (t *MyTask) Run() tea.Cmd { return nil }
 
 ## Валидация
 
-`InputTaskNew` optionally accepts `validator func(string) error`. On Enter, if validator returns an error, the task sets the error via `SetError(err)` and remains active.
+`InputTaskNew` может принимать необязательный параметр `validator func(string) error`. При нажатии Enter, если валидатор возвращает ошибку, задача устанавливает ошибку через `SetError(err)` и остается активной.
 
 ## Очереди и оркестрация (планируется)
 

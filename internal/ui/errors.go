@@ -8,11 +8,13 @@ import (
 )
 
 // FormatErrorMessage форматирует сообщение об ошибке с отступами и ограничением по ширине
-// Удаляет все новые строки и эскейп последовательности, затем разбивает на строки
+// Если preserveNewLines=false, то удаляет все новые строки и эскейп последовательности, затем разбивает на строки
+// Если preserveNewLines=true, то сохраняет оригинальные переносы строк
 // Корректно работает с UTF-8 символами (кириллица, эмодзи, китайские символы и т.д.)
 // maxWidth - полная ширина доступного пространства в символах (не байтах)
 // layoutWidth - полная ширина макета для финальной линии
-func FormatErrorMessage(errMsg string, layoutWidth int) string {
+// preserveNewLines - если true, то сохраняет оригинальные переносы строк
+func FormatErrorMessage(errMsg string, layoutWidth int, preserveNewLines bool) string {
 	if errMsg == "" {
 		return ""
 	}
@@ -31,26 +33,40 @@ func FormatErrorMessage(errMsg string, layoutWidth int) string {
 		wrapWidth = 3
 	}
 
+	// Базовый отступ слева (2 пробела)
+	numIndent := 2
+	indent := performance.RepeatEfficient(" ", numIndent)
+
+	// Если нужно сохранить переносы строк
+	if preserveNewLines {
+		// Разбиваем сообщение по переносам строк
+		lines := strings.Split(errMsg, "\n")
+		result := performance.GetBuffer()
+		defer performance.PutBuffer(result)
+
+		for i, line := range lines {
+			if i > 0 {
+				result.WriteString("\n")
+			}
+			result.WriteString(indent)
+			result.WriteString(VerticalLineSymbol)
+			result.WriteString(performance.RepeatEfficient(" ", 3))
+			result.WriteString(GetErrorMessageStyle().Render(line))
+		}
+
+		return result.String()
+	}
+
+	// Если не нужно сохранять переносы строк
 	// 1. Очищаем строку от управляющих символов и эскейп последовательностей
 	cleanedMsg := cleanMessage(errMsg)
 
 	if cleanedMsg == "" {
 		return ""
 	}
-	// Базовый отступ слева (2 пробела)
-	numIndent := 2
-	indent := performance.RepeatEfficient(" ", numIndent)
-
-	// Создаем разделительную линию с учетом отступа
-	// SeparatorLine := indent + BranchSymbol + DrawLine(effectiveWidth+rightMargin-numIndent*2+1)
 
 	// Создаем форматированный результат с учётом новой ширины
 	errorMsg := formatErrorEveryLine(cleanedMsg, wrapWidth, indent, true)
-	// errorMsg := formatErrorEveryLine(cleanedMsg, wrapWidth, indent, true)
-	//  + GetTaskBelowPrefix()
-
-	// удаляем крайний перенос строки
-	// errorMsg = strings.TrimSuffix(errorMsg, "\n")
 
 	return errorMsg
 }
@@ -67,7 +83,8 @@ func formatErrorEveryLine(msg string, effectiveWidth int, indent string, delNewL
 	msg = CapitalizeFirst(msg)
 
 	// Если не нужно удалять переносы строк, обрабатываем каждую строку отдельно
-	if !delNewLines && strings.Contains(msg, "\n") {
+	if !delNewLines {
+		// Разбиваем по переносам строк
 		lines := strings.Split(msg, "\n")
 		for i, line := range lines {
 			if i > 0 {

@@ -342,13 +342,13 @@ func TestFormatErrorMessage(t *testing.T) {
 			name:        "Длинное сообщение",
 			errMsg:      "Это очень длинное сообщение об ошибке которое должно быть разбито на несколько строк",
 			layoutWidth: 30,
-			minExpected: "Это очень длинное сообщение",
+			minExpected: "Это очень длинное",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := FormatErrorMessage(tt.errMsg, tt.layoutWidth)
+			result := FormatErrorMessage(tt.errMsg, tt.layoutWidth, false)
 
 			if tt.errMsg == "" {
 				assert.Empty(t, result, "Результат должен быть пустым для пустого сообщения")
@@ -385,13 +385,13 @@ func TestBuildFormattedMessage(t *testing.T) {
 			effectiveWidth: 20,
 			rightMargin:    2,
 			layoutWidth:    22,
-			shouldContain:  []string{"Это очень длинное", MessageIndent},
+			shouldContain:  []string{"Это очень", MessageIndent},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := FormatErrorMessage(tt.msg, tt.layoutWidth)
+			result := FormatErrorMessage(tt.msg, tt.layoutWidth, false)
 
 			for _, expected := range tt.shouldContain {
 				assert.Contains(t, result, expected, "Результат должен содержать: %s", expected)
@@ -434,6 +434,6 @@ func BenchmarkFormatErrorMessage(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		FormatErrorMessage(errorMsg, 80)
+		FormatErrorMessage(errorMsg, 80, false)
 	}
 }

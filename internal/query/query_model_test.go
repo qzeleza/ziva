@@ -21,6 +21,7 @@ type mockTask struct {
 	err       error
 	value     string
 	stopOnErr bool // Флаг остановки при ошибке
+	preserveErrorNewLines bool // Флаг сохранения переносов строк в сообщениях об ошибках
 }
 
 func newMockTask(title string) *mockTask {
@@ -52,6 +53,12 @@ func (t *mockTask) StopOnError() bool {
 
 func (t *mockTask) SetStopOnError(stop bool) {
 	t.stopOnErr = stop
+}
+
+// WithNewLinesInErrors устанавливает флаг сохранения переносов строк в сообщениях об ошибках
+func (t *mockTask) WithNewLinesInErrors(preserve bool) common.Task {
+	t.preserveErrorNewLines = preserve
+	return t
 }
 
 // Run запускает выполнение задачи и возвращает команду bubbletea.

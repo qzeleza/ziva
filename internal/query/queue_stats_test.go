@@ -18,6 +18,7 @@ type MockTask struct {
 	hasError  bool
 	err       error
 	stopOnErr bool
+	preserveErrorNewLines bool
 }
 
 func (m *MockTask) Title() string                             { return m.title }
@@ -26,6 +27,7 @@ func (m *MockTask) HasError() bool                            { return m.hasErro
 func (m *MockTask) Error() error                              { return m.err }
 func (m *MockTask) StopOnError() bool                         { return m.stopOnErr }
 func (m *MockTask) SetStopOnError(stop bool)                  { m.stopOnErr = stop }
+func (m *MockTask) WithNewLinesInErrors(preserve bool) common.Task { m.preserveErrorNewLines = preserve; return m }
 func (m *MockTask) Run() tea.Cmd                              { return nil }
 func (m *MockTask) Update(msg tea.Msg) (common.Task, tea.Cmd) { return m, nil }
 func (m *MockTask) View(width int) string                     { return m.title }

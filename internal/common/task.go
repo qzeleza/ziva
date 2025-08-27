@@ -38,4 +38,10 @@ type Task interface {
 	
 	// SetStopOnError устанавливает флаг остановки очереди при ошибке.
 	SetStopOnError(stop bool)
+	
+	// WithNewLinesInErrors устанавливает режим сохранения переносов строк в сообщениях об ошибках.
+	// Если preserve=true, то оригинальные переносы строк сохраняются.
+	// Если preserve=false, то переносы строк удаляются и текст переформатируется.
+	// @return Указатель на текущую задачу для цепочки вызовов
+	WithNewLinesInErrors(preserve bool) Task
 }
