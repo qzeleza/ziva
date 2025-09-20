@@ -7,6 +7,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/qzeleza/termos/internal/defauilt"
 )
 
 // TestSingleSelectTaskCreation проверяет корректность создания задачи SingleSelectTask
@@ -123,6 +125,34 @@ func TestSingleSelectTaskWithDefaultItemByValue(t *testing.T) {
 
 	assert.Equal(t, 1, task.cursor, "Курсор должен указывать на элемент с индексом 1")
 	assert.Equal(t, "Опция 2", task.GetSelected(), "Выбранным значением по умолчанию должна быть 'Опция 2'")
+}
+
+func TestSingleSelectTaskLeftCancels(t *testing.T) {
+	title := "Выберите опцию"
+	options := []string{"Опция 1", "Опция 2"}
+
+	task := NewSingleSelectTask(title, options)
+
+	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	canceledTask, ok := updated.(*SingleSelectTask)
+	assert.True(t, ok, "Обновленная задача должна быть типа *SingleSelectTask")
+	assert.True(t, canceledTask.IsDone(), "Задача должна завершиться после нажатия ←")
+	if err := canceledTask.Error(); assert.NotNil(t, err, "Ошибка должна быть установлена") {
+		assert.Equal(t, defauilt.ErrorMsgCanceled, err.Error())
+	}
+}
+
+func TestSingleSelectTaskRightSelects(t *testing.T) {
+	title := "Выберите опцию"
+	options := []string{"Опция 1", "Опция 2"}
+
+	task := NewSingleSelectTask(title, options)
+
+	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyRight})
+	selectedTask, ok := updated.(*SingleSelectTask)
+	assert.True(t, ok, "Обновленная задача должна быть типа *SingleSelectTask")
+	assert.True(t, selectedTask.IsDone(), "Задача должна завершиться после нажатия →")
+	assert.Equal(t, options[0], selectedTask.GetSelected(), "Должна быть выбрана текущая опция")
 }
 
 // TestSingleSelectTaskBoundaries проверяет обработку граничных случаев

@@ -184,7 +184,7 @@ func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			// Обновляем viewport после изменения позиции курсора
 			t.updateViewport()
 			return t, nil
-		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C":
+		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C", "left", "Left":
 			// Отмена пользователем
 			cancelErr := fmt.Errorf(defauilt.ErrorMsgCanceled)
 			t.done = true
@@ -194,7 +194,7 @@ func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			t.SetStopOnError(true)
 			return t, nil
 
-		case "enter":
+		case "enter", "right", "Right":
 			// Если таймер активен, останавливаем его
 			t.stopTimeout()
 			t.done = true

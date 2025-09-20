@@ -111,7 +111,7 @@ func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
 		cursor:          0, // Начинаем с первого элемента списка
 		activeStyle:     ui.ActiveStyle,
 		hasSelectAll:    false,
-		selectAllText:   "Выбрать все",
+		selectAllText:   defauilt.SelectAllDefaultText,
 		showHelpMessage: false,
 		helpMessage:     "",
 		// Viewport по умолчанию отключен (показываем все элементы)
@@ -434,7 +434,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			// Обновляем viewport после изменения позиции курсора
 			t.updateViewport()
 			return t, nil
-		case " ":
+		case " ", "right", "Right":
 			// При выборе останавливаем таймер
 			t.stopTimeout()
 
@@ -446,9 +446,9 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 				// Обычная логика выбора для элементов списка
 				t.toggleSelection(t.cursor)
 			}
-		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C":
+		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C", "left", "Left":
 			// Отмена пользователем
-			cancelErr := fmt.Errorf("отменено пользователем")
+			cancelErr := fmt.Errorf(defauilt.ErrorMsgCanceled)
 			t.done = true
 			t.err = cancelErr
 			t.icon = ui.IconCancelled
