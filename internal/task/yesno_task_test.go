@@ -143,3 +143,14 @@ func TestYesNoTaskLegacyCompatibility(t *testing.T) {
 	assert.True(t, yesNoTaskDone.IsYes(), "Новый API должен работать")
 	assert.Equal(t, YesOption, yesNoTaskDone.GetSelectedOption(), "Новый API должен работать")
 }
+
+func TestYesNoTaskWithDefaultItem(t *testing.T) {
+	yesNoTask := NewYesNoTask("Подтверждение", "Вы согласны?").WithDefaultItem(NoOption)
+
+	assert.Equal(t, 1, yesNoTask.GetSelectedIndex(), "По умолчанию должен быть выбран вариант 'Нет'")
+	assert.Equal(t, NoOption, yesNoTask.GetSelectedOption(), "selectedOption должен соответствовать значению по умолчанию")
+
+	yesNoTask.WithDefaultItem(true)
+	assert.Equal(t, 0, yesNoTask.GetSelectedIndex(), "После смены значения должен быть выбран вариант 'Да'")
+	assert.Equal(t, YesOption, yesNoTask.GetSelectedOption(), "selectedOption должен обновиться на 'Да'")
+}

@@ -218,7 +218,7 @@ func (t *FuncTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 	case tea.KeyMsg:
 		// Обработка нажатия клавиш для возможности выхода из задачи
 		switch msg.String() {
-		case "q", "Q", "Ctrl+c", "Esc", "esc", "Ctrl+C":
+		case "q", "Q", "ctrl+c", "Esc", "esc":
 			// Помечаем задачу как выполненную с отменой
 			t.done = true
 			t.icon = ui.IconCancelled

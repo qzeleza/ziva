@@ -38,6 +38,37 @@ func NewSingleSelectTask(title string, choices []string) *SingleSelectTask {
 	}
 }
 
+// WithDefaultItem устанавливает элемент, который будет подсвечен курсором при открытии списка.
+// Поддерживает выбор по индексу (int) или строковому значению (string). Некорректные значения игнорируются.
+func (t *SingleSelectTask) WithDefaultItem(selection interface{}) *SingleSelectTask {
+	if selection == nil || len(t.choices) == 0 {
+		return t
+	}
+
+	setCursor := func(index int) {
+		if index < 0 || index >= len(t.choices) {
+			return
+		}
+		t.cursor = index
+	}
+
+	switch v := selection.(type) {
+	case int:
+		setCursor(v)
+	case string:
+		for i, choice := range t.choices {
+			if choice == v {
+				setCursor(i)
+				break
+			}
+		}
+	}
+
+	// После обновления курсора синхронизируем viewport
+	t.updateViewport()
+	return t
+}
+
 // WithViewport устанавливает размер viewport (окна просмотра) для ограничения количества отображаемых элементов.
 // Это полезно для длинных списков, когда нужно показывать только часть элементов.
 //

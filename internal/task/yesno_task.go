@@ -240,6 +240,51 @@ func (t *YesNoTask) WithCustomLabelsAll(yesLabel, noLabel string) *YesNoTask {
 	return t
 }
 
+// WithDefaultItem позволяет задать опцию, которая будет выбрана по умолчанию при открытии задачи.
+// Поддерживает YesNoOption, bool, индекс (int) и строку (string).
+func (t *YesNoTask) WithDefaultItem(option interface{}) *YesNoTask {
+	if option == nil {
+		return t
+	}
+
+	selectByIndex := func(index int) {
+		t.SingleSelectTask.WithDefaultItem(index)
+		switch index {
+		case 0:
+			t.selectedOption = YesOption
+		case 1:
+			t.selectedOption = NoOption
+		}
+	}
+
+	switch v := option.(type) {
+	case YesNoOption:
+		switch v {
+		case YesOption:
+			selectByIndex(0)
+		case NoOption:
+			selectByIndex(1)
+		}
+	case bool:
+		if v {
+			selectByIndex(0)
+		} else {
+			selectByIndex(1)
+		}
+	case int:
+		selectByIndex(v)
+	case string:
+		for i, choice := range t.choices {
+			if strings.EqualFold(choice, v) {
+				selectByIndex(i)
+				break
+			}
+		}
+	}
+
+	return t
+}
+
 // GetValue возвращает ответ пользователя (true для "Да", false для "Нет")
 // @deprecated Рекомендуется использовать GetSelectedOption() для более ясной семантики
 func (t *YesNoTask) GetValue() bool {

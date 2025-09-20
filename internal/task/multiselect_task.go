@@ -228,6 +228,89 @@ func (t *MultiSelectTask) WithSelectAll(text ...string) *MultiSelectTask {
 	return t
 }
 
+// WithDefaultItems позволяет заранее отметить элементы списка выбранными при открытии задачи.
+// Поддерживает выбор одного индекса/строки или списков значений ([]int, []string).
+func (t *MultiSelectTask) WithDefaultItems(defaultSelection interface{}) *MultiSelectTask {
+	if defaultSelection == nil || len(t.choices) == 0 {
+		return t
+	}
+
+	// Сбрасываем текущий выбор
+	if len(t.choices) > 32 {
+		if t.fallbackMap == nil {
+			t.fallbackMap = make(map[int]struct{})
+		} else {
+			for k := range t.fallbackMap {
+				delete(t.fallbackMap, k)
+			}
+		}
+		t.selected.ClearAll()
+	} else {
+		t.selected.ClearAll()
+	}
+
+	setSelected := func(index int) bool {
+		if index < 0 || index >= len(t.choices) {
+			return false
+		}
+		if len(t.choices) > 32 && t.fallbackMap != nil {
+			t.fallbackMap[index] = struct{}{}
+		} else {
+			t.selected.Set(index)
+		}
+		return true
+	}
+
+	anyApplied := false
+
+	switch v := defaultSelection.(type) {
+	case int:
+		anyApplied = setSelected(v) || anyApplied
+	case string:
+		for i, choice := range t.choices {
+			if choice == v {
+				if setSelected(i) {
+					anyApplied = true
+				}
+				break
+			}
+		}
+	case []int:
+		for _, idx := range v {
+			if setSelected(idx) {
+				anyApplied = true
+			}
+		}
+	case []string:
+		for _, val := range v {
+			for i, choice := range t.choices {
+				if choice == val {
+					if setSelected(i) {
+						anyApplied = true
+					}
+					break
+				}
+			}
+		}
+	}
+
+	if anyApplied {
+		// Перемещаем курсор на первый выбранный элемент (если он вне диапазона)
+		if t.cursor < 0 || t.cursor >= len(t.choices) {
+			for i := range t.choices {
+				if t.isSelected(i) {
+					t.cursor = i
+					break
+				}
+			}
+		}
+	}
+
+	// После обновления выбора синхронизируем viewport
+	t.updateViewport()
+	return t
+}
+
 // toggleSelectAll переключает состояние всех элементов списка.
 // Если все элементы выбраны - снимает выбор со всех.
 // Если хотя бы один элемент не выбран - выбирает все.

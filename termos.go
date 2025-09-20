@@ -128,6 +128,12 @@ func (t *YesNoTask) WithTimeout(duration time.Duration, defaultValue interface{}
 	return t
 }
 
+// WithDefaultItem задает опцию, которая будет подсвечена при открытии задачи.
+func (t *YesNoTask) WithDefaultItem(option interface{}) *YesNoTask {
+	t.YesNoTask.WithDefaultItem(option)
+	return t
+}
+
 // WithCustomLabels позволяет изменить текст опций
 func (t *YesNoTask) WithCustomLabels(yesLabel, noLabel string) *YesNoTask {
 	t.YesNoTask.WithCustomLabels(yesLabel, noLabel)
@@ -165,6 +171,12 @@ func (t *SingleSelectTask) WithTimeout(duration time.Duration, defaultValue inte
 	return t
 }
 
+// WithDefaultItem задает элемент, который будет подсвечен при открытии задачи.
+func (t *SingleSelectTask) WithDefaultItem(selection interface{}) *SingleSelectTask {
+	t.SingleSelectTask.WithDefaultItem(selection)
+	return t
+}
+
 // GetSelected возвращает выбранное значение
 func (t *SingleSelectTask) GetSelected() string {
 	return t.SingleSelectTask.GetSelected()
@@ -194,6 +206,12 @@ func (t *MultiSelectTask) WithTimeout(duration time.Duration, defaultValues inte
 // WithSelectAll добавляет опцию "Выбрать все" в начало списка
 func (t *MultiSelectTask) WithSelectAll(text ...string) *MultiSelectTask {
 	t.MultiSelectTask.WithSelectAll(text...)
+	return t
+}
+
+// WithDefaultItems задает элементы, которые будут отмечены при открытии задачи.
+func (t *MultiSelectTask) WithDefaultItems(defaultSelection interface{}) *MultiSelectTask {
+	t.MultiSelectTask.WithDefaultItems(defaultSelection)
 	return t
 }
 

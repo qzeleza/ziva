@@ -49,13 +49,15 @@ func main() {
 	ms2 := termos.NewMultiSelectTask(
 		"Выберите модули для сборки",
 		ssel,
-	).WithViewport(3).WithSelectAll("Выбрать все").WithTimeout(10*time.Second, []string{ssel[0], ssel[1]})
+	).WithViewport(3).WithSelectAll("Выбрать все").WithTimeout(10*time.Second, []string{ssel[0], ssel[1]}).WithDefaultItems([]string{ssel[0], ssel[1]})
 
 	// 2) Одиночный выбор
 	ss := termos.NewSingleSelectTask(
 		"Выберите среду развертывания",
 		[]string{"development", "staging", "production", "другое", "отмена", "выход"},
-	).WithViewport(3).WithTimeout(3*time.Second, "staging")
+	).WithViewport(3).
+		// WithTimeout(3*time.Second, "staging")
+		WithDefaultItem("production")
 
 	// 3) Ввод с использованием всех стандартных валидаторов
 	//    Валидация будет происходить в момент подтверждения (Enter)
