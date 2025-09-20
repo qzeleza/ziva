@@ -74,7 +74,7 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			t.stopTimeout()
 		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C":
 			// Отмена пользователем
-			cancelErr := fmt.Errorf("отменено пользователем")
+			cancelErr := fmt.Errorf(defauilt.ErrorMsgCanceled)
 			t.done = true
 			t.err = cancelErr
 			t.icon = ui.IconCancelled

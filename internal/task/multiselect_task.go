@@ -224,6 +224,8 @@ func (t *MultiSelectTask) WithSelectAll(text ...string) *MultiSelectTask {
 	t.cursor = -1 // Начинаем с опции "Выбрать все"
 	if len(text) > 0 && strings.TrimSpace(text[0]) != "" {
 		t.selectAllText = text[0]
+	} else {
+		t.selectAllText = defauilt.SelectAllDefaultText
 	}
 	return t
 }
@@ -635,7 +637,7 @@ func (t *MultiSelectTask) View(width int) string {
 			itemsAbove = t.viewportStart
 		}
 		// Не добавляем перенос строки в конце, чтобы не нарушать форматирование
-		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s %s %d выше", indentPrefix, ui.UpArrowSymbol, itemsAbove)))
+		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf(defauilt.ScrollAboveFormat, indentPrefix, ui.UpArrowSymbol, itemsAbove)))
 		// Добавляем перенос строки отдельно
 		sb.WriteString("\n")
 	}
@@ -681,7 +683,7 @@ func (t *MultiSelectTask) View(width int) string {
 		// Используем точно такой же префикс как у элементов "below"
 		indentPrefix := ui.GetSelectItemPrefix("below")
 		// Не добавляем перенос строки в конце, чтобы не нарушать форматирование
-		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s %s %d ниже", indentPrefix, ui.DownArrowSymbol, len(t.choices)-endIdx)))
+		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf(defauilt.ScrollBelowFormat, indentPrefix, ui.DownArrowSymbol, len(t.choices)-endIdx)))
 		// Добавляем перенос строки отдельно
 		sb.WriteString("\n")
 	}
@@ -696,9 +698,9 @@ func (t *MultiSelectTask) View(width int) string {
 		warning += "\n"
 	}
 
-	helpText := "[↑/↓ навигация, пробел выбор, Enter подтверждение, Q/Esc - Выход]"
+	helpText := defauilt.MultiSelectHelp
 	if t.hasSelectAll {
-		helpText = "[↑/↓ навигация, пробел выбор/переключение всех, Enter подтверждение, Q/Esc - Выход]"
+		helpText = defauilt.MultiSelectHelpSelectAll
 	}
 	sb.WriteString("\n" + ui.DrawLine(width) +
 		ui.SubtleStyle.Render(fmt.Sprintf("%s%s%s", warning, helpIndent, helpText)))

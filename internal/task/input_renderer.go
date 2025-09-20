@@ -79,7 +79,7 @@ func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, val
 	var helpText string
 	if r.helpEnabled {
 		helpIndent := performance.RepeatEfficient(" ", ui.MainLeftIndent)
-		helpText = ui.SubtleStyle.Render(fmt.Sprintf("%s[Enter - подтвердить, Ctrl+C - отменить]", helpIndent))
+		helpText = ui.SubtleStyle.Render(fmt.Sprintf("%s%s", helpIndent, defauilt.InputConfirmHint))
 	}
 
 	// Подсказка о типе ввода
@@ -88,7 +88,7 @@ func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, val
 		description := validator.Description()
 		if description != "" {
 			hintIndent := performance.RepeatEfficient(" ", ui.MainLeftIndent)
-			typeHint = ui.SubtleStyle.Render(fmt.Sprintf("%sФормат: %s", hintIndent, description))
+			typeHint = ui.SubtleStyle.Render(fmt.Sprintf("%s%s %s", hintIndent, defauilt.InputFormatLabel, description))
 		}
 	}
 
@@ -174,11 +174,11 @@ func (r *InputRenderer) looksLikePassword(title, value string) bool {
 // InputTypeHints предоставляет подсказки для различных типов ввода
 var InputTypeHints = map[InputType]string{
 	InputTypeText:     "",
-	InputTypePassword: "Используйте надежный пароль",
-	InputTypeEmail:    "Пример: user@example.com",
-	InputTypeNumber:   "Введите число",
-	InputTypeIP:       "Пример: 192.168.1.1",
-	InputTypeDomain:   "Пример: example.com",
+	InputTypePassword: defauilt.InputHintPassword,
+	InputTypeEmail:    defauilt.InputHintEmail,
+	InputTypeNumber:   defauilt.InputHintNumber,
+	InputTypeIP:       defauilt.InputHintIP,
+	InputTypeDomain:   defauilt.InputHintDomain,
 }
 
 // GetTypeHint возвращает подсказку для типа ввода

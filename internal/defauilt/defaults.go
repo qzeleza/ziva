@@ -58,8 +58,8 @@ const (
 	HelpTextMaxWidth = 60
 )
 
-// Константы для русскоязычных строк
-const (
+// Переменные для локализуемых строк
+var (
 	// Строки статусов
 	StatusSuccess    = "УСПЕШНО"
 	StatusProblem    = "ПРОБЛЕМА"
@@ -71,13 +71,13 @@ const (
 	SummaryTasks     = "задач"
 )
 
-const (
+var (
 	DefaultNo  = "Нет"
 	DefaultYes = "Да"
 )
 
 // Константы успешного завершения задач
-const (
+var (
 	// DefaultSuccessLabel метка успешного завершения по умолчанию
 	DefaultSuccessLabel = "Готово"
 
@@ -104,7 +104,7 @@ const (
 )
 
 // Константы для задач ввода
-const (
+var (
 	// DefaultPrompt подсказка по умолчанию для ввода
 	DefaultPrompt = "Введите значение"
 
@@ -119,7 +119,7 @@ const (
 )
 
 // Константы для сообщений об ошибках
-const (
+var (
 	// Типы ошибок
 	ErrorTypeValidation = "ВАЛИДАЦИЯ"
 	ErrorTypeUserCancel = "ОТМЕНА"
@@ -131,12 +131,12 @@ const (
 	ErrorTypeUnknown    = "ОШИБКА"
 
 	// Сообщения об ошибках
-	ErrorMsgUnknown       = "неизвестная ошибка"
-	ErrorMsgTaskPrefix    = "задача '%s': "
-	ErrorMsgCanceled      = "отменено пользователем"
-	ErrorMsgTimeout       = "операция не завершилась за %v"
-	ErrorMsgPermission    = "недостаточно прав для доступа к %s"
-	
+	ErrorMsgUnknown    = "неизвестная ошибка"
+	ErrorMsgTaskPrefix = "задача '%s': "
+	ErrorMsgCanceled   = "отменено пользователем"
+	ErrorMsgTimeout    = "операция не завершилась за %v"
+	ErrorMsgPermission = "недостаточно прав для доступа к %s"
+
 	// Пользовательские сообщения об ошибках
 	ErrorUserMsgValidation    = "Проверьте правильность введенных данных"
 	ErrorUserMsgCancel        = "Операция отменена"
@@ -148,8 +148,36 @@ const (
 	ErrorUserMsgUnknown       = "Произошла неизвестная ошибка"
 
 	// Константы для статусов задач
-	TaskStatusError = "ОШИБКА"
+	TaskStatusError     = "ОШИБКА"
 	TaskStatusCancelled = "Отменено"
+)
+
+// Переменные для сообщений валидации и подсказок
+var (
+	ErrFieldRequired         = "поле обязательно для заполнения"
+	ErrPathEmpty             = "путь не может быть пустым"
+	ErrPathInvalidChar       = "путь содержит недопустимый символ: %c"
+	ErrURLEmpty              = "URL не может быть пустым"
+	ErrURLScheme             = "URL должен начинаться с http:// или https://"
+	ErrValueEmpty            = "значение не может быть пустым"
+	ErrValueAlphaNumeric     = "значение должно содержать только буквы и цифры"
+	ErrDefaultValueInvalid   = "значение по умолчанию невалидно"
+	ErrDefaultValueEmpty     = "значение по умолчанию пусто"
+	CancelShort              = "Отменено"
+	NeedSelectAtLeastOne     = "! Необходимо выбрать хотя бы один элемент"
+	ScrollAboveFormat        = "%s %s %d выше"
+	ScrollBelowFormat        = "%s %s %d ниже"
+	SingleSelectHelp         = "[↑/↓ навигация, Enter - выбор, Q/Esc - Выход]"
+	MultiSelectHelp          = "[↑/↓ навигация, пробел выбор, Enter подтверждение, Q/Esc - Выход]"
+	MultiSelectHelpSelectAll = "[↑/↓ навигация, пробел выбор/переключение всех, Enter подтверждение, Q/Esc - Выход]"
+	SelectAllDefaultText     = "Выбрать все"
+	InputConfirmHint         = "[Enter - подтвердить, Ctrl+C - отменить]"
+	InputFormatLabel         = "Формат:"
+	InputHintPassword        = "Используйте надежный пароль"
+	InputHintEmail           = "Пример: user@example.com"
+	InputHintNumber          = "Введите число"
+	InputHintIP              = "Пример: 192.168.1.1"
+	InputHintDomain          = "Пример: example.com"
 )
 
 const ClearScreen = "\033[H\033[2J"

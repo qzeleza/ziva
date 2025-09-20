@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/qzeleza/termos/internal/performance"
 )
 
@@ -70,7 +71,7 @@ func (f *ValidatorFactory) Username() Validator {
 func (f *ValidatorFactory) Required() Validator {
 	return ValidatorFunc(func(input string) error {
 		if len(performance.TrimSpaceEfficient(input)) == 0 {
-			return errors.New("поле обязательно для заполнения")
+			return errors.New(defauilt.ErrFieldRequired)
 		}
 		return nil
 	})
@@ -91,14 +92,14 @@ func (f *ValidatorFactory) OptionalEmail() Validator {
 func (f *ValidatorFactory) Path() Validator {
 	return ValidatorFunc(func(input string) error {
 		if len(performance.TrimSpaceEfficient(input)) == 0 {
-			return errors.New("путь не может быть пустым")
+			return errors.New(defauilt.ErrPathEmpty)
 		}
 		// Проверяем на недопустимые символы для большинства ОС
 		invalidChars := `<>:"|?*`
 		if performance.ContainsAnyEfficient(input, invalidChars) {
 			for _, char := range input {
 				if strings.ContainsRune(invalidChars, char) {
-					return fmt.Errorf("путь содержит недопустимый символ: %c", char)
+					return fmt.Errorf(defauilt.ErrPathInvalidChar, char)
 				}
 			}
 		}
@@ -111,14 +112,14 @@ func (f *ValidatorFactory) URL() Validator {
 	return ValidatorFunc(func(input string) error {
 		trimmed := performance.TrimSpaceEfficient(input)
 		if trimmed == "" {
-			return errors.New("URL не может быть пустым")
+			return errors.New(defauilt.ErrURLEmpty)
 		}
 
 		// Простая проверка URL
 		lowerTrimmed := performance.ToLowerEfficient(trimmed)
 		if !strings.HasPrefix(lowerTrimmed, "http://") &&
 			!strings.HasPrefix(lowerTrimmed, "https://") {
-			return errors.New("URL должен начинаться с http:// или https://")
+			return errors.New(defauilt.ErrURLScheme)
 		}
 
 		return nil
@@ -149,12 +150,12 @@ func (f *ValidatorFactory) Length(exactLen int) Validator {
 func (f *ValidatorFactory) AlphaNumeric() Validator {
 	return ValidatorFunc(func(input string) error {
 		if len(performance.TrimSpaceEfficient(input)) == 0 {
-			return errors.New("значение не может быть пустым")
+			return errors.New(defauilt.ErrValueEmpty)
 		}
 
 		for _, char := range input {
 			if (char < 'a' || char > 'z') && (char < 'A' || char > 'Z') && (char < '0' || char > '9') {
-				return errors.New("значение должно содержать только буквы и цифры")
+				return errors.New(defauilt.ErrValueAlphaNumeric)
 			}
 		}
 		return nil

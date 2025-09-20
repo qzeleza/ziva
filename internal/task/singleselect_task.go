@@ -7,6 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
 )
@@ -185,7 +186,7 @@ func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			return t, nil
 		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C":
 			// Отмена пользователем
-			cancelErr := fmt.Errorf("отменено пользователем")
+			cancelErr := fmt.Errorf(defauilt.ErrorMsgCanceled)
 			t.done = true
 			t.err = cancelErr
 			t.icon = ui.IconCancelled
@@ -290,11 +291,8 @@ func (t *SingleSelectTask) View(width int) string {
 
 	// Добавляем индикатор прокрутки вверх, если есть скрытые элементы выше
 	if t.viewportSize > 0 && startIdx > 0 {
-		// Используем точно такой же префикс как у элементов "above"
 		indentPrefix := ui.GetSelectItemPrefix("above")
-		// Не добавляем перенос строки в конце, чтобы не нарушать форматирование
-		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s %s %d выше", indentPrefix, ui.UpArrowSymbol, startIdx)))
-		// Добавляем перенос строки отдельно
+		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf(defauilt.ScrollAboveFormat, indentPrefix, ui.UpArrowSymbol, startIdx)))
 		sb.WriteString("\n")
 	}
 
@@ -339,18 +337,15 @@ func (t *SingleSelectTask) View(width int) string {
 
 	// Добавляем индикатор прокрутки вниз, если есть скрытые элементы ниже
 	if t.viewportSize > 0 && endIdx < len(t.choices) {
-		// Используем точно такой же префикс как у элементов "below"
 		indentPrefix := ui.GetSelectItemPrefix("below")
-		// Не добавляем перенос строки в конце, чтобы не нарушать форматирование
-		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s %s %d ниже", indentPrefix, ui.DownArrowSymbol, len(t.choices)-endIdx)))
-		// Добавляем перенос строки отдельно
+		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf(defauilt.ScrollBelowFormat, indentPrefix, ui.DownArrowSymbol, len(t.choices)-endIdx)))
 		sb.WriteString("\n")
 	}
 
 	// Добавляем подсказку о навигации с новым отступом
 	helpIndent := performance.RepeatEfficient(" ", ui.MainLeftIndent)
 	sb.WriteString("\n" + ui.DrawLine(width) +
-		ui.SubtleStyle.Render(fmt.Sprintf("%s[↑/↓ навигация, Enter - выбор, Q/Esc - Выход]", helpIndent)))
+		ui.SubtleStyle.Render(fmt.Sprintf("%s%s", helpIndent, defauilt.SingleSelectHelp)))
 
 	return sb.String()
 }

@@ -277,6 +277,17 @@ queue.WithTasksNumbered(true, true, "(%d)")
 - `keepFirstSymbol` — сохранит `○/●` для первой задачи (остальные будут пронумерованы).
 - `format` — любой шаблон `fmt.Sprintf`, например `"(%02d)"`, `"[0%d]"`.
 
+### Локализация и требования к терминалу
+
+- Язык интерфейса задаётся флагом `--lang` или переменной окружения `TERMOS_LANG` (`ru`, `en`, `tr`, `be`, `uk`).
+- Библиотечный API даёт возможность установить язык по умолчанию: `termos.SetDefaultLanguage("tr")`.
+- Если запрошена русская локаль, Termos проверяет `ru_RU.UTF-8`; при отсутствии локали интерфейс переключается на английский и выводит инструкцию по установке.
+- Базовые команды для развертывания локали:
+  - Debian/Ubuntu: `sudo locale-gen ru_RU.UTF-8 && sudo update-locale LANG=ru_RU.UTF-8`
+  - Entware/BusyBox: `opkg install locale-full glibc-binary-locales && export LANG=ru_RU.UTF-8`
+- Для корректного отображения псевдографики убедитесь, что терминал работает в UTF-8 и экспортирует `COLORTERM`.
+- На консольных терминалах (Linux console, BusyBox) настроьте шрифты: `setterm -reset && setterm -store && setterm -font latarcyrheb-sun32`.
+
 
 ### Embedded оптимизации
 

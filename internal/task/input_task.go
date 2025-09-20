@@ -293,7 +293,7 @@ func (t *InputTaskNew) handleSubmit() (Task, tea.Cmd) {
 
 	// Финальная валидация
 	if !t.allowEmpty && performance.TrimSpaceEfficient(currentValue) == "" {
-		emptyErr := terrors.NewValidationError(t.title, errors.New("поле не может быть пустым")).
+		emptyErr := terrors.NewValidationError(t.title, errors.New(defauilt.ErrFieldRequired)).
 			WithContext("required", true)
 		t.validationErr = emptyErr
 		t.SetError(emptyErr)
@@ -333,7 +333,7 @@ func (t *InputTaskNew) handleCancel() (Task, tea.Cmd) {
 	t.SetError(cancelErr)
 	t.done = true
 	t.icon = ui.IconCancelled
-	t.finalValue = ui.CancelStyle.Render("Отменено")
+	t.finalValue = ui.CancelStyle.Render(defauilt.CancelShort)
 
 	return t, nil
 }
@@ -369,26 +369,26 @@ func (t *InputTaskNew) applyDefaultValue() {
 			if err := t.validator.Validate(valueToSet); err != nil {
 				// Если значение по умолчанию не прошло валидацию, завершаем с ошибкой
 				validationErr := terrors.NewValidationError(t.title, err).
-					WithContext("значение_по_умолчанию", true).
+					WithContext("default_value", true).
 					WithContext("input_type", t.inputType)
 				t.validationErr = validationErr
 				t.SetError(validationErr)
 				t.done = true
 				t.icon = ui.IconError
-				t.finalValue = ui.GetErrorMessageStyle().Render("значение по умолчанию невалидно")
+				t.finalValue = ui.GetErrorMessageStyle().Render(defauilt.ErrDefaultValueInvalid)
 				return
 			}
 		}
 
 		// Проверяем на пустоту, если пустые значения не разрешены
 		if !t.allowEmpty && performance.TrimSpaceEfficient(valueToSet) == "" {
-			emptyErr := terrors.NewValidationError(t.title, errors.New("поле не может быть пустым")).
-				WithContext("значение_по_умолчанию", true)
+			emptyErr := terrors.NewValidationError(t.title, errors.New(defauilt.ErrFieldRequired)).
+				WithContext("default_value", true)
 			t.validationErr = emptyErr
 			t.SetError(emptyErr)
 			t.done = true
 			t.icon = ui.IconError
-			t.finalValue = ui.GetErrorMessageStyle().Render("значение по умолчанию пусто")
+			t.finalValue = ui.GetErrorMessageStyle().Render(defauilt.ErrDefaultValueEmpty)
 			return
 		}
 

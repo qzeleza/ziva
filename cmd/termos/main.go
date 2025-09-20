@@ -4,7 +4,10 @@ import (
 	// Встроенные импорты не требуются
 
 	"errors"
+	"flag"
+	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -20,6 +23,11 @@ type pingResult struct {
 }
 
 func main() {
+	// Настраиваем язык интерфейса и предупреждаем о возможных ограничениях терминала
+	activeLang := configureLanguage()
+	warnTerminalCapabilities(activeLang)
+	termos.SetDefaultLanguage("en")
+
 	// Заголовок и краткое описание для TUI
 	header := "Демонстрация всех типов задач Termos"
 
@@ -204,4 +212,78 @@ func checkConnection(result *pingResult) error {
 	}
 
 	return nil
+}
+
+// configureLanguage разбирает язык из CLI/конфига, проверяет доступность локали и применяет его.
+func configureLanguage() string {
+	if defLang := strings.TrimSpace(os.Getenv("TERMOS_DEFAULT_LANG")); defLang != "" {
+		termos.SetDefaultLanguage(defLang)
+	}
+	langFlag := flag.String("lang", "", "язык интерфейса Termos (например, ru или en)")
+	flag.Parse()
+
+	lang := strings.TrimSpace(*langFlag)
+	if lang == "" {
+		lang = strings.TrimSpace(os.Getenv("TERMOS_LANG"))
+	}
+	if lang == "" {
+		lang = "ru"
+	}
+	lang = strings.ToLower(lang)
+
+	if strings.HasPrefix(lang, "ru") && !localeAvailable("ru_RU") {
+		printRussianLocaleHint()
+		lang = "en"
+	}
+
+	return termos.SetLanguage(lang)
+}
+
+// localeAvailable проверяет присутствие заданной локали в системе.
+func localeAvailable(locale string) bool {
+	if strings.HasPrefix(locale, "en") {
+		return true
+	}
+	cmd := exec.Command("locale", "-a")
+	output, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	list := strings.Split(strings.ToLower(string(output)), "\n")
+	targets := []string{"ru_ru.utf-8", "ru_ru.utf8", "ru_ru", "ru"}
+	for _, line := range list {
+		line = strings.TrimSpace(line)
+		for _, target := range targets {
+			if line == target {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// printRussianLocaleHint выводит рекомендации по установке русской локали и шрифта.
+func printRussianLocaleHint() {
+	fmt.Println("⚠️ Не удалось найти локаль ru_RU.UTF-8. Переключаю интерфейс на английский.")
+	fmt.Println("   Установите русскую локаль командой (Debian/Ubuntu): sudo locale-gen ru_RU.UTF-8 && sudo update-locale LANG=ru_RU.UTF-8")
+	fmt.Println("   Для Entware/BusyBox: opkg install locale-full glibc-binary-locales && export LANG=ru_RU.UTF-8")
+	fmt.Println("   При необходимости настройте шрифт: setterm -reset && setterm -store")
+}
+
+// warnTerminalCapabilities предупреждает о возможных ограничениях терминала.
+func warnTerminalCapabilities(lang string) {
+	langEnv := strings.ToLower(os.Getenv("LANG"))
+	term := strings.ToLower(os.Getenv("TERM"))
+	colorTerm := strings.TrimSpace(os.Getenv("COLORTERM"))
+
+	if !strings.Contains(langEnv, "utf") {
+		fmt.Println("⚠️ Текущая локаль не содержит UTF-8. Псевдографика может отображаться некорректно.")
+		fmt.Println("   Совет: export LANG=ru_RU.UTF-8 && export LC_ALL=ru_RU.UTF-8")
+	}
+	if colorTerm == "" {
+		fmt.Println("⚠️ Терминал не сообщает о поддержке цвета (COLORTERM пуст). Включите цветной режим или используйте современный эмулятор.")
+	}
+	if term == "linux" || strings.Contains(term, "vt100") || strings.Contains(term, "busybox") {
+		fmt.Println("ℹ️ Для Entware/BusyBox установите шрифт UTF-8: setterm -store && setterm -font latarcyrheb-sun32")
+	}
 }
