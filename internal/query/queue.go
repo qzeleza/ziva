@@ -297,7 +297,7 @@ func (m *Model) setTitle(width int) string {
 	if m.appName != "" {
 		appName := m.appNameStyle.Render(m.appName)
 		title := m.titleStyle.Render(m.title)
-		result = ui.AlignTextToRight("  "+title, appName, width+1) + "\n"
+		result = ui.AlignTextToRight("  "+title, appName, width) + "\n"
 	} else {
 		result = "  " + m.title + "\n"
 	}

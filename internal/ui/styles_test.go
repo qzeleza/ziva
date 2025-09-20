@@ -70,7 +70,7 @@ func TestAlignText(t *testing.T) {
 			left:       "Левый",
 			right:      "Правый",
 			totalWidth: 20,
-			expected:   "Левый         Правый",
+			expected:   "Левый" + strings.Repeat(" ", 7) + "Правый  ",
 		},
 		{
 			name:       "Недостаточная ширина",

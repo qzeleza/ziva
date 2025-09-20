@@ -219,15 +219,25 @@ func GetPendingTasksPlaceholder() string {
 
 // AlignTextToRight выравнивает текст по правому краю по заданной ширине
 func AlignTextToRight(left string, right string, totalWidth int) string {
+	const rightMargin = 2
+
 	leftWidth := lipgloss.Width(left)
 	rightWidth := lipgloss.Width(right)
 
-	if totalWidth < leftWidth+rightWidth {
-		return left + " " + right
+	available := totalWidth - leftWidth - rightWidth
+	if available < 0 {
+		return performance.FastConcat(left, " ", right)
+	}
+	if available == 0 {
+		return performance.FastConcat(left, right)
 	}
 
-	padding := performance.RepeatEfficient(" ", totalWidth-leftWidth-rightWidth-1)
-	return performance.FastConcat(left, padding, right, " ")
+	if available <= rightMargin {
+		return performance.FastConcat(left, performance.RepeatEfficient(" ", available), right)
+	}
+
+	padding := performance.RepeatEfficient(" ", available-rightMargin)
+	return performance.FastConcat(left, padding, right, "  ")
 }
 
 // CapitalizeFirst делает первую букву заглавной
