@@ -251,6 +251,33 @@ styles.Title = styles.Title.Foreground(lipgloss.Color("#ff6b6b"))
 styles.Selected = styles.Selected.Background(lipgloss.Color("#4ecdc4"))
 ```
 
+
+### Нумерация задач в очереди
+
+`WithTasksNumbered(enable, keepFirstSymbol, format)` позволяет заменить стандартные маркеры `○/●` на числовую нумерацию.
+
+```go
+queue := termos.NewQueue("CI Pipeline").
+    WithAppName("Termos").
+    WithSummary(true).
+    // Используем квадратные скобки и лидирующие нули: [01], [02], ...
+    WithTasksNumbered(true, false, "[%02d]")
+
+queue.AddTasks(buildTask, testTask, deployTask)
+
+if err := queue.Run(); err != nil {
+    log.Fatal(err)
+}
+
+// Оставляем первый маркер без номера и переходим на круглые скобки
+queue.WithTasksNumbered(true, true, "(%d)")
+```
+
+- `enable` — включает нумерацию.
+- `keepFirstSymbol` — сохранит `○/●` для первой задачи (остальные будут пронумерованы).
+- `format` — любой шаблон `fmt.Sprintf`, например `"(%02d)"`, `"[0%d]"`.
+
+
 ### Embedded оптимизации
 
 ```go

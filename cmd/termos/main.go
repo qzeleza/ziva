@@ -143,7 +143,7 @@ func main() {
 	ys := termos.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeout(5*time.Second, "Нет")
 
 	// Создаем очередь и добавляем задачи
-	queue := termos.NewQueue(header).WithAppName("Термос").WithSummary(true)
+	queue := termos.NewQueue(header).WithAppName("Термос").WithSummary(true).WithTasksNumbered(true, true, "[%d]")
 	queue.AddTasks(
 		ss,
 		// inUsername,

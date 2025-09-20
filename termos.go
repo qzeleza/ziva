@@ -83,6 +83,12 @@ func (q *Queue) WithSummary(show bool) *Queue {
 	return q
 }
 
+// WithTasksNumbered включает отображение номеров для задач и задаёт формат (например "[%02d]" или "(%d)").
+func (q *Queue) WithTasksNumbered(enable bool, keepFirstSymbol bool, numberFormat string) *Queue {
+	q.model.WithTasksNumbered(enable, keepFirstSymbol, numberFormat)
+	return q
+}
+
 // WithAppNameColor устанавливает цвет текста и стиль названия приложения.
 func (q *Queue) WithAppNameColor(textColor lipgloss.TerminalColor, bold bool) *Queue {
 	q.model.WithAppNameColor(textColor, bold)

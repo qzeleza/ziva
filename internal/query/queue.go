@@ -113,7 +113,14 @@ type Model struct {
 	successCount int  // Количество успешно выполненных задач
 	errorCount   int  // Количество задач с ошибками
 	showSummary  bool // Флаг отображения сводки
+
+	// Параметры отображения префиксов завершённых задач
+	numberCompletedTasks bool   // Включает отображение номеров вместо символа завершения
+	keepFirstSymbol      bool   // Если true, первая завершённая задача сохраняет символ
+	numberFormat         string // Строка формата для отображения номера задачи
 }
+
+const defaultNumberFormat = "[%02d]" // формат по умолчанию для отображения номеров задач
 
 // New создает новую модель очереди с заданным заголовком и задачами.
 func New(title string) *Model {
@@ -124,12 +131,27 @@ func New(title string) *Model {
 		showSummary:  true,                // По умолчанию сводка отображается
 		clearScreen:  false,               // По умолчанию экран не очищается
 		appNameStyle: lipgloss.NewStyle().Foreground(ui.ColorDarkGray).Background(ui.ColorBrightWhite).Bold(false),
+		numberFormat: defaultNumberFormat,
 	}
 }
 
 // Добавляет список задач для выполнения.
 func (m *Model) AddTasks(tasks []common.Task) {
 	m.tasks = append(m.tasks, tasks...)
+}
+
+// WithTasksNumbered включает нумерацию и задаёт формат представления числа в префиксе.
+// Формат передаётся как строка для fmt.Sprintf (например, "[%02d]", "(%d)", "[0%d]").
+// Если формат пустой, используется значение по умолчанию.
+func (m *Model) WithTasksNumbered(enable bool, keepFirstSymbol bool, numberFormat string) *Model {
+	m.numberCompletedTasks = enable
+	m.keepFirstSymbol = keepFirstSymbol
+	if strings.TrimSpace(numberFormat) == "" {
+		m.numberFormat = defaultNumberFormat
+	} else {
+		m.numberFormat = numberFormat
+	}
+	return m
 }
 
 // updateTaskStats обновляет статистику выполнения задач
@@ -359,16 +381,25 @@ func (m *Model) View() string {
 
 	for i, t := range m.tasks {
 		if i < m.current {
+			hasError := t.HasError()
+			m.applyCompletedTaskPrefix(t, i, hasError)
 			// Завершенные задачи: отображаем их финальный, выровненный вид.
 			sb.WriteString(t.FinalView(layoutWidth) + "\n")
 		} else if i == m.current {
-			// Активная задача: отображаем ее интерактивный вид.
-			// Обрезаем только завершающие символы новой строки, сохраняя ведущие пробелы
-			// view := strings.TrimRight(t.View(layoutWidth), "\n")
-			view := t.View(layoutWidth)
-			sb.WriteString(view + "\n")
+			hasError := t.HasError()
+			if t.IsDone() {
+				m.applyCompletedTaskPrefix(t, i, hasError)
+				sb.WriteString(t.FinalView(layoutWidth) + "\n")
+			} else {
+				m.applyInProgressTaskPrefix(t, i, hasError)
+				// Активная задача: отображаем ее интерактивный вид.
+				// Обрезаем только завершающие символы новой строки, сохраняя ведущие пробелы
+				// view := strings.TrimRight(t.View(layoutWidth), "\n")
+				view := t.View(layoutWidth)
+				sb.WriteString(view + "\n")
+			}
 			// Добавляем разделитель, если есть ожидающие задачи и нет ошибки
-			if i+1 < len(m.tasks) && (!m.stoppedOnError && !t.HasError()) {
+			if i+1 < len(m.tasks) && (!m.stoppedOnError && !hasError) {
 				sb.WriteString(ui.DrawLine(layoutWidth))
 			}
 		}
@@ -441,6 +472,100 @@ func (m *Model) View() string {
 	}
 
 	return sb.String()
+}
+
+// applyCompletedTaskPrefix настраивает префикс завершённой задачи в зависимости от параметров модели
+func (m *Model) applyCompletedTaskPrefix(task common.Task, index int, hasError bool) {
+	setter, ok := task.(interface{ SetCompletedPrefix(string) })
+	if !ok {
+		return
+	}
+
+	if !m.numberCompletedTasks {
+		setter.SetCompletedPrefix("")
+		return
+	}
+
+	if m.keepFirstSymbol && index == 0 && !hasError {
+		setter.SetCompletedPrefix("")
+		return
+	}
+
+	number := index + 1
+	if m.keepFirstSymbol && !hasError {
+		number = index
+		if number <= 0 {
+			number = 1
+		}
+	}
+	setter.SetCompletedPrefix(buildCompletedPrefix(number, m.numberFormat))
+}
+
+func (m *Model) applyInProgressTaskPrefix(task common.Task, index int, hasError bool) {
+	setter, ok := task.(interface{ SetInProgressPrefix(string) })
+	if !ok {
+		return
+	}
+
+	if !m.numberCompletedTasks {
+		setter.SetInProgressPrefix("")
+		return
+	}
+
+	if m.keepFirstSymbol && index == 0 && !hasError {
+		setter.SetInProgressPrefix("")
+		return
+	}
+
+	number := index + 1
+	if m.keepFirstSymbol && !hasError {
+		number = index
+		if number <= 0 {
+			number = 1
+		}
+	}
+
+	setter.SetInProgressPrefix(buildInProgressPrefix(number, m.numberFormat))
+}
+
+// buildCompletedPrefix возвращает префикс завершённой задачи, учитывая формат номера.
+func buildCompletedPrefix(number int, format string) string {
+	indent := ui.MainLeftIndent - 1
+	if indent < 0 {
+		indent = 0
+	}
+	return performance.FastConcat(
+		performance.RepeatEfficient(" ", indent),
+		formatTaskNumber(number, format),
+	)
+}
+
+// buildInProgressPrefix возвращает префикс активной задачи с учётом формата номера.
+func buildInProgressPrefix(number int, format string) string {
+	indent := ui.MainLeftIndent - 1
+	if indent < 0 {
+		indent = 0
+	}
+	return performance.FastConcat(
+		performance.RepeatEfficient(" ", indent),
+		formatTaskNumber(number, format),
+		" ",
+	)
+}
+
+// formatTaskNumber форматирует номер задачи на основе заданного шаблона fmt.Sprintf.
+// Если переданный формат пустой, используется формат по умолчанию.
+func formatTaskNumber(number int, format string) string {
+	if number <= 0 {
+		number = 1
+	}
+	if strings.TrimSpace(format) == "" {
+		format = defaultNumberFormat
+	}
+	if !strings.Contains(format, "%") {
+		format = format + "%d"
+	}
+	return fmt.Sprintf(format, number)
 }
 
 // Убираем из потока вывода крайнюю линию, если она есть

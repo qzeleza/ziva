@@ -188,7 +188,10 @@ func (t *YesNoTask) FinalView(width int) string {
 	// Используем новый префикс завершённой задачи
 	// Успешной считается только выбор "Да" и отсутствие других ошибок
 	success := t.selectedOption == YesOption && !t.HasError()
-	prefix := ui.GetCompletedTaskPrefix(success)
+	prefix := t.CompletedPrefix()
+	if prefix == "" {
+		prefix = ui.GetCompletedTaskPrefix(success)
+	}
 
 	left := fmt.Sprintf("%s %s", prefix, t.title)
 

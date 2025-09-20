@@ -24,6 +24,8 @@ type BaseTask struct {
 	finalValue  string // The final value to display (e.g., "Yes", "Option 1")
 	err         error  // Ошибка, если задача завершилась с ошибкой
 	stopOnError bool   // Флаг, указывающий, нужно ли останавливать очередь при ошибке
+	// customCompletedPrefix позволяет очереди подменять префикс завершённой задачи (например, на номер)
+	completedPrefix string
 
 	// Флаг, указывающий, нужно ли сохранять переносы строк в сообщениях об ошибках
 	preserveErrorNewLines bool
@@ -79,8 +81,8 @@ func (t *BaseTask) SetStopOnError(stop bool) { t.stopOnError = stop }
 // Если preserve=true, то оригинальные переносы строк сохраняются.
 // Если preserve=false, то переносы строк удаляются и текст переформатируется.
 // @return Интерфейс Task для цепочки вызовов
-func (t *BaseTask) WithNewLinesInErrors(preserve bool) common.Task { 
-	t.preserveErrorNewLines = preserve 
+func (t *BaseTask) WithNewLinesInErrors(preserve bool) common.Task {
+	t.preserveErrorNewLines = preserve
 	return t
 }
 
@@ -176,6 +178,9 @@ func (t *BaseTask) FinalView(width int) string {
 	} else {
 		prefix = ui.GetCompletedTaskPrefix(success)
 	}
+	if t.completedPrefix != "" {
+		prefix = t.completedPrefix
+	}
 
 	// Для простых значений Yes/No используем отдельные стили для "Да" и "Нет"
 	if t.finalValue == defauilt.DefaultYes || t.finalValue == defauilt.DefaultNo {
@@ -235,6 +240,16 @@ func (t *BaseTask) FinalView(width int) string {
 
 	// Запасной вариант - просто отображаем заголовок с префиксом
 	return fmt.Sprintf("%s %s", prefix, t.title)
+}
+
+// SetCompletedPrefix позволяет переопределить префикс завершённой задачи (используется очередью)
+func (t *BaseTask) SetCompletedPrefix(prefix string) {
+	t.completedPrefix = prefix
+}
+
+// CompletedPrefix возвращает текущий переопределённый префикс (если установлен)
+func (t *BaseTask) CompletedPrefix() string {
+	return t.completedPrefix
 }
 
 // IsTextInputTask определяет, является ли задача текстовой задачей ввода
