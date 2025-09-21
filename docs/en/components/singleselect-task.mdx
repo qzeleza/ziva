@@ -1,0 +1,61 @@
+---
+title: "SingleSelectTask"
+description: "Single option selection task from a list"
+---
+
+# SingleSelectTask
+
+`SingleSelectTask` provides an interface for selecting one option from a provided list of choices. This is one of the most commonly used task types in Termos.
+
+## Creating a Task
+
+```go
+options := []string{"option1", "option2", "option3"}
+task := termos.NewSingleSelectTask("Title", options)
+```
+
+## Main Methods
+
+### Creating with Settings
+
+```go
+task := termos.NewSingleSelectTask("Environment Selection", environments).
+    WithDefaultItem("staging").                    // default value
+    WithTimeout(10*time.Second, "production").     // timeout with fallback
+    WithViewport(5, true).                         // display limitation
+    WithItemsDisabled([]string{"maintenance"})     // disabled items
+```
+
+### Getting Results
+
+```go
+// After task execution
+selected := task.GetSelected()      // string - selected value
+index := task.GetSelectedIndex()    // int - selected item index
+```
+
+## Choice Hints
+
+For creating more informative lists, use hint delimiters:
+
+```go
+// Using "::" delimiter (default)
+options := []string{
+    "dev::Development environment",
+    "staging::Testing environment", 
+    "prod::Production environment",
+}
+
+// Or configure custom delimiter
+termos.SetChoiceHelpDelimiter("||")
+options = []string{
+    "api||REST API server",
+    "web||Web interface",
+    "cli||Command line",
+}
+```
+
+## See Also
+
+- [MultiSelectTask](/en/components/multiselect-task) - for multiple option selection
+- [YesNoTask](/en/components/yesno-task) - for binary choice

@@ -1,0 +1,69 @@
+---
+title: "Custom Validators"
+description: "Creating custom validators in Termos"
+---
+
+# Custom Validators
+
+You can create custom validators by implementing the `Validator` interface.
+
+## Validator Interface
+
+```go
+type Validator interface {
+    Validate(input string) error
+}
+```
+
+## Simple Custom Validator
+
+```go
+type PasswordValidator struct {
+    MinLength int
+}
+
+func (v *PasswordValidator) Validate(input string) error {
+    if len(input) < v.MinLength {
+        return fmt.Errorf("password must be at least %d characters", v.MinLength)
+    }
+    return nil
+}
+
+// Usage
+validator := &PasswordValidator{MinLength: 10}
+input := termos.NewInputTask("Password", "Enter password:").
+    WithValidator(validator)
+```
+
+## Chained Validators
+
+```go
+type ChainValidator struct {
+    validators []Validator
+}
+
+func (c *ChainValidator) Validate(input string) error {
+    for _, v := range c.validators {
+        if err := v.Validate(input); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+```
+
+## Conditional Validator
+
+```go
+type ConditionalValidator struct {
+    condition func(string) bool
+    validator Validator
+}
+
+func (c *ConditionalValidator) Validate(input string) error {
+    if c.condition(input) {
+        return c.validator.Validate(input)
+    }
+    return nil
+}
+```

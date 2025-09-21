@@ -1,0 +1,157 @@
+---
+title: "Kurulum"
+description: "Termos'u Go projenizde nasıl kuracağınız ve yapılandıracağınız"
+---
+
+# Termos Kurulumu
+
+## Gereksinimler
+
+- **Go 1.23.0+** (toolchain 1.24.5 önerilir)
+- Pseudografiklerin doğru görüntülenmesi için UTF-8 destekli terminal
+- Terminal renk desteği (opsiyonel)
+
+## Kurulum
+
+### go get ile
+
+```bash
+go get github.com/qzeleza/termos
+```
+
+### go mod ile
+
+`go.mod` dosyanıza ekleyin:
+
+```go
+require github.com/qzeleza/termos latest
+```
+
+Sonra çalıştırın:
+
+```bash
+go mod tidy
+```
+
+## Kurulum Doğrulaması
+
+Doğrulama için basit bir `main.go` dosyası oluşturun:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Basit görev oluştur
+    task := termos.NewYesNoTask("Test", "Termos doğru kuruldu mu?")
+
+    // Kuyruk oluştur ve görev ekle
+    queue := termos.NewQueue("Termos Kurulum Kontrolü")
+    queue.AddTasks(task)
+
+    // Çalıştır
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Sonucu kontrol et
+    if task.IsYes() {
+        fmt.Println("✅ Harika! Termos çalışmaya hazır.")
+    } else {
+        fmt.Println("❌ Kurulumu kontrol etmek gerekiyor.")
+    }
+}
+```
+
+Çalıştırın:
+
+```bash
+go run main.go
+```
+
+## Ortam Yapılandırması
+
+### Yerel Ayar Yapılandırması (Türkçe için)
+
+Türkçe metnin doğru görüntülenmesi için yerel ayarları yapılandırın:
+
+**Ubuntu/Debian:**
+```bash
+sudo locale-gen tr_TR.UTF-8
+sudo update-locale LANG=tr_TR.UTF-8
+export LANG=tr_TR.UTF-8
+export LC_ALL=tr_TR.UTF-8
+```
+
+**Entware/BusyBox:**
+```bash
+opkg install locale-full glibc-binary-locales
+export LANG=tr_TR.UTF-8
+```
+
+### Font Yapılandırması
+
+Gömülü sistemler için font yapılandırması gerekebilir:
+
+```bash
+setterm -reset
+setterm -store
+setterm -font ter-116n  # Turkish character support
+```
+
+### Ortam Değişkenleri
+
+Termos, ortam değişkenleri ile yapılandırmayı destekler:
+
+```bash
+# Arayüz dili
+export TERMOS_LANG=tr
+export TERMOS_DEFAULT_LANG=tr
+
+# Gömülü sistemler için
+export TERMOS_MEMORY_PRESSURE_THRESHOLD=50M
+export TERMOS_MAX_COMPLETED_TASKS=10
+
+# Terminal renkleri
+export COLORTERM=truecolor
+export TERM=xterm-256color
+```
+
+## Proje Yapısı
+
+Termos ile önerilen Go projesi yapısı:
+
+```
+uygulamam/
+├── go.mod
+├── go.sum
+├── main.go
+├── cmd/
+│   └── uygulamam/
+│       └── main.go
+├── internal/
+│   ├── tasks/
+│   ├── config/
+│   └── ui/
+└── pkg/
+    └── validation/
+```
+
+## Bağımlılıklar
+
+Termos şu ana bağımlılıkları kullanır:
+
+- **Bubble Tea** - TUI için temel
+- **Lip Gloss** - stil ve renkler
+- **Cobra** - CLI (opsiyonel)
+
+Tüm bağımlılıklar `go get` ile otomatik olarak yüklenir.
+
+<Card title="Sonraki Adım" icon="arrow-right" href="/tr/quick-start">
+  İlk TUI uygulamanızı oluşturun
+</Card>

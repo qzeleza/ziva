@@ -1,0 +1,119 @@
+---
+title: "Validation Examples"
+description: "Comprehensive examples of validation in Termos"
+---
+
+# Validation Examples
+
+Comprehensive examples demonstrating Termos validation capabilities.
+
+## All Built-in Validators
+
+```go
+func comprehensiveValidationDemo() {
+    v := termos.DefaultValidators
+
+    tasks := []termos.Task{
+        // Basic validation
+        termos.NewInputTask("Name", "Required field:").
+            WithValidator(v.Required()),
+
+        termos.NewInputTask("Username", "Username (3-20 chars):").
+            WithValidator(v.Username()),
+
+        // Length validation
+        termos.NewInputTask("Short Text", "Max 10 characters:").
+            WithValidator(v.MaxLength(10)),
+
+        termos.NewInputTask("Long Text", "Min 5 characters:").
+            WithValidator(v.MinLength(5)),
+
+        termos.NewInputTask("Exact Length", "Exactly 8 characters:").
+            WithValidator(v.Length(8)),
+
+        // Network validation
+        termos.NewInputTask("Email", "Email address:").
+            WithInputType(termos.InputTypeEmail).
+            WithValidator(v.Email()),
+
+        termos.NewInputTask("Website", "URL (optional):").
+            WithValidator(v.OptionalURL()),
+
+        termos.NewInputTask("IP Address", "IP (v4 or v6):").
+            WithInputType(termos.InputTypeIP).
+            WithValidator(v.IP()),
+
+        termos.NewInputTask("Domain", "Domain name:").
+            WithInputType(termos.InputTypeDomain).
+            WithValidator(v.Domain()),
+
+        termos.NewInputTask("Port", "Port number:").
+            WithInputType(termos.InputTypeNumber).
+            WithValidator(v.Port()),
+
+        // Advanced validation
+        termos.NewInputTask("Number Range", "Number (1-100):").
+            WithInputType(termos.InputTypeNumber).
+            WithValidator(v.Range(1, 100)),
+
+        termos.NewInputTask("Alpha Numeric", "Letters and numbers only:").
+            WithValidator(v.AlphaNumeric()),
+
+        // Password validation
+        termos.NewInputTask("Standard Password", "Password (min 8):").
+            WithInputType(termos.InputTypePassword).
+            WithValidator(v.StandardPassword()),
+
+        termos.NewInputTask("Strong Password", "Strong password (min 12):").
+            WithInputType(termos.InputTypePassword).
+            WithValidator(v.StrongPassword()),
+    }
+
+    queue := termos.NewQueue("Validation Showcase")
+    queue.WithTasksNumbered(true, "[%02d]")
+    queue.AddTasks(tasks...)
+    queue.Run()
+}
+```
+
+## Custom Validation Chain
+
+```go
+type ValidationChain struct {
+    validators []termos.Validator
+}
+
+func (vc *ValidationChain) Validate(input string) error {
+    for i, validator := range vc.validators {
+        if err := validator.Validate(input); err != nil {
+            return fmt.Errorf("validation %d failed: %w", i+1, err)
+        }
+    }
+    return nil
+}
+
+func chainValidationExample() {
+    v := termos.DefaultValidators
+
+    // Create validation chain
+    chain := &ValidationChain{
+        validators: []termos.Validator{
+            v.Required(),
+            v.MinLength(8),
+            v.MaxLength(50),
+            v.AlphaNumeric(),
+        },
+    }
+
+    task := termos.NewInputTask(
+        "Complex Validation",
+        "Enter value (required, 8-50 chars, alphanumeric):",
+    ).WithValidator(chain)
+
+    queue := termos.NewQueue("Chain Validation")
+    queue.AddTasks(task)
+    queue.Run()
+
+    fmt.Printf("Valid input: %s\n", task.GetValue())
+}
+```

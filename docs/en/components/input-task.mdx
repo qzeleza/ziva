@@ -1,0 +1,63 @@
+---
+title: "InputTask"
+description: "Text input task with validation"
+---
+
+# InputTask
+
+`InputTask` provides an interface for text data input with validation support.
+
+## Creating
+
+```go
+task := termos.NewInputTask("Username", "Enter name:")
+```
+
+## Main Methods
+
+```go
+// Settings
+task.WithValidator(termos.DefaultValidators.Email())  // validator
+task.WithInputType(termos.InputTypePassword)         // field type
+task.WithTimeout(30*time.Second, "default")          // timeout
+
+// Get result
+value := task.GetValue() // string
+```
+
+## Input Types
+
+```go
+const (
+    InputTypeText     = termos.InputTypeText     // regular text
+    InputTypePassword = termos.InputTypePassword // password (hidden)
+    InputTypeEmail    = termos.InputTypeEmail    // email
+    InputTypeNumber   = termos.InputTypeNumber   // number
+    InputTypeIP       = termos.InputTypeIP       // IP address
+    InputTypeDomain   = termos.InputTypeDomain   // domain
+)
+```
+
+## Example with Validation
+
+```go
+v := termos.DefaultValidators
+
+email := termos.NewInputTask("Email", "Enter email:").
+    WithInputType(termos.InputTypeEmail).
+    WithValidator(v.Email())
+
+password := termos.NewInputTask("Password", "Enter password:").
+    WithInputType(termos.InputTypePassword).
+    WithValidator(v.StrongPassword())
+
+queue := termos.NewQueue("Registration")
+queue.AddTasks(email, password)
+queue.Run()
+
+fmt.Printf("Email: %s\n", email.GetValue())
+```
+
+## See Also
+
+- [Validation](/en/validation/overview) - detailed validation system

@@ -1,0 +1,297 @@
+---
+title: "Basic Examples"
+description: "Simple examples of using Termos for creating TUI applications"
+---
+
+# Basic Usage Examples
+
+This page contains practical examples of creating TUI applications with Termos. All examples are ready to run and demonstrate the main features of the library.
+
+## Example 1: Simple Confirmation
+
+Basic example with a confirmation task:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Create confirmation task
+    confirm := termos.NewYesNoTask(
+        "Action Confirmation",
+        "Delete all temporary files?",
+    )
+
+    // Create queue and add task
+    queue := termos.NewQueue("System Cleanup")
+    queue.AddTasks(confirm)
+
+    // Run
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Handle result
+    if confirm.IsYes() {
+        fmt.Println("🗑️  Temporary files deleted")
+    } else {
+        fmt.Println("❌ Operation canceled")
+    }
+}
+```
+
+## Example 2: List Selection
+
+Example with single option selection from a list:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Options with descriptions
+    environments := []string{
+        "dev||Development environment - local machine",
+        "staging||Testing environment - for QA",
+        "production||Production environment - live users",
+    }
+
+    // Create selection task
+    envTask := termos.NewSingleSelectTask(
+        "Deployment Environment Selection",
+        environments,
+    ).WithDefaultItem("staging")
+
+    // Configure and run queue
+    queue := termos.NewQueue("Application Deployment")
+    queue.WithAppName("DeployTool")
+    queue.AddTasks(envTask)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Get result
+    selected := envTask.GetSelected()
+    fmt.Printf("🚀 Deploying to environment: %s\n", selected)
+}
+```
+
+## Example 3: Multiple Selection
+
+Example with selecting multiple components:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "strings"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Components to install
+    components := []string{
+        "web||Web server",
+        "api||REST API",
+        "db||Database",
+        "cache||Caching",
+        "monitoring||Monitoring",
+        "backup||Backup",
+    }
+
+    // Create multi-selection task
+    compTask := termos.NewMultiSelectTask(
+        "Select components to install",
+        components,
+    ).WithSelectAll("Install all").
+      WithDefaultItems([]string{"web", "api"})
+
+    queue := termos.NewQueue("System Installation")
+    queue.AddTasks(compTask)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Show selected components
+    selected := compTask.GetSelected()
+    if len(selected) > 0 {
+        fmt.Printf("📦 Will install: %s\n",
+            strings.Join(selected, ", "))
+    } else {
+        fmt.Println("❌ No components selected")
+    }
+}
+```
+
+## Example 4: Input with Validation
+
+Example of collecting user data with validation:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    v := termos.DefaultValidators
+
+    // Create input fields with validation
+    name := termos.NewInputTask("Name", "Enter your name:").
+        WithValidator(v.Required())
+
+    email := termos.NewInputTask("Email", "Enter email:").
+        WithInputType(termos.InputTypeEmail).
+        WithValidator(v.Email())
+
+    website := termos.NewInputTask("Website", "Website URL (optional):").
+        WithValidator(v.OptionalURL())
+
+    // Create queue
+    queue := termos.NewQueue("User Registration")
+    queue.WithAppName("UserReg")
+    queue.AddTasks(name, email, website)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Show collected information
+    fmt.Println("\n✅ Registration completed:")
+    fmt.Printf("Name: %s\n", name.GetValue())
+    fmt.Printf("Email: %s\n", email.GetValue())
+    if website.GetValue() != "" {
+        fmt.Printf("Website: %s\n", website.GetValue())
+    }
+}
+```
+
+## Example 5: Function Task
+
+Example of executing a long-running operation:
+
+```go
+package main
+
+import (
+    "log"
+    "math/rand"
+    "time"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Report data
+    var stats struct {
+        FilesProcessed int
+        Errors         int
+        Duration       time.Duration
+    }
+
+    // Create functional task
+    processTask := termos.NewFuncTask(
+        "File Processing",
+        func() error {
+            start := time.Now()
+
+            // File processing simulation
+            for i := 0; i < 100; i++ {
+                time.Sleep(50 * time.Millisecond)
+                stats.FilesProcessed++
+
+                // Random errors
+                if rand.Intn(20) == 0 {
+                    stats.Errors++
+                }
+            }
+
+            stats.Duration = time.Since(start)
+            return nil
+        },
+        // Results summary function
+        termos.WithSummaryFunction(func() []string {
+            return []string{
+                fmt.Sprintf("Files processed: %d", stats.FilesProcessed),
+                fmt.Sprintf("Errors: %d", stats.Errors),
+                fmt.Sprintf("Duration: %v", stats.Duration.Round(time.Millisecond)),
+            }
+        }),
+    )
+
+    queue := termos.NewQueue("Batch Processing")
+    queue.AddTasks(processTask)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+## Usage Tips
+
+### 1. Task Grouping
+
+Logically group related tasks:
+
+```go
+// Authentication group
+authTasks := []termos.Task{
+    termos.NewInputTask("Username", "Login:"),
+    termos.NewInputTask("Password", "Password:").WithInputType(termos.InputTypePassword),
+}
+
+// Settings group
+configTasks := []termos.Task{
+    termos.NewSingleSelectTask("Theme", themes),
+    termos.NewYesNoTask("Notifications", "Enable notifications?"),
+}
+
+queue.AddTasks(authTasks...)
+queue.AddTasks(configTasks...)
+```
+
+### 2. Cancellation Handling
+
+```go
+queue := termos.NewQueue("Setup")
+if err := queue.Run(); err != nil {
+    if err == context.Canceled {
+        fmt.Println("❌ Setup canceled by user")
+        return
+    }
+    log.Fatal(err)
+}
+```
+
+### 3. Configuration Saving
+
+```go
+// After successful execution
+config := collectResults(tasks...)
+if err := saveConfig(config); err != nil {
+    log.Printf("Save error: %v", err)
+}
+```
+
+## See Also
+
+- [Advanced Examples](/en/examples/advanced-queue) - complex usage scenarios
+- [Components](/en/components/queue) - details about each component
+- [Validation](/en/validation/overview) - data validation system

@@ -1,0 +1,54 @@
+---
+title: "Görev Türleri"
+description: "Termos'taki tüm görev türleri ve ana özellikleri"
+---
+
+# Termos'ta Görev Türleri
+
+Termos, etkileşimli TUI uygulamaları oluşturmak için beş ana görev türü sağlar.
+
+<CardGroup cols={2}>
+  <Card title="YesNoTask" icon="check-circle" href="/tr/components/yesno-task">
+    İki seçenek arasında ikili seçim (Evet/Hayır)
+  </Card>
+  <Card title="SingleSelectTask" icon="mouse-pointer" href="/tr/components/singleselect-task">
+    Listeden tek seçenek seçimi
+  </Card>
+  <Card title="MultiSelectTask" icon="list-check" href="/tr/components/multiselect-task">
+    Listeden çoklu seçenek seçimi
+  </Card>
+  <Card title="InputTask" icon="keyboard" href="/tr/components/input-task">
+    Doğrulama ile metin girişi
+  </Card>
+  <Card title="FuncTask" icon="play" href="/tr/components/func-task">
+    İlerleme gösterimi ile fonksiyon yürütme
+  </Card>
+</CardGroup>
+
+## Ortak Özellikler
+
+### Zaman Aşımları
+
+```go
+// Tüm görevler zaman aşımını destekler
+task.WithTimeout(10*time.Second, defaultValue)
+```
+
+### Sonuç Alma
+
+```go
+// Görev tamamlandıktan sonra
+result := task.GetResult()      // interface{}
+completed := task.IsCompleted() // bool
+```
+
+## Görev Oluşturma
+
+```go
+// Fabrika metodları
+yesno := termos.NewYesNoTask("Başlık", "Soru?")
+single := termos.NewSingleSelectTask("Başlık", []string{"opt1", "opt2"})
+multi := termos.NewMultiSelectTask("Başlık", []string{"item1", "item2"})
+input := termos.NewInputTask("Başlık", "İpucu:")
+fn := termos.NewFuncTask("Başlık", func() error { return nil })
+```

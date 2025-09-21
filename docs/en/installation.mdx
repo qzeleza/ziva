@@ -1,0 +1,157 @@
+---
+title: "Installation"
+description: "How to install and configure Termos in your Go project"
+---
+
+# Installing Termos
+
+## Requirements
+
+- **Go 1.23.0+** (toolchain 1.24.5 recommended)
+- Terminal with UTF-8 support for proper pseudographics display
+- Terminal color support (optional)
+
+## Installation
+
+### Via go get
+
+```bash
+go get github.com/qzeleza/termos
+```
+
+### Via go mod
+
+Add to your `go.mod`:
+
+```go
+require github.com/qzeleza/termos latest
+```
+
+Then run:
+
+```bash
+go mod tidy
+```
+
+## Installation Verification
+
+Create a simple `main.go` file for verification:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Create a simple task
+    task := termos.NewYesNoTask("Test", "Is Termos installed correctly?")
+
+    // Create queue and add task
+    queue := termos.NewQueue("Termos Installation Check")
+    queue.AddTasks(task)
+
+    // Run
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Check result
+    if task.IsYes() {
+        fmt.Println("✅ Great! Termos is ready to work.")
+    } else {
+        fmt.Println("❌ Installation needs to be checked.")
+    }
+}
+```
+
+Run it:
+
+```bash
+go run main.go
+```
+
+## Environment Setup
+
+### Locale Configuration (for non-English languages)
+
+For correct display of non-English text, configure locales:
+
+**Ubuntu/Debian:**
+```bash
+sudo locale-gen en_US.UTF-8 ru_RU.UTF-8
+sudo update-locale LANG=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+```
+
+**Entware/BusyBox:**
+```bash
+opkg install locale-full glibc-binary-locales
+export LANG=en_US.UTF-8
+```
+
+### Font Configuration
+
+For embedded systems, font configuration may be required:
+
+```bash
+setterm -reset
+setterm -store
+setterm -font ter-116n  # for international characters
+```
+
+### Environment Variables
+
+Termos supports configuration via environment variables:
+
+```bash
+# Interface language
+export TERMOS_LANG=en
+export TERMOS_DEFAULT_LANG=en
+
+# For embedded systems
+export TERMOS_MEMORY_PRESSURE_THRESHOLD=50M
+export TERMOS_MAX_COMPLETED_TASKS=10
+
+# Terminal colors
+export COLORTERM=truecolor
+export TERM=xterm-256color
+```
+
+## Project Structure
+
+Recommended Go project structure with Termos:
+
+```
+myapp/
+├── go.mod
+├── go.sum
+├── main.go
+├── cmd/
+│   └── myapp/
+│       └── main.go
+├── internal/
+│   ├── tasks/
+│   ├── config/
+│   └── ui/
+└── pkg/
+    └── validation/
+```
+
+## Dependencies
+
+Termos uses the following main dependencies:
+
+- **Bubble Tea** - foundation for TUI
+- **Lip Gloss** - styling and colors
+- **Cobra** - CLI (optional)
+
+All dependencies are installed automatically with `go get`.
+
+<Card title="Next Step" icon="arrow-right" href="/en/quick-start">
+  Create your first TUI application
+</Card>

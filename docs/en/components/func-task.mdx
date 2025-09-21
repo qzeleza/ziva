@@ -1,0 +1,64 @@
+---
+title: "FuncTask"
+description: "Function execution task with progress display"
+---
+
+# FuncTask
+
+`FuncTask` allows execution of arbitrary functions with progress display and results.
+
+## Creating
+
+```go
+task := termos.NewFuncTask("Processing", func() error {
+    // perform work
+    time.Sleep(2 * time.Second)
+    return nil
+})
+```
+
+## Configuration Options
+
+```go
+task := termos.NewFuncTask(
+    "Data Loading",
+    processFunc,
+    termos.WithSummaryFunction(func() []string {
+        return []string{"Processed: 100 files"}
+    }),
+    termos.WithStopOnError(true), // stop queue on error
+)
+```
+
+## Example with Report
+
+```go
+var stats struct {
+    Processed int
+    Errors    int
+}
+
+task := termos.NewFuncTask(
+    "File Processing",
+    func() error {
+        for i := 0; i < 100; i++ {
+            time.Sleep(50 * time.Millisecond)
+            stats.Processed++
+            if rand.Intn(20) == 0 {
+                stats.Errors++
+            }
+        }
+        return nil
+    },
+    termos.WithSummaryFunction(func() []string {
+        return []string{
+            fmt.Sprintf("Processed: %d", stats.Processed),
+            fmt.Sprintf("Errors: %d", stats.Errors),
+        }
+    }),
+)
+
+queue := termos.NewQueue("Batch Processing")
+queue.AddTasks(task)
+queue.Run()
+```

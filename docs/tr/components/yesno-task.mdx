@@ -1,0 +1,56 @@
+---
+title: "YesNoTask"
+description: "İki seçenek arasında ikili seçim görevi"
+---
+
+# YesNoTask
+
+`YesNoTask`, "Evet" ve "Hayır" arasında seçim yapmak için arayüz sağlar.
+
+## Görev Oluşturma
+
+```go
+task := termos.NewYesNoTask("Başlık", "Kullanıcıya soru?")
+```
+
+## Ana Metodlar
+
+```go
+// Ayarlarla oluşturma
+task := termos.NewYesNoTask("Onay", "Kuruluma devam et?").
+    WithDefaultItem("Evet").                         // varsayılan değer
+    WithTimeout(10*time.Second, "Hayır").            // zaman aşımı ile fallback
+    WithCustomLabels("Devam Et", "İptal Et")         // özel etiketler
+
+// Sonuç alma
+selected := task.GetSelectedOption() // termos.YesNoOption
+isYes := task.IsYes()                // bool
+isNo := task.IsNo()                  // bool
+```
+
+## Özel Etiketler
+
+```go
+// Varsayılan "Evet/Hayır" yerine özel etiketler
+task.WithCustomLabels("Devam Et", "İptal Et")
+task.WithCustomLabels("Kabul Et", "Reddet")
+task.WithCustomLabels("Aç", "Kapat")
+task.WithCustomLabels("✓ Evet", "✗ Hayır")
+```
+
+## Kullanım Örneği
+
+```go
+func confirmAction() bool {
+    task := termos.NewYesNoTask(
+        "Onay",
+        "Dosyayı silmek istediğinizden emin misiniz?",
+    )
+
+    queue := termos.NewQueue("Dosya Silme")
+    queue.AddTasks(task)
+    queue.Run()
+
+    return task.IsYes()
+}
+```

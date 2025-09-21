@@ -1,0 +1,54 @@
+---
+title: "Styling and Themes"
+description: "Customizing appearance of Termos applications"
+---
+
+# Styling and Themes
+
+Termos provides extensive styling capabilities for customizing the appearance of your TUI applications.
+
+## Global Styles
+
+```go
+// Available global styles
+termos.ErrorStatusStyle   // Error status display
+termos.ErrorMessageStyle  // Error messages
+termos.CancelStyle        // Cancellation messages
+termos.SubtleStyle        // Subtle text
+termos.SelectionStyle     // Selected items
+termos.ActiveStyle        // Active elements
+termos.InputStyle         // Input fields
+termos.SpinnerStyle       // Loading spinner
+```
+
+## Colors
+
+```go
+// Available colors
+termos.GreenBright
+termos.RedBright
+termos.BlueBright
+termos.YellowBright
+termos.CyanBright
+termos.MagentaBright
+termos.WhiteBright
+termos.GrayBright
+```
+
+## Queue Styling
+
+```go
+queue := termos.NewQueue("Styled Application")
+queue.WithAppNameColor(termos.BlueBright, true)     // app name: blue, bold
+queue.WithTitleColor(termos.GreenBright, false)     // title: green, normal
+```
+
+## Task Numbering Styles
+
+```go
+// Different numbering formats
+queue.WithTasksNumbered(true, "[%02d]")   // [01], [02], [03]
+queue.WithTasksNumbered(true, "(%d)")     // (1), (2), (3)
+queue.WithTasksNumbered(true, "%d.")      // 1., 2., 3.
+queue.WithTasksNumbered(true, "→ %d")     // → 1, → 2, → 3
+```

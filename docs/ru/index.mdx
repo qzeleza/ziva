@@ -1,0 +1,84 @@
+---
+title: "О пакете"
+description: "Термос - мощная Go библиотека для создания интерактивных TUI приложений с богатой функциональностью"
+---
+
+# Добро пожаловать в Termos
+
+**Термос** - это мощная Go библиотека для создания интерактивных терминальных пользовательских интерфейсов (TUI). Построенная на основе Bubble Tea, она предоставляет высокоуровневые компоненты для быстрого создания консольных приложений.
+
+## Основные возможности
+
+<CardGroup cols={2}>
+  <Card title="Система задач" icon="list-check" href="/ru/components/tasks">
+    Пять типов задач: YesNo, SingleSelect, MultiSelect, Input и Func с поддержкой таймаутов
+  </Card>
+  <Card title="Система очередей" icon="arrow-right-arrow-left" href="/ru/components/queue">
+    Оркестрация последовательностей задач с автоматическим отслеживанием прогресса
+  </Card>
+  <Card title="Валидация" icon="shield-check" href="/ru/validation/overview">
+    Встроенные валидаторы для email, IP, доменов, паролей и многого другого
+  </Card>
+  <Card title="Локализация" icon="globe" href="/ru/customization/colors">
+    Поддержка нескольких языков: русский, английский, турецкий, белорусский, украинский
+  </Card>
+</CardGroup>
+
+## Быстрый старт
+
+Установите библиотеку и начните создавать TUI приложения за несколько минут:
+
+```go
+package main
+
+import (
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Создаем очередь задач
+    queue := termos.NewQueue("Мое TUI приложение")
+
+    // Добавляем задачу подтверждения
+    confirm := termos.NewYesNoTask("Подтверждение", "Продолжить?")
+
+    // Добавляем задачу выбора
+    options := []string{"development", "staging", "production"}
+    env := termos.NewSingleSelectTask("Выберите среду", options)
+
+    // Добавляем задачи в очередь и запускаем
+    queue.AddTasks(confirm, env)
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+## Оптимизирован для встроенных систем
+
+Termos автоматически определяет и оптимизируется для работы на встроенных системах:
+
+- **Управление памятью** - мониторинг нагрузки и интернирование строк
+- **Адаптивные цветовые схемы** - упрощенные цвета для ограниченных терминалов
+- **Автоконфигурация** - детекция роутеров, IoT устройств и настройка параметров
+
+<Card title="Начать работу" icon="rocket" href="/ru/installation">
+  Установите Termos и создайте свое первое TUI приложение
+</Card>
+
+---
+
+## Сообщество и поддержка
+
+<CardGroup cols={3}>
+  <Card title="GitHub" icon="github" href="https://github.com/qzeleza/termos">
+    Исходный код, issue tracker и релизы
+  </Card>
+  <Card title="Go Package" icon="golang" href="https://pkg.go.dev/github.com/qzeleza/termos">
+    Документация API и примеры использования
+  </Card>
+  <Card title="Примеры" icon="code" href="/ru/examples/basic-usage">
+    Готовые примеры для быстрого начала
+  </Card>
+</CardGroup>

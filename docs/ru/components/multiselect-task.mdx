@@ -1,0 +1,48 @@
+---
+title: "MultiSelectTask"
+description: "Задача выбора нескольких вариантов из списка"
+---
+
+# MultiSelectTask
+
+`MultiSelectTask` позволяет пользователю выбрать один или несколько элементов из списка.
+
+## Создание
+
+```go
+options := []string{"item1", "item2", "item3"}
+task := termos.NewMultiSelectTask("Выберите компоненты", options)
+```
+
+## Основные методы
+
+```go
+// Настройки
+task.WithSelectAll("Выбрать все")          // добавить опцию "выбрать все"
+task.WithDefaultItems([]string{"item1", "item2"}) // выбранные по умолчанию
+task.WithViewport(5, true)                      // окно просмотра
+task.WithItemsDisabled([]string{"item3"})        // отключенные элементы
+
+// Получение результатов
+selected := task.GetSelected() // []string
+```
+
+## Пример использования
+
+```go
+components := []string{
+    "web::Веб-сервер",
+    "api::REST API",
+    "db::База данных",
+}
+
+task := termos.NewMultiSelectTask("Компоненты", components).
+    WithSelectAll("Установить все").
+    WithDefaultItems([]string{"web", "api"})
+
+queue := termos.NewQueue("Setup")
+queue.AddTasks(task)
+queue.Run()
+
+fmt.Printf("Выбрано: %v\n", task.GetSelected())
+```

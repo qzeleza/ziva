@@ -1,87 +1,168 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Termos",
+  "description": "Terminal Multitask Orchestrator System - A powerful Go library for creating interactive TUI applications",
+  "theme": "almond",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#0ea5e9",
+    "light": "#0284c7",
+    "dark": "#0369a1"
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "tabs": [
+    "languages": [
       {
-        "tab": "Guides",
+        "language": "ru",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Начало работы",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "ru/index",
+              "ru/installation",
+              "ru/quick-start"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Основные компоненты",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "ru/components/queue",
+              "ru/components/tasks",
+              "ru/components/yesno-task",
+              "ru/components/singleselect-task",
+              "ru/components/multiselect-task",
+              "ru/components/input-task",
+              "ru/components/func-task"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Валидация",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "ru/validation/overview",
+              "ru/validation/built-in-validators",
+              "ru/validation/custom-validators"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Настройка и стили",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "ru/customization/styling",
+              "ru/customization/colors",
+              "ru/customization/embedded-systems"
+            ]
+          },
+          {
+            "group": "Примеры",
+            "pages": [
+              "ru/examples/basic-usage",
+              "ru/examples/advanced-queue",
+              "ru/examples/validation-demo"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "language": "en",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Getting Started",
             "pages": [
-              "api-reference/introduction"
+              "en/index",
+              "en/installation",
+              "en/quick-start"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Core Components",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "en/components/queue",
+              "en/components/tasks",
+              "en/components/yesno-task",
+              "en/components/singleselect-task",
+              "en/components/multiselect-task",
+              "en/components/input-task",
+              "en/components/func-task"
+            ]
+          },
+          {
+            "group": "Validation",
+            "pages": [
+              "en/validation/overview",
+              "en/validation/built-in-validators",
+              "en/validation/custom-validators"
+            ]
+          },
+          {
+            "group": "Customization & Styling",
+            "pages": [
+              "en/customization/styling",
+              "en/customization/colors",
+              "en/customization/embedded-systems"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "en/examples/basic-usage",
+              "en/examples/advanced-queue",
+              "en/examples/validation-demo"
+            ]
+          }
+        ]
+      },
+      {
+        "language": "tr",
+        "groups": [
+          {
+            "group": "Başlangıç",
+            "pages": [
+              "tr/index",
+              "tr/installation",
+              "tr/quick-start"
+            ]
+          },
+          {
+            "group": "Ana Bileşenler",
+            "pages": [
+              "tr/components/queue",
+              "tr/components/tasks",
+              "tr/components/yesno-task",
+              "tr/components/singleselect-task",
+              "tr/components/multiselect-task",
+              "tr/components/input-task",
+              "tr/components/func-task"
+            ]
+          },
+          {
+            "group": "Doğrulama",
+            "pages": [
+              "tr/validation/overview",
+              "tr/validation/built-in-validators",
+              "tr/validation/custom-validators"
+            ]
+          },
+          {
+            "group": "Özelleştirme ve Stiller",
+            "pages": [
+              "tr/customization/styling",
+              "tr/customization/colors",
+              "tr/customization/embedded-systems"
+            ]
+          },
+          {
+            "group": "Örnekler",
+            "pages": [
+              "tr/examples/basic-usage",
+              "tr/examples/advanced-queue",
+              "tr/examples/validation-demo"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
@@ -90,33 +171,26 @@
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "label": "GitHub",
+        "href": "https://github.com/qzeleza/termos"
       }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+    ]
+  },
+  "anchors": [
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/qzeleza/termos"
+    },
+    {
+      "name": "Go Package",
+      "icon": "golang",
+      "url": "https://pkg.go.dev/github.com/qzeleza/termos"
     }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
+  ],
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/qzeleza/termos"
     }
   }
 }

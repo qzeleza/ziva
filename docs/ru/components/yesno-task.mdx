@@ -1,0 +1,285 @@
+---
+title: "YesNoTask"
+description: "Задача бинарного выбора между двумя вариантами"
+---
+
+# YesNoTask
+
+`YesNoTask` предоставляет интерфейс для выбора между двумя вариантами: "Да" и "Нет". Это самый простой тип задач в Termos, идеальный для подтверждений и бинарных решений.
+
+## Создание задачи
+
+```go
+task := termos.NewYesNoTask("Заголовок", "Вопрос пользователю?")
+```
+
+## Основные методы
+
+### Создание с настройками
+
+```go
+task := termos.NewYesNoTask("Подтверждение", "Продолжить установку?").
+    WithDefaultItem("Да").                           // значение по умолчанию
+    WithTimeout(10*time.Second, "Нет").              // таймаут с fallback
+    WithCustomLabels("Продолжить", "Отменить")       // кастомные лейблы
+```
+
+### Получение результатов
+
+```go
+// После выполнения задачи
+option := task.GetSelectedOption() // termos.YesNoOption
+isYes := task.IsYes()              // bool
+isNo := task.IsNo()                // bool
+```
+
+## Опции и константы
+
+```go
+// Доступные опции
+const (
+    YesOption = termos.YesOption  // "Да"
+    NoOption  = termos.NoOption   // "Нет"
+)
+
+// Проверка конкретной опции
+if task.GetSelectedOption() == termos.YesOption {
+    fmt.Println("Пользователь выбрал 'Да'")
+}
+```
+
+## Настройка по умолчанию
+
+### Выбор по умолчанию
+
+```go
+// По строке
+task.WithDefaultItem("Да")
+task.WithDefaultItem("Нет")
+
+// По константе
+task.WithDefaultItem(termos.YesOption)
+task.WithDefaultItem(termos.NoOption)
+
+// По bool (true = Да, false = Нет)
+task.WithDefaultItem(true)
+task.WithDefaultItem(false)
+```
+
+## Таймауты
+
+```go
+// Таймаут с автоматическим выбором "Да"
+task.WithTimeout(5*time.Second, "Да")
+
+// Таймаут с автоматическим выбором "Нет"
+task.WithTimeout(3*time.Second, termos.NoOption)
+
+// Таймаут с bool значением
+task.WithTimeout(10*time.Second, true) // true = Да
+```
+
+## Кастомные лейблы
+
+По умолчанию используются "Да" и "Нет", но можно настроить собственные:
+
+```go
+// Кастомные лейблы
+task.WithCustomLabels("Продолжить", "Отменить")
+task.WithCustomLabels("Accept", "Decline")
+task.WithCustomLabels("Включить", "Выключить")
+task.WithCustomLabels("✓ Да", "✗ Нет")
+```
+
+## Примеры использования
+
+### Простое подтверждение
+
+```go
+func confirmAction() bool {
+    task := termos.NewYesNoTask(
+        "Подтверждение",
+        "Вы уверены, что хотите удалить файл?",
+    )
+
+    queue := termos.NewQueue("Удаление файла")
+    queue.AddTasks(task)
+    queue.Run()
+
+    return task.IsYes()
+}
+```
+
+### Подтверждение с таймаутом
+
+```go
+func confirmWithTimeout() bool {
+    task := termos.NewYesNoTask(
+        "Автоматическое продолжение",
+        "Продолжить через 5 секунд?",
+    ).WithTimeout(5*time.Second, "Да")
+
+    queue := termos.NewQueue("Демо")
+    queue.AddTasks(task)
+    queue.Run()
+
+    return task.IsYes()
+}
+```
+
+### Кастомные опции
+
+```go
+func enableFeature() bool {
+    task := termos.NewYesNoTask(
+        "Настройка функции",
+        "Включить экспериментальную функцию?",
+    ).WithCustomLabels("Включить", "Оставить выключенной").
+      WithDefaultItem("Оставить выключенной")
+
+    queue := termos.NewQueue("Конфигурация")
+    queue.AddTasks(task)
+    queue.Run()
+
+    return task.IsYes()
+}
+```
+
+### Цепочка подтверждений
+
+```go
+func multipleConfirmations() {
+    backup := termos.NewYesNoTask(
+        "Резервная копия",
+        "Создать резервную копию перед обновлением?",
+    ).WithDefaultItem("Да")
+
+    proceed := termos.NewYesNoTask(
+        "Продолжение",
+        "Начать обновление?",
+    )
+
+    queue := termos.NewQueue("Обновление системы")
+    queue.AddTasks(backup, proceed)
+    queue.Run()
+
+    if backup.IsYes() {
+        fmt.Println("Создаем резервную копию...")
+    }
+
+    if proceed.IsYes() {
+        fmt.Println("Начинаем обновление...")
+    } else {
+        fmt.Println("Обновление отменено")
+    }
+}
+```
+
+### Условная логика
+
+```go
+func conditionalFlow() {
+    enableSSL := termos.NewYesNoTask(
+        "Безопасность",
+        "Включить SSL шифрование?",
+    ).WithDefaultItem("Да")
+
+    var certTask *termos.InputTask
+    if enableSSL.IsYes() {
+        certTask = termos.NewInputTask(
+            "Сертификат",
+            "Путь к SSL сертификату:",
+        )
+    }
+
+    queue := termos.NewQueue("Настройка сервера")
+    queue.AddTasks(enableSSL)
+
+    if enableSSL.IsYes() {
+        queue.AddTasks(certTask)
+    }
+
+    queue.Run()
+
+    if enableSSL.IsYes() && certTask != nil {
+        fmt.Printf("SSL включен, сертификат: %s\n", certTask.GetValue())
+    }
+}
+```
+
+## Интеграция с валидацией
+
+Хотя YesNoTask не использует валидацию напрямую, результаты можно проверять:
+
+```go
+func validateChoice(task *termos.YesNoTask) error {
+    if task.IsNo() {
+        return errors.New("операция отменена пользователем")
+    }
+    return nil
+}
+
+// Использование
+task := termos.NewYesNoTask("Confirm", "Proceed?")
+queue := termos.NewQueue("Demo")
+queue.AddTasks(task)
+queue.Run()
+
+if err := validateChoice(task); err != nil {
+    log.Fatal(err)
+}
+```
+
+## Стилизация
+
+```go
+// YesNoTask наследует стили из общей системы
+// Можно настроить через глобальные стили:
+
+// В main или init функции
+termos.SelectionStyle = termos.SelectionStyle.Foreground(termos.GreenBright)
+termos.ActiveStyle = termos.ActiveStyle.Foreground(termos.BlueBright)
+```
+
+## Лучшие практики
+
+### 1. Используйте понятные вопросы
+
+```go
+// Хорошо
+termos.NewYesNoTask("Удаление", "Удалить все файлы в папке?")
+
+// Плохо
+termos.NewYesNoTask("Файлы", "Действие?")
+```
+
+### 2. Устанавливайте разумные значения по умолчанию
+
+```go
+// Для безопасных операций - "Да"
+task.WithDefaultItem("Да")
+
+// Для опасных операций - "Нет"
+task.WithDefaultItem("Нет")
+```
+
+### 3. Используйте таймауты для автоматизации
+
+```go
+// Для CI/CD пайплайнов
+task.WithTimeout(30*time.Second, "Да")
+```
+
+### 4. Кастомизируйте лейблы для контекста
+
+```go
+// Вместо "Да/Нет" используйте контекстные лейблы
+task.WithCustomLabels("Сохранить", "Отменить")
+task.WithCustomLabels("Установить", "Пропустить")
+```
+
+## См. также
+
+- [SingleSelectTask](/ru/components/singleselect-task) - для выбора из нескольких вариантов
+- [InputTask](/ru/components/input-task) - для ввода произвольного текста
+- [Примеры](/ru/examples/basic-usage) - практические примеры использования

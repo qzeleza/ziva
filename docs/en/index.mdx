@@ -1,0 +1,84 @@
+---
+title: "About"
+description: "Termos - a powerful Go library for creating interactive TUI applications with rich functionality"
+---
+
+# Welcome to Termos
+
+**Termos** is a powerful Go library for creating interactive terminal user interfaces (TUI). Built on top of Bubble Tea, it provides high-level components for quickly building console applications.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Task System" icon="list-check" href="/en/components/tasks">
+    Five task types: YesNo, SingleSelect, MultiSelect, Input, and Func with timeout support
+  </Card>
+  <Card title="Queue System" icon="arrow-right-arrow-left" href="/en/components/queue">
+    Orchestration of task sequences with automatic progress tracking
+  </Card>
+  <Card title="Validation" icon="shield-check" href="/en/validation/overview">
+    Built-in validators for email, IP, domains, passwords, and much more
+  </Card>
+  <Card title="Localization" icon="globe" href="/en/customization/colors">
+    Multi-language support: Russian, English, Turkish, Belarusian, Ukrainian
+  </Card>
+</CardGroup>
+
+## Quick Start
+
+Install the library and start creating TUI applications in minutes:
+
+```go
+package main
+
+import (
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Create a task queue
+    queue := termos.NewQueue("My TUI Application")
+
+    // Add confirmation task
+    confirm := termos.NewYesNoTask("Confirmation", "Continue?")
+
+    // Add selection task
+    options := []string{"development", "staging", "production"}
+    env := termos.NewSingleSelectTask("Select environment", options)
+
+    // Add tasks to queue and run
+    queue.AddTasks(confirm, env)
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+## Optimized for Embedded Systems
+
+Termos automatically detects and optimizes for embedded systems:
+
+- **Memory Management** - load monitoring and string interning
+- **Adaptive Color Schemes** - simplified colors for limited terminals
+- **Auto-configuration** - router and IoT device detection with parameter tuning
+
+<Card title="Get Started" icon="rocket" href="/en/installation">
+  Install Termos and create your first TUI application
+</Card>
+
+---
+
+## Community and Support
+
+<CardGroup cols={3}>
+  <Card title="GitHub" icon="github" href="https://github.com/qzeleza/termos">
+    Source code, issue tracker, and releases
+  </Card>
+  <Card title="Go Package" icon="golang" href="https://pkg.go.dev/github.com/qzeleza/termos">
+    API documentation and usage examples
+  </Card>
+  <Card title="Examples" icon="code" href="/en/examples/basic-usage">
+    Ready-to-run examples for quick start
+  </Card>
+</CardGroup>

@@ -1,0 +1,64 @@
+---
+title: "FuncTask"
+description: "Задача выполнения функций с отображением прогресса"
+---
+
+# FuncTask
+
+`FuncTask` позволяет выполнять произвольные функции с отображением прогресса и результатов.
+
+## Создание
+
+```go
+task := termos.NewFuncTask("Обработка", func() error {
+    // выполнить работу
+    time.Sleep(2 * time.Second)
+    return nil
+})
+```
+
+## Опции конфигурации
+
+```go
+task := termos.NewFuncTask(
+    "Загрузка данных",
+    processFunc,
+    termos.WithSummaryFunction(func() []string {
+        return []string{"Обработано: 100 файлов"}
+    }),
+    termos.WithStopOnError(true), // остановить очередь при ошибке
+)
+```
+
+## Пример с отчетом
+
+```go
+var stats struct {
+    Processed int
+    Errors    int
+}
+
+task := termos.NewFuncTask(
+    "Обработка файлов",
+    func() error {
+        for i := 0; i < 100; i++ {
+            time.Sleep(50 * time.Millisecond)
+            stats.Processed++
+            if rand.Intn(20) == 0 {
+                stats.Errors++
+            }
+        }
+        return nil
+    },
+    termos.WithSummaryFunction(func() []string {
+        return []string{
+            fmt.Sprintf("Обработано: %d", stats.Processed),
+            fmt.Sprintf("Ошибок: %d", stats.Errors),
+        }
+    }),
+)
+
+queue := termos.NewQueue("Пакетная обработка")
+queue.AddTasks(task)
+queue.Run()
+```

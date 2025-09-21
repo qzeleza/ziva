@@ -1,0 +1,157 @@
+---
+title: "Установка"
+description: "Как установить и настроить Termos в вашем Go проекте"
+---
+
+# Установка Termos
+
+## Требования
+
+- **Go 1.23.0+** (рекомендуется toolchain 1.24.5)
+- Терминал с поддержкой UTF-8 для корректного отображения псевдографики
+- Поддержка цветов в терминале (опционально)
+
+## Установка
+
+### Через go get
+
+```bash
+go get github.com/qzeleza/termos
+```
+
+### Через go mod
+
+Добавьте в ваш `go.mod`:
+
+```go
+require github.com/qzeleza/termos latest
+```
+
+Затем выполните:
+
+```bash
+go mod tidy
+```
+
+## Проверка установки
+
+Создайте простой файл `main.go` для проверки:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Создаем простую задачу
+    task := termos.NewYesNoTask("Тест", "Termos установлен корректно?")
+
+    // Создаем очередь и добавляем задачу
+    queue := termos.NewQueue("Проверка установки Termos")
+    queue.AddTasks(task)
+
+    // Запускаем
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Проверяем результат
+    if task.IsYes() {
+        fmt.Println("✅ Отлично! Termos готов к работе.")
+    } else {
+        fmt.Println("❌ Нужно проверить установку.")
+    }
+}
+```
+
+Запустите:
+
+```bash
+go run main.go
+```
+
+## Настройка окружения
+
+### Настройка локали (для русского языка)
+
+Для корректного отображения русского текста настройте локаль:
+
+**Ubuntu/Debian:**
+```bash
+sudo locale-gen ru_RU.UTF-8
+sudo update-locale LANG=ru_RU.UTF-8
+export LANG=ru_RU.UTF-8
+export LC_ALL=ru_RU.UTF-8
+```
+
+**Entware/BusyBox:**
+```bash
+opkg install locale-full glibc-binary-locales
+export LANG=ru_RU.UTF-8
+```
+
+### Настройка шрифта
+
+Для встроенных систем может потребоваться настройка шрифта:
+
+```bash
+setterm -reset
+setterm -store
+setterm -font latarcyrheb-sun32  # для Cyrillic
+```
+
+### Переменные окружения
+
+Termos поддерживает настройку через переменные окружения:
+
+```bash
+# Язык интерфейса
+export TERMOS_LANG=ru
+export TERMOS_DEFAULT_LANG=ru
+
+# Для встроенных систем
+export TERMOS_MEMORY_PRESSURE_THRESHOLD=50M
+export TERMOS_MAX_COMPLETED_TASKS=10
+
+# Цвета терминала
+export COLORTERM=truecolor
+export TERM=xterm-256color
+```
+
+## Структура проекта
+
+Рекомендуемая структура Go проекта с Termos:
+
+```
+myapp/
+├── go.mod
+├── go.sum
+├── main.go
+├── cmd/
+│   └── myapp/
+│       └── main.go
+├── internal/
+│   ├── tasks/
+│   ├── config/
+│   └── ui/
+└── pkg/
+    └── validation/
+```
+
+## Зависимости
+
+Termos использует следующие основные зависимости:
+
+- **Bubble Tea** - основа для TUI
+- **Lip Gloss** - стилизация и цвета
+- **Cobra** - CLI (опционально)
+
+Все зависимости устанавливаются автоматически при `go get`.
+
+<Card title="Следующий шаг" icon="arrow-right" href="/ru/quick-start">
+  Создайте ваше первое TUI приложение
+</Card>

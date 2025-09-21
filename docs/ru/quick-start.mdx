@@ -1,0 +1,200 @@
+---
+title: "Быстрый старт"
+description: "Создайте ваше первое TUI приложение с Termos за 5 минут"
+---
+
+# Быстрый старт
+
+В этом руководстве мы создадим простое TUI приложение, демонстрирующее основные возможности Termos.
+
+## Шаг 1: Создание проекта
+
+Создайте новый Go проект:
+
+```bash
+mkdir termos-demo
+cd termos-demo
+go mod init termos-demo
+go get github.com/qzeleza/termos
+```
+
+## Шаг 2: Базовое приложение
+
+Создайте файл `main.go`:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "time"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Создаем очередь задач с заголовком
+    queue := termos.NewQueue("Демо приложение Termos")
+
+    // Настраиваем внешний вид
+    queue.WithAppName("MyApp")
+    queue.WithTasksNumbered(false, "[%d]")
+
+    // Создаем задачи
+    createTasks(queue)
+
+    // Запускаем очередь
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Выводим результаты
+    printResults()
+}
+
+func createTasks(queue *termos.Queue) {
+    // 1. Задача подтверждения с таймаутом
+    confirm := termos.NewYesNoTask("Подтверждение", "Начать настройку?").
+        WithTimeout(5*time.Second, "Да")
+
+    // 2. Выбор среды
+    environments := []string{
+        "development||Среда разработки",
+        "staging||Тестовая среда",
+        "production||Боевая среда",
+    }
+    env := termos.NewSingleSelectTask("Выбор среды", environments).
+        WithDefaultItem("staging")
+
+    // 3. Выбор компонентов
+    components := []string{
+        "api||REST API сервер",
+        "web||Веб интерфейс",
+        "cli||Командная строка",
+        "docs||Документация",
+    }
+    comp := termos.NewMultiSelectTask("Компоненты", components).
+        WithSelectAll("Выбрать все").
+        WithDefaultItems([]string{"api", "cli"})
+
+    // 4. Ввод имени проекта с валидацией
+    name := termos.NewInputTask("Имя проекта", "Введите название:").
+        WithValidator(termos.DefaultValidators.Required())
+
+    // 5. Функциональная задача
+    setup := termos.NewFuncTask("Настройка", func() error {
+        time.Sleep(2 * time.Second) // Имитация работы
+        return nil
+    }, termos.WithSummaryFunction(func() []string {
+        return []string{"Конфигурация создана", "Проект готов к работе"}
+    }))
+
+    // Добавляем все задачи в очередь
+    queue.AddTasks(confirm, env, comp, name, setup)
+}
+
+func printResults() {
+    fmt.Println("\n🎉 Приложение завершено!")
+    fmt.Println("Результаты сохранены в объектах задач.")
+}
+```
+
+## Шаг 3: Запуск
+
+Запустите приложение:
+
+```bash
+go run main.go
+```
+
+Вы увидите интерактивный интерфейс с различными типами задач.
+
+## Шаг 4: Работа с результатами
+
+Расширим пример для работы с результатами:
+
+```go
+func printResults(confirm *termos.YesNoTask, env *termos.SingleSelectTask,
+                 comp *termos.MultiSelectTask, name *termos.InputTask) {
+    fmt.Println("\n📋 Результаты конфигурации:")
+    fmt.Printf("Подтверждение: %v\n", confirm.IsYes())
+    fmt.Printf("Среда: %s\n", env.GetSelected())
+    fmt.Printf("Компоненты: %v\n", comp.GetSelected())
+    fmt.Printf("Имя проекта: %s\n", name.GetValue())
+}
+```
+
+И обновим main:
+
+```go
+func main() {
+    queue := termos.NewQueue("Демо приложение Termos")
+
+    // Создаем задачи с сохранением ссылок
+    confirm, env, comp, name := createTasksWithReferences(queue)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Выводим результаты
+    printResults(confirm, env, comp, name)
+}
+```
+
+## Основные концепции
+
+### Очередь задач (Queue)
+
+Центральный компонент, который управляет последовательным выполнением задач:
+
+```go
+queue := termos.NewQueue("Заголовок")
+queue.WithAppName("MyApp")      // Имя приложения
+queue.WithClearScreen(true)     // Очистка экрана
+queue.WithTasksNumbered(true, "[%02d]") // Нумерация задач
+```
+
+### Типы задач
+
+1. **YesNoTask** - выбор Да/Нет
+2. **SingleSelectTask** - выбор одного варианта
+3. **MultiSelectTask** - выбор нескольких вариантов
+4. **InputTask** - ввод текста с валидацией
+5. **FuncTask** - выполнение функции
+
+### Таймауты
+
+Все задачи поддерживают таймауты с значениями по умолчанию:
+
+```go
+task.WithTimeout(10*time.Second, defaultValue)
+```
+
+### Валидация
+
+Встроенные валидаторы для различных типов данных:
+
+```go
+v := termos.DefaultValidators
+inputTask.WithValidator(v.Email())        // Email
+inputTask.WithValidator(v.IP())           // IP адрес
+inputTask.WithValidator(v.MinLength(5))   // Минимальная длина
+```
+
+## Что дальше?
+
+<CardGroup cols={2}>
+  <Card title="Компоненты" icon="puzzle-piece" href="/ru/components/queue">
+    Изучите все доступные компоненты подробно
+  </Card>
+  <Card title="Валидация" icon="shield-check" href="/ru/validation/overview">
+    Узнайте о системе валидации данных
+  </Card>
+  <Card title="Стилизация" icon="palette" href="/ru/customization/styling">
+    Настройте внешний вид приложения
+  </Card>
+  <Card title="Примеры" icon="code" href="/ru/examples/basic-usage">
+    Изучите продвинутые примеры использования
+  </Card>
+</CardGroup>

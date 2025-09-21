@@ -1,0 +1,63 @@
+---
+title: "InputTask"
+description: "Задача ввода текста с валидацией"
+---
+
+# InputTask
+
+`InputTask` предоставляет интерфейс для ввода текстовых данных с поддержкой валидации.
+
+## Создание
+
+```go
+task := termos.NewInputTask("Имя пользователя", "Введите имя:")
+```
+
+## Основные методы
+
+```go
+// Настройки
+task.WithValidator(termos.DefaultValidators.Email())  // валидатор
+task.WithInputType(termos.InputTypePassword)         // тип поля
+task.WithTimeout(30*time.Second, "по умолчанию") // таймаут
+
+// Получение результата
+value := task.GetValue() // string
+```
+
+## Типы полей ввода
+
+```go
+const (
+    InputTypeText     = termos.InputTypeText     // обычный текст
+    InputTypePassword = termos.InputTypePassword // пароль (скрытые символы)
+    InputTypeEmail    = termos.InputTypeEmail    // email
+    InputTypeNumber   = termos.InputTypeNumber   // число
+    InputTypeIP       = termos.InputTypeIP       // IP адрес
+    InputTypeDomain   = termos.InputTypeDomain   // домен
+)
+```
+
+## Пример с валидацией
+
+```go
+v := termos.DefaultValidators
+
+email := termos.NewInputTask("Email", "Введите email:").
+    WithInputType(termos.InputTypeEmail).
+    WithValidator(v.Email())
+
+password := termos.NewInputTask("Пароль", "Введите пароль:").
+    WithInputType(termos.InputTypePassword).
+    WithValidator(v.StrongPassword())
+
+queue := termos.NewQueue("Регистрация")
+queue.AddTasks(email, password)
+queue.Run()
+
+fmt.Printf("Email: %s\n", email.GetValue())
+```
+
+## См. также
+
+- [Валидация](/ru/validation/overview) - подробно о системе валидации

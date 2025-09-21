@@ -1,0 +1,59 @@
+---
+title: "AB@>5==K5 20;840B>@K"
+description: ">;=K9 A?8A>: 2AB@>5==KE 20;840B>@>2 Termos"
+---
+
+# AB@>5==K5 20;840B>@K
+
+Termos ?@54>AB02;O5B H8@>:89 =01>@ 2AB@>5==KE 20;840B>@>2.
+
+## 07>2K5 20;840B>@K
+
+```go
+v := termos.DefaultValidators
+
+// 1O70B5;L=>5 ?>;5
+v.Required()
+
+// 8=8<0;L=0O 4;8=0
+v.MinLength(5)
+
+// 0:A8<0;L=0O 4;8=0
+v.MaxLength(100)
+
+// ">G=0O 4;8=0
+v.Length(8)
+
+// '8A;>2>9 480?07>=
+v.Range(1, 100)
+```
+
+## !5B52K5 20;840B>@K
+
+```go
+// Email
+v.Email()
+v.OptionalEmail()
+
+// IP 04@5A0
+v.IP()    // IPv4 8;8 IPv6
+v.IPv4()  // B>;L:> IPv4
+v.IPv6()  // B>;L:> IPv6
+
+// ><5= 8 URL
+v.Domain()
+v.URL()
+
+// >@B
+v.Port() // 1-65535
+```
+
+## 0@>;8
+
+```go
+// !B0=40@B=K9 ?0@>;L (<8=. 8 A8<2>;>2)
+v.StandardPassword()
+
+// !8;L=K9 ?0@>;L (<8=. 12 A8<2>;>2)
+v.StrongPassword()
+```

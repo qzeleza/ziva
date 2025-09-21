@@ -1,0 +1,271 @@
+---
+title: "Task Types Overview"
+description: "All task types in Termos and their key capabilities"
+---
+
+# Task Types in Termos
+
+Termos provides five main task types for creating interactive TUI applications. Each task has unique capabilities and use cases.
+
+## Task Types
+
+<CardGroup cols={2}>
+  <Card title="YesNoTask" icon="check-circle" href="/en/components/yesno-task">
+    Binary choice between two options (Yes/No)
+  </Card>
+  <Card title="SingleSelectTask" icon="mouse-pointer" href="/en/components/singleselect-task">
+    Single option selection from a list
+  </Card>
+  <Card title="MultiSelectTask" icon="list-check" href="/en/components/multiselect-task">
+    Multiple option selection from a list
+  </Card>
+  <Card title="InputTask" icon="keyboard" href="/en/components/input-task">
+    Text input with validation
+  </Card>
+  <Card title="FuncTask" icon="play" href="/en/components/func-task">
+    Function execution with progress display
+  </Card>
+</CardGroup>
+
+## Common Features
+
+All tasks in Termos share a common set of basic capabilities:
+
+### Task Interface
+
+```go
+type Task interface {
+    Execute() error
+    GetTitle() string
+    GetResult() interface{}
+    IsCompleted() bool
+}
+```
+
+### Timeouts
+
+All tasks support timeout configuration with default values:
+
+```go
+// For YesNoTask
+task.WithTimeout(5*time.Second, "Yes")
+
+// For SingleSelectTask
+task.WithTimeout(10*time.Second, "option1")
+
+// For MultiSelectTask
+task.WithTimeout(15*time.Second, []string{"item1", "item2"})
+
+// For InputTask
+task.WithTimeout(30*time.Second, "default text")
+```
+
+### Choice Hints
+
+For selection tasks, you can add hints:
+
+```go
+// Using default delimiter "::"
+options := []string{
+    "dev::Development environment",
+    "prod::Production environment",
+}
+
+// Configure custom delimiter
+termos.SetChoiceHelpDelimiter("||")
+options := []string{
+    "api||REST API server",
+    "web||Web interface",
+    "cli||Command line interface",
+}
+```
+
+## Creating Tasks
+
+### Factory Methods
+
+```go
+// YesNo task
+yesno := termos.NewYesNoTask("Title", "Question?")
+
+// Single select task
+single := termos.NewSingleSelectTask("Title", []string{"opt1", "opt2"})
+
+// Multi select task
+multi := termos.NewMultiSelectTask("Title", []string{"item1", "item2"})
+
+// Input task
+input := termos.NewInputTask("Title", "Prompt:")
+
+// Function task
+fn := termos.NewFuncTask("Title", func() error {
+    // perform work
+    return nil
+})
+```
+
+### Method Chaining
+
+All tasks support method chaining configuration:
+
+```go
+task := termos.NewSingleSelectTask("Selection", options).
+    WithDefaultItem("option2").
+    WithTimeout(10*time.Second, "option1").
+    WithViewport(5, true)
+```
+
+## Getting Results
+
+### After Queue Execution
+
+```go
+// Save task references
+yesnoTask := termos.NewYesNoTask("Confirm", "Continue?")
+selectTask := termos.NewSingleSelectTask("Choose", options)
+
+queue := termos.NewQueue("Demo")
+queue.AddTasks(yesnoTask, selectTask)
+queue.Run()
+
+// Get results
+if yesnoTask.IsYes() {
+    fmt.Printf("Selected: %s\n", selectTask.GetSelected())
+}
+```
+
+### Typed Results
+
+```go
+// YesNoTask
+option := yesnoTask.GetSelectedOption() // YesNoOption
+isYes := yesnoTask.IsYes()              // bool
+isNo := yesnoTask.IsNo()                // bool
+
+// SingleSelectTask
+selected := task.GetSelected()          // string
+index := task.GetSelectedIndex()        // int
+
+// MultiSelectTask
+items := task.GetSelected()             // []string
+
+// InputTask
+value := task.GetValue()                // string
+```
+
+## Advanced Features
+
+### Viewport for Long Lists
+
+```go
+task := termos.NewSingleSelectTask("Choose", longList).
+    WithViewport(5, true) // show 5 items, show counters
+```
+
+### Disabling Items
+
+```go
+// By indices
+task.WithItemsDisabled([]int{0, 2, 4})
+
+// By values
+task.WithItemsDisabled([]string{"item1", "item3"})
+```
+
+### Default Values
+
+```go
+// For single select
+task.WithDefaultItem("option2")
+task.WithDefaultItem(1) // by index
+
+// For multi select
+task.WithDefaultItems([]string{"item1", "item3"})
+task.WithDefaultItems([]int{0, 2}) // by indices
+```
+
+## Error Handling
+
+### Validation in InputTask
+
+```go
+input := termos.NewInputTask("Email", "Enter email:").
+    WithValidator(termos.DefaultValidators.Email())
+
+// After execution
+if input.GetValue() != "" {
+    fmt.Printf("Valid email: %s\n", input.GetValue())
+}
+```
+
+### Errors in FuncTask
+
+```go
+funcTask := termos.NewFuncTask("Process", func() error {
+    // May return error
+    return errors.New("processing failed")
+}).WithStopOnError(true) // stop queue on error
+```
+
+## Best Practices
+
+### 1. Group Related Tasks
+
+```go
+// Configuration task group
+configTasks := []termos.Task{
+    termos.NewInputTask("Host", "Enter hostname:"),
+    termos.NewInputTask("Port", "Enter port:"),
+    termos.NewYesNoTask("SSL", "Enable SSL?"),
+}
+queue.AddTasks(configTasks...)
+```
+
+### 2. Use Context
+
+```go
+type Config struct {
+    Host string
+    Port string
+    SSL  bool
+}
+
+func setupConfig() *Config {
+    var config Config
+
+    hostTask := termos.NewInputTask("Host", "Enter hostname:")
+    portTask := termos.NewInputTask("Port", "Enter port:")
+    sslTask := termos.NewYesNoTask("SSL", "Enable SSL?")
+
+    queue := termos.NewQueue("Configuration")
+    queue.AddTasks(hostTask, portTask, sslTask)
+    queue.Run()
+
+    config.Host = hostTask.GetValue()
+    config.Port = portTask.GetValue()
+    config.SSL = sslTask.IsYes()
+
+    return &config
+}
+```
+
+### 3. Validate Results
+
+```go
+task := termos.NewInputTask("Port", "Enter port (1-65535):").
+    WithValidator(termos.DefaultValidators.Port())
+
+// Additional check after execution
+if task.GetValue() != "" {
+    port, _ := strconv.Atoi(task.GetValue())
+    if port < 1024 {
+        fmt.Println("Warning: Using privileged port")
+    }
+}
+```
+
+## See Also
+
+- [YesNoTask](/en/components/yesno-task) - confirmation task details
+- [Validation](/en/validation/overview) - input data validation system
+- [Examples](/en/examples/basic-usage) - practical usage examples

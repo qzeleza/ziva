@@ -1,0 +1,200 @@
+---
+title: "Quick Start"
+description: "Create your first TUI application with Termos in 5 minutes"
+---
+
+# Quick Start
+
+In this guide, we'll create a simple TUI application demonstrating the main features of Termos.
+
+## Step 1: Create Project
+
+Create a new Go project:
+
+```bash
+mkdir termos-demo
+cd termos-demo
+go mod init termos-demo
+go get github.com/qzeleza/termos
+```
+
+## Step 2: Basic Application
+
+Create a `main.go` file:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "time"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Create task queue with title
+    queue := termos.NewQueue("Termos Demo Application")
+
+    // Configure appearance
+    queue.WithAppName("MyApp")
+    queue.WithTasksNumbered(false, "[%d]")
+
+    // Create tasks
+    createTasks(queue)
+
+    // Run the queue
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Show results
+    printResults()
+}
+
+func createTasks(queue *termos.Queue) {
+    // 1. Confirmation task with timeout
+    confirm := termos.NewYesNoTask("Confirmation", "Start setup?").
+        WithTimeout(5*time.Second, "Yes")
+
+    // 2. Environment selection
+    environments := []string{
+        "development||Development environment",
+        "staging||Testing environment",
+        "production||Production environment",
+    }
+    env := termos.NewSingleSelectTask("Environment Selection", environments).
+        WithDefaultItem("staging")
+
+    // 3. Component selection
+    components := []string{
+        "api||REST API server",
+        "web||Web interface",
+        "cli||Command line",
+        "docs||Documentation",
+    }
+    comp := termos.NewMultiSelectTask("Components", components).
+        WithSelectAll("Select all").
+        WithDefaultItems([]string{"api", "cli"})
+
+    // 4. Project name input with validation
+    name := termos.NewInputTask("Project Name", "Enter name:").
+        WithValidator(termos.DefaultValidators.Required())
+
+    // 5. Functional task
+    setup := termos.NewFuncTask("Setup", func() error {
+        time.Sleep(2 * time.Second) // Work simulation
+        return nil
+    }, termos.WithSummaryFunction(func() []string {
+        return []string{"Configuration created", "Project ready"}
+    }))
+
+    // Add all tasks to queue
+    queue.AddTasks(confirm, env, comp, name, setup)
+}
+
+func printResults() {
+    fmt.Println("\n🎉 Application completed!")
+    fmt.Println("Results are stored in task objects.")
+}
+```
+
+## Step 3: Run
+
+Run the application:
+
+```bash
+go run main.go
+```
+
+You'll see an interactive interface with different types of tasks.
+
+## Step 4: Working with Results
+
+Extend the example to work with results:
+
+```go
+func printResults(confirm *termos.YesNoTask, env *termos.SingleSelectTask,
+                 comp *termos.MultiSelectTask, name *termos.InputTask) {
+    fmt.Println("\n📋 Configuration Results:")
+    fmt.Printf("Confirmation: %v\n", confirm.IsYes())
+    fmt.Printf("Environment: %s\n", env.GetSelected())
+    fmt.Printf("Components: %v\n", comp.GetSelected())
+    fmt.Printf("Project name: %s\n", name.GetValue())
+}
+```
+
+And update main:
+
+```go
+func main() {
+    queue := termos.NewQueue("Termos Demo Application")
+
+    // Create tasks with preserved references
+    confirm, env, comp, name := createTasksWithReferences(queue)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Show results
+    printResults(confirm, env, comp, name)
+}
+```
+
+## Core Concepts
+
+### Task Queue
+
+The central component that manages sequential task execution:
+
+```go
+queue := termos.NewQueue("Title")
+queue.WithAppName("MyApp")                    // Application name
+queue.WithClearScreen(true)                   // Screen clearing
+queue.WithTasksNumbered(true, "[%02d]")       // Task numbering
+```
+
+### Task Types
+
+1. **YesNoTask** - Yes/No choice
+2. **SingleSelectTask** - Single option selection
+3. **MultiSelectTask** - Multiple option selection
+4. **InputTask** - Text input with validation
+5. **FuncTask** - Function execution
+
+### Timeouts
+
+All tasks support timeouts with default values:
+
+```go
+task.WithTimeout(10*time.Second, defaultValue)
+```
+
+### Validation
+
+Built-in validators for various data types:
+
+```go
+v := termos.DefaultValidators
+inputTask.WithValidator(v.Email())        // Email
+inputTask.WithValidator(v.IP())           // IP address
+inputTask.WithValidator(v.MinLength(5))   // Minimum length
+```
+
+## What's Next
+
+<CardGroup cols={2}>
+  <Card title="Components" icon="puzzle-piece" href="/en/components/queue">
+    Explore all available components in detail
+  </Card>
+  <Card title="Validation" icon="shield-check" href="/en/validation/overview">
+    Learn about the data validation system
+  </Card>
+  <Card title="Styling" icon="palette" href="/en/customization/styling">
+    Customize application appearance
+  </Card>
+  <Card title="Examples" icon="code" href="/en/examples/basic-usage">
+    Study advanced usage examples
+  </Card>
+</CardGroup>

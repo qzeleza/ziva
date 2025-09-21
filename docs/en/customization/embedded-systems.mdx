@@ -1,0 +1,63 @@
+---
+title: "Embedded Systems Optimization"
+description: "Optimizing Termos for embedded and IoT devices"
+---
+
+# Embedded Systems Optimization
+
+Termos automatically detects and optimizes for embedded systems like routers, IoT devices, and resource-constrained environments.
+
+## Automatic Detection
+
+Termos detects embedded systems by:
+
+- **Memory constraints** - available RAM and swap
+- **CPU architecture** - ARM, MIPS detection  
+- **Environment variables** - BusyBox, OpenWrt markers
+- **File system indicators** - `/proc/cpuinfo`, `/etc/openwrt_release`
+
+## Memory Optimizations
+
+```bash
+# Configure memory thresholds
+export TERMOS_MEMORY_PRESSURE_THRESHOLD=50M
+export TERMOS_MAX_COMPLETED_TASKS=5
+```
+
+## Simplified UI Mode
+
+```go
+// Embedded-friendly configuration
+queue := termos.NewQueue("IoT Setup")
+queue.WithOutSummary(true).        // disable summary
+      WithOutResultLine().         // disable result lines
+      WithTasksNumbered(false, ""). // disable numbering
+      WithClearScreen(false)       // preserve context
+```
+
+## Color Optimization
+
+For limited terminals:
+
+```go
+// Use simplified colors
+queue.WithAppNameColor(termos.WhiteBright, false).
+      WithTitleColor(termos.GrayBright, false)
+```
+
+## Performance Tips
+
+1. **Limit task history** - reduce memory usage
+2. **Use shorter timeouts** - faster response
+3. **Minimize viewport sizes** - reduce rendering
+4. **Disable animations** - improve performance
+
+## Environment Detection
+
+```go
+// Check if running on embedded system
+if termos.IsEmbeddedSystem() {
+    // Apply embedded optimizations
+    queue.WithOutSummary(true)
+}
+```

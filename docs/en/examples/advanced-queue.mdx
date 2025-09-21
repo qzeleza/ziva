@@ -1,0 +1,119 @@
+---
+title: "Advanced Queue Examples"
+description: "Complex scenarios and advanced queue usage patterns"
+---
+
+# Advanced Queue Examples
+
+Complex examples demonstrating advanced Termos features and patterns.
+
+## Conditional Task Flow
+
+```go
+func conditionalFlow() {
+    // Main configuration choice
+    setupType := termos.NewSingleSelectTask(
+        "Setup Type",
+        []string{"basic", "advanced", "custom"},
+    )
+
+    queue := termos.NewQueue("Conditional Setup")
+    queue.AddTasks(setupType)
+    queue.Run()
+
+    // Add different tasks based on selection
+    switch setupType.GetSelected() {
+    case "basic":
+        addBasicTasks(queue)
+    case "advanced":
+        addAdvancedTasks(queue)
+    case "custom":
+        addCustomTasks(queue)
+    }
+
+    queue.Run() // Run additional tasks
+}
+```
+
+## Error Recovery Pattern
+
+```go
+func errorRecoveryExample() {
+    var attempt int
+    maxAttempts := 3
+
+    for attempt < maxAttempts {
+        task := termos.NewFuncTask(
+            fmt.Sprintf("Attempt %d/%d", attempt+1, maxAttempts),
+            func() error {
+                // Simulate work that might fail
+                if rand.Float32() < 0.5 {
+                    return errors.New("operation failed")
+                }
+                return nil
+            },
+        )
+
+        queue := termos.NewQueue("Retry Logic")
+        queue.AddTasks(task)
+
+        if err := queue.Run(); err == nil {
+            fmt.Println("✅ Operation succeeded")
+            break
+        }
+
+        attempt++
+        if attempt < maxAttempts {
+            retry := termos.NewYesNoTask(
+                "Retry",
+                fmt.Sprintf("Attempt %d failed. Retry?", attempt),
+            )
+            retryQueue := termos.NewQueue("Retry Decision")
+            retryQueue.AddTasks(retry)
+            retryQueue.Run()
+
+            if !retry.IsYes() {
+                break
+            }
+        }
+    }
+}
+```
+
+## Dynamic Task Generation
+
+```go
+func dynamicTaskGeneration() {
+    // Get number of servers to configure
+    countTask := termos.NewInputTask(
+        "Server Count",
+        "How many servers to configure?",
+    ).WithValidator(termos.DefaultValidators.Range(1, 10))
+
+    queue := termos.NewQueue("Dynamic Setup")
+    queue.AddTasks(countTask)
+    queue.Run()
+
+    count, _ := strconv.Atoi(countTask.GetValue())
+
+    // Generate tasks for each server
+    var serverTasks []termos.Task
+    for i := 1; i <= count; i++ {
+        hostTask := termos.NewInputTask(
+            fmt.Sprintf("Server %d Host", i),
+            fmt.Sprintf("Enter hostname for server %d:", i),
+        ).WithValidator(termos.DefaultValidators.Domain())
+
+        portTask := termos.NewInputTask(
+            fmt.Sprintf("Server %d Port", i),
+            fmt.Sprintf("Enter port for server %d:", i),
+        ).WithValidator(termos.DefaultValidators.Port())
+
+        serverTasks = append(serverTasks, hostTask, portTask)
+    }
+
+    serverQueue := termos.NewQueue("Server Configuration")
+    serverQueue.AddTasks(serverTasks...)
+    serverQueue.Run()
+}
+```

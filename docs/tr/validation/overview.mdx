@@ -1,0 +1,128 @@
+---
+title: "Doğrulama Genel Bakış"
+description: "Termos'ta giriş verisi doğrulama sistemi"
+---
+
+# Doğrulama Sistemi
+
+Termos, `InputTask`'ta kullanıcı girişini kontrol etmek için güçlü ve esnek bir doğrulama sistemi sağlar.
+
+## Temel Kavramlar
+
+### Doğrulaycı Arayüzü
+
+```go
+type Validator interface {
+    Validate(input string) error
+}
+```
+
+### Doğrulamayı Uygulama
+
+```go
+input := termos.NewInputTask("Email", "Email girin:").
+    WithValidator(termos.DefaultValidators.Email())
+```
+
+## Yerleşik Doğrulaycılar
+
+### Temel Doğrulaycılar
+
+```go
+v := termos.DefaultValidators
+
+// Zorunlu alan (boş olmamalı)
+validator := v.Required()
+
+// Minimum uzunluk
+validator = v.MinLength(5)
+
+// Maksimum uzunluk
+validator = v.MaxLength(20)
+
+// Tam uzunluk
+validator = v.Length(8)
+
+// Sayısal aralık
+validator = v.Range(1, 100)
+```
+
+### Format Doğrulaycıları
+
+```go
+// Email adresi
+validator := v.Email()
+
+// İsteğe bağlı email (boş olabilir)
+validator = v.OptionalEmail()
+
+// URL adresi
+validator = v.URL()
+
+// Sadece harf ve rakam
+validator = v.AlphaNumeric()
+
+// Kullanıcı adı
+validator = v.Username()
+
+// Dosya/dizin yolu
+validator = v.Path()
+```
+
+### Ağ Doğrulaycıları
+
+```go
+// IP adresi (IPv4 veya IPv6)
+validator := v.IP()
+
+// Sadece IPv4
+validator = v.IPv4()
+
+// Sadece IPv6
+validator = v.IPv6()
+
+// Domain adı
+validator = v.Domain()
+
+// Port (1-65535)
+validator = v.Port()
+```
+
+### Şifre Doğrulaycıları
+
+```go
+// Standart şifre (minimum 8 karakter)
+validator := v.StandardPassword()
+
+// Güçlü şifre (minimum 12 karakter, harf, rakam, sembol)
+validator = v.StrongPassword()
+```
+
+## Kullanım Örnekleri
+
+### Email Doğrulama
+
+```go
+emailTask := termos.NewInputTask("Email", "Email adresinizi girin:").
+    WithValidator(termos.DefaultValidators.Email())
+
+queue := termos.NewQueue("Kayıt")
+queue.AddTasks(emailTask)
+queue.Run()
+
+fmt.Printf("Email: %s\n", emailTask.GetValue())
+```
+
+### Şifre Doğrulama
+
+```go
+passwordTask := termos.NewInputTask("Şifre", "Şifre girin:").
+    WithInputType(termos.InputTypePassword).
+    WithValidator(termos.DefaultValidators.StrongPassword())
+
+queue := termos.NewQueue("Güvenlik")
+queue.AddTasks(passwordTask)
+queue.Run()
+
+fmt.Println("Şifre ayarlandı")
+```

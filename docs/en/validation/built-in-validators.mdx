@@ -1,0 +1,59 @@
+---
+title: "Built-in Validators"
+description: "Complete list of Termos built-in validators"
+---
+
+# Built-in Validators
+
+Termos provides a wide range of built-in validators.
+
+## Basic Validators
+
+```go
+v := termos.DefaultValidators
+
+// Required field
+v.Required()
+
+// Minimum length
+v.MinLength(5)
+
+// Maximum length
+v.MaxLength(100)
+
+// Exact length
+v.Length(8)
+
+// Numeric range
+v.Range(1, 100)
+```
+
+## Network Validators
+
+```go
+// Email
+v.Email()
+v.OptionalEmail()
+
+// IP addresses
+v.IP()    // IPv4 or IPv6
+v.IPv4()  // IPv4 only
+v.IPv6()  // IPv6 only
+
+// Domain and URL
+v.Domain()
+v.URL()
+
+// Port
+v.Port() // 1-65535
+```
+
+## Passwords
+
+```go
+// Standard password (min 8 characters)
+v.StandardPassword()
+
+// Strong password (min 12 characters)
+v.StrongPassword()
+```

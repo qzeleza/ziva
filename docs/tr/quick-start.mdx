@@ -1,0 +1,200 @@
+---
+title: "Hızlı Başlangıç"
+description: "Termos ile 5 dakikada ilk TUI uygulamanızı oluşturun"
+---
+
+# Hızlı Başlangıç
+
+Bu kılavuzda Termos'un ana özelliklerini gösteren basit bir TUI uygulaması oluşturacağız.
+
+## Adım 1: Proje Oluşturma
+
+Yeni bir Go projesi oluşturun:
+
+```bash
+mkdir termos-demo
+cd termos-demo
+go mod init termos-demo
+go get github.com/qzeleza/termos
+```
+
+## Adım 2: Temel Uygulama
+
+`main.go` dosyası oluşturun:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "time"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Başlık ile görev kuyruğu oluştur
+    queue := termos.NewQueue("Termos Demo Uygulaması")
+
+    // Görünümü yapılandır
+    queue.WithAppName("BenimUygulamam")
+    queue.WithTasksNumbered(false, "[%d]")
+
+    // Görevleri oluştur
+    createTasks(queue)
+
+    // Kuyruğu çalıştır
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Sonuçları göster
+    printResults()
+}
+
+func createTasks(queue *termos.Queue) {
+    // 1. Zaman aşımı ile onay görevi
+    confirm := termos.NewYesNoTask("Onay", "Kuruluma başlansın mı?").
+        WithTimeout(5*time.Second, "Evet")
+
+    // 2. Ortam seçimi
+    environments := []string{
+        "development||Geliştirme ortamı",
+        "staging||Test ortamı",
+        "production||Canlı ortam",
+    }
+    env := termos.NewSingleSelectTask("Ortam Seçimi", environments).
+        WithDefaultItem("staging")
+
+    // 3. Bileşen seçimi
+    components := []string{
+        "api||REST API sunucusu",
+        "web||Web arayüzü",
+        "cli||Komut satırı",
+        "docs||Belgeler",
+    }
+    comp := termos.NewMultiSelectTask("Bileşenler", components).
+        WithSelectAll("Tümünü seç").
+        WithDefaultItems([]string{"api", "cli"})
+
+    // 4. Doğrulama ile proje adı girişi
+    name := termos.NewInputTask("Proje Adı", "Adı girin:").
+        WithValidator(termos.DefaultValidators.Required())
+
+    // 5. Fonksiyonel görev
+    setup := termos.NewFuncTask("Kurulum", func() error {
+        time.Sleep(2 * time.Second) // İş simülasyonu
+        return nil
+    }, termos.WithSummaryFunction(func() []string {
+        return []string{"Yapılandırma oluşturuldu", "Proje hazır"}
+    }))
+
+    // Tüm görevleri kuyruğa ekle
+    queue.AddTasks(confirm, env, comp, name, setup)
+}
+
+func printResults() {
+    fmt.Println("\n🎉 Uygulama tamamlandı!")
+    fmt.Println("Sonuçlar görev nesnelerinde saklandı.")
+}
+```
+
+## Adım 3: Çalıştırma
+
+Uygulamayı çalıştırın:
+
+```bash
+go run main.go
+```
+
+Farklı türde görevlerle etkileşimli arayüzü göreceksiniz.
+
+## Adım 4: Sonuçlarla Çalışma
+
+Sonuçlarla çalışmak için örneği genişletelim:
+
+```go
+func printResults(confirm *termos.YesNoTask, env *termos.SingleSelectTask,
+                 comp *termos.MultiSelectTask, name *termos.InputTask) {
+    fmt.Println("\n📋 Yapılandırma Sonuçları:")
+    fmt.Printf("Onay: %v\n", confirm.IsYes())
+    fmt.Printf("Ortam: %s\n", env.GetSelected())
+    fmt.Printf("Bileşenler: %v\n", comp.GetSelected())
+    fmt.Printf("Proje adı: %s\n", name.GetValue())
+}
+```
+
+Ve main'i güncelleyin:
+
+```go
+func main() {
+    queue := termos.NewQueue("Termos Demo Uygulaması")
+
+    // Referansları koruyarak görevleri oluştur
+    confirm, env, comp, name := createTasksWithReferences(queue)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Sonuçları göster
+    printResults(confirm, env, comp, name)
+}
+```
+
+## Ana Kavramlar
+
+### Görev Kuyruğu (Queue)
+
+Görevlerin sıralı yürütülmesini yöneten merkezi bileşen:
+
+```go
+queue := termos.NewQueue("Başlık")
+queue.WithAppName("BenimUygulamam")      // Uygulama adı
+queue.WithClearScreen(true)              // Ekran temizleme
+queue.WithTasksNumbered(true, "[%02d]")  // Görev numaralandırma
+```
+
+### Görev Türleri
+
+1. **YesNoTask** - Evet/Hayır seçimi
+2. **SingleSelectTask** - Tek seçenek seçimi
+3. **MultiSelectTask** - Çoklu seçenek seçimi
+4. **InputTask** - Doğrulama ile metin girişi
+5. **FuncTask** - Fonksiyon yürütme
+
+### Zaman Aşımları
+
+Tüm görevler varsayılan değerlerle zaman aşımını destekler:
+
+```go
+task.WithTimeout(10*time.Second, defaultValue)
+```
+
+### Doğrulama
+
+Çeşitli veri türleri için yerleşik doğrulayıcılar:
+
+```go
+v := termos.DefaultValidators
+inputTask.WithValidator(v.Email())        // Email
+inputTask.WithValidator(v.IP())           // IP adresi
+inputTask.WithValidator(v.MinLength(5))   // Minimum uzunluk
+```
+
+## Sonraki Adım
+
+<CardGroup cols={2}>
+  <Card title="Bileşenler" icon="puzzle-piece" href="/tr/components/queue">
+    Tüm mevcut bileşenleri detaylı inceleyin
+  </Card>
+  <Card title="Doğrulama" icon="shield-check" href="/tr/validation/overview">
+    Veri doğrulama sistemi hakkında bilgi edinin
+  </Card>
+  <Card title="Stil" icon="palette" href="/tr/customization/styling">
+    Uygulama görünümünü özelleştirin
+  </Card>
+  <Card title="Örnekler" icon="code" href="/tr/examples/basic-usage">
+    Gelişmiş kullanım örneklerini inceleyin
+  </Card>
+</CardGroup>

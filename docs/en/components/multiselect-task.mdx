@@ -1,0 +1,48 @@
+---
+title: "MultiSelectTask"
+description: "Multiple option selection task from a list"
+---
+
+# MultiSelectTask
+
+`MultiSelectTask` allows users to select one or multiple items from a list.
+
+## Creating
+
+```go
+options := []string{"item1", "item2", "item3"}
+task := termos.NewMultiSelectTask("Select components", options)
+```
+
+## Main Methods
+
+```go
+// Settings
+task.WithSelectAll("Select all")                    // add "select all" option
+task.WithDefaultItems([]string{"item1", "item2"})   // default selected
+task.WithViewport(5, true)                          // viewport window
+task.WithItemsDisabled([]string{"item3"})            // disabled items
+
+// Get results
+selected := task.GetSelected() // []string
+```
+
+## Usage Example
+
+```go
+components := []string{
+    "web::Web server",
+    "api::REST API",
+    "db::Database",
+}
+
+task := termos.NewMultiSelectTask("Components", components).
+    WithSelectAll("Install all").
+    WithDefaultItems([]string{"web", "api"})
+
+queue := termos.NewQueue("Setup")
+queue.AddTasks(task)
+queue.Run()
+
+fmt.Printf("Selected: %v\n", task.GetSelected())
+```

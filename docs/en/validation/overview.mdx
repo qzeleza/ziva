@@ -1,0 +1,238 @@
+---
+title: "Validation Overview"
+description: "Input data validation system in Termos"
+---
+
+# Validation System
+
+Termos provides a powerful and flexible validation system for checking user input in `InputTask`. The system includes built-in validators for common cases and the ability to create custom validators.
+
+## Core Concepts
+
+### Validator Interface
+
+```go
+type Validator interface {
+    Validate(input string) error
+}
+```
+
+The validator receives an input string and returns an error if the input doesn't meet requirements.
+
+### Applying Validation
+
+```go
+input := termos.NewInputTask("Email", "Enter email:").
+    WithValidator(termos.DefaultValidators.Email())
+```
+
+Validation is performed when confirming input (pressing Enter). If validation fails, the user is shown an error and prompted to enter data again.
+
+## Built-in Validators
+
+Termos provides a validator factory through `termos.DefaultValidators`:
+
+### Basic Validators
+
+```go
+v := termos.DefaultValidators
+
+// Required field (not empty)
+validator := v.Required()
+
+// Minimum length
+validator = v.MinLength(5)
+
+// Maximum length
+validator = v.MaxLength(20)
+
+// Exact length
+validator = v.Length(8)
+
+// Numeric range
+validator = v.Range(1, 100)
+```
+
+### Format Validators
+
+```go
+// Email address
+validator := v.Email()
+
+// Optional email (can be empty)
+validator = v.OptionalEmail()
+
+// URL address
+validator = v.URL()
+
+// Letters and numbers only
+validator = v.AlphaNumeric()
+
+// Username
+validator = v.Username()
+
+// File/directory path
+validator = v.Path()
+```
+
+### Network Validators
+
+```go
+// IP address (IPv4 or IPv6)
+validator := v.IP()
+
+// IPv4 only
+validator = v.IPv4()
+
+// IPv6 only
+validator = v.IPv6()
+
+// Domain name
+validator = v.Domain()
+
+// Port (1-65535)
+validator = v.Port()
+```
+
+### Password Validators
+
+```go
+// Standard password (minimum 8 characters)
+validator := v.StandardPassword()
+
+// Strong password (minimum 12 characters, letters, numbers, symbols)
+validator = v.StrongPassword()
+```
+
+## Usage Examples
+
+### Email Validation
+
+```go
+emailTask := termos.NewInputTask("Email", "Enter your email:").
+    WithValidator(termos.DefaultValidators.Email())
+
+queue := termos.NewQueue("Registration")
+queue.AddTasks(emailTask)
+queue.Run()
+
+fmt.Printf("Email: %s\n", emailTask.GetValue())
+```
+
+### Port Validation
+
+```go
+portTask := termos.NewInputTask("Port", "Enter port (1-65535):").
+    WithInputType(termos.InputTypeNumber).
+    WithValidator(termos.DefaultValidators.Port())
+
+queue := termos.NewQueue("Server Setup")
+queue.AddTasks(portTask)
+queue.Run()
+
+port, _ := strconv.Atoi(portTask.GetValue())
+fmt.Printf("Port: %d\n", port)
+```
+
+### Password Validation
+
+```go
+passwordTask := termos.NewInputTask("Password", "Enter password:").
+    WithInputType(termos.InputTypePassword).
+    WithValidator(termos.DefaultValidators.StrongPassword())
+
+queue := termos.NewQueue("Security")
+queue.AddTasks(passwordTask)
+queue.Run()
+
+fmt.Println("Password set")
+```
+
+### Complex Validation
+
+```go
+func createUserForm() {
+    v := termos.DefaultValidators
+
+    username := termos.NewInputTask("Username", "Login (3-20 characters):").
+        WithValidator(v.Username())
+
+    email := termos.NewInputTask("Email", "Email address:").
+        WithValidator(v.Email())
+
+    password := termos.NewInputTask("Password", "Password (min 8 characters):").
+        WithInputType(termos.InputTypePassword).
+        WithValidator(v.StandardPassword())
+
+    website := termos.NewInputTask("Website", "Website (optional):").
+        WithValidator(v.OptionalURL())
+
+    queue := termos.NewQueue("User Registration")
+    queue.AddTasks(username, email, password, website)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("User created:\n")
+    fmt.Printf("Login: %s\n", username.GetValue())
+    fmt.Printf("Email: %s\n", email.GetValue())
+    fmt.Printf("Website: %s\n", website.GetValue())
+}
+```
+
+## Best Practices
+
+### 1. Use Appropriate Input Types
+
+```go
+// For numbers
+task.WithInputType(termos.InputTypeNumber).
+     WithValidator(v.Range(1, 100))
+
+// For passwords
+task.WithInputType(termos.InputTypePassword).
+     WithValidator(v.StrongPassword())
+
+// For email
+task.WithInputType(termos.InputTypeEmail).
+     WithValidator(v.Email())
+```
+
+### 2. Provide Clear Error Messages
+
+```go
+type ClearValidator struct{}
+
+func (v *ClearValidator) Validate(input string) error {
+    if len(input) < 3 {
+        return errors.New("Name must contain at least 3 characters")
+    }
+    if len(input) > 20 {
+        return errors.New("Name must not exceed 20 characters")
+    }
+    return nil
+}
+```
+
+### 3. Validate by Context
+
+```go
+// Different requirements for different environments
+func createPasswordValidator(env string) validation.Validator {
+    switch env {
+    case "production":
+        return termos.DefaultValidators.StrongPassword()
+    case "development":
+        return termos.DefaultValidators.StandardPassword()
+    default:
+        return termos.DefaultValidators.Required()
+    }
+}
+```
+
+## See Also
+
+- [Built-in Validators](/en/validation/built-in-validators) - complete list of built-in validators
+- [Custom Validators](/en/validation/custom-validators) - creating custom validators
+- [InputTask](/en/components/input-task) - using validation in input tasks

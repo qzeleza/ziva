@@ -1,0 +1,152 @@
+---
+title: "YesNoTask"
+description: "Binary choice task between two options"
+---
+
+# YesNoTask
+
+`YesNoTask` provides an interface for choosing between two options: "Yes" and "No". This is the simplest task type in Termos, perfect for confirmations and binary decisions.
+
+## Creating a Task
+
+```go
+task := termos.NewYesNoTask("Title", "Question for user?")
+```
+
+## Main Methods
+
+### Creating with Settings
+
+```go
+task := termos.NewYesNoTask("Confirmation", "Continue installation?").
+    WithDefaultItem("Yes").                          // default value
+    WithTimeout(10*time.Second, "No").               // timeout with fallback
+    WithCustomLabels("Continue", "Cancel")           // custom labels
+```
+
+### Getting Results
+
+```go
+// After task execution
+option := task.GetSelectedOption() // termos.YesNoOption
+isYes := task.IsYes()              // bool
+isNo := task.IsNo()                // bool
+```
+
+## Options and Constants
+
+```go
+// Available options
+const (
+    YesOption = termos.YesOption  // "Yes"
+    NoOption  = termos.NoOption   // "No"
+)
+
+// Check specific option
+if task.GetSelectedOption() == termos.YesOption {
+    fmt.Println("User chose 'Yes'")
+}
+```
+
+## Default Configuration
+
+### Default Selection
+
+```go
+// By string
+task.WithDefaultItem("Yes")
+task.WithDefaultItem("No")
+
+// By constant
+task.WithDefaultItem(termos.YesOption)
+task.WithDefaultItem(termos.NoOption)
+
+// By bool (true = Yes, false = No)
+task.WithDefaultItem(true)
+task.WithDefaultItem(false)
+```
+
+## Timeouts
+
+```go
+// Timeout with automatic "Yes" selection
+task.WithTimeout(5*time.Second, "Yes")
+
+// Timeout with automatic "No" selection
+task.WithTimeout(3*time.Second, termos.NoOption)
+
+// Timeout with bool value
+task.WithTimeout(10*time.Second, true) // true = Yes
+```
+
+## Custom Labels
+
+By default "Yes" and "No" are used, but you can configure custom labels:
+
+```go
+// Custom labels
+task.WithCustomLabels("Continue", "Cancel")
+task.WithCustomLabels("Accept", "Decline")
+task.WithCustomLabels("Enable", "Disable")
+task.WithCustomLabels("✓ Yes", "✗ No")
+```
+
+## Usage Examples
+
+### Simple Confirmation
+
+```go
+func confirmAction() bool {
+    task := termos.NewYesNoTask(
+        "Confirmation",
+        "Are you sure you want to delete the file?",
+    )
+
+    queue := termos.NewQueue("File Deletion")
+    queue.AddTasks(task)
+    queue.Run()
+
+    return task.IsYes()
+}
+```
+
+### Confirmation with Timeout
+
+```go
+func confirmWithTimeout() bool {
+    task := termos.NewYesNoTask(
+        "Auto-continue",
+        "Continue in 5 seconds?",
+    ).WithTimeout(5*time.Second, "Yes")
+
+    queue := termos.NewQueue("Demo")
+    queue.AddTasks(task)
+    queue.Run()
+
+    return task.IsYes()
+}
+```
+
+### Custom Options
+
+```go
+func enableFeature() bool {
+    task := termos.NewYesNoTask(
+        "Feature Setup",
+        "Enable experimental feature?",
+    ).WithCustomLabels("Enable", "Keep disabled").
+      WithDefaultItem("Keep disabled")
+
+    queue := termos.NewQueue("Configuration")
+    queue.AddTasks(task)
+    queue.Run()
+
+    return task.IsYes()
+}
+```
+
+## See Also
+
+- [SingleSelectTask](/en/components/singleselect-task) - for multiple option selection
+- [InputTask](/en/components/input-task) - for arbitrary text input
+- [Examples](/en/examples/basic-usage) - practical usage examples

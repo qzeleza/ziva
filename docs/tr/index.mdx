@@ -1,0 +1,84 @@
+---
+title: "Termos"
+description: "Termos - etkileşimli TUI uygulamaları oluşturmak için güçlü Go kütüphanesi"
+---
+
+# Termos'a Hoş Geldiniz
+
+**Termos** (Terminal Multitask Orchestrator System), etkileşimli terminal kullanıcı arayüzleri (TUI) oluşturmak için güçlü bir Go kütüphanesidir. Bubble Tea üzerine inşa edilmiş olup, konsol uygulamaları oluşturmak için üst düzey bileşenler sağlar.
+
+## Ana Özellikler
+
+<CardGroup cols={2}>
+  <Card title="Görev Sistemi" icon="list-check" href="/tr/components/tasks">
+    Beş görev türü: YesNo, SingleSelect, MultiSelect, Input ve Func - zaman aşımı desteği ile
+  </Card>
+  <Card title="Kuyruk Sistemi" icon="arrow-right-arrow-left" href="/tr/components/queue">
+    Otomatik ilerleme takibi ile görev dizilerinin orkestasyonu
+  </Card>
+  <Card title="Doğrulama" icon="shield-check" href="/tr/validation/overview">
+    Email, IP, domain, şifre ve daha fazlası için yerleşik doğrulayıcılar
+  </Card>
+  <Card title="Yerelleştirme" icon="globe" href="/tr/customization/colors">
+    Çoklu dil desteği: Türkçe, Rusça, İngilizce, Belarusça, Ukraynaca
+  </Card>
+</CardGroup>
+
+## Hızlı Başlangıç
+
+Kütüphaneyi yükleyin ve dakikalar içinde TUI uygulamaları oluşturmaya başlayın:
+
+```go
+package main
+
+import (
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Görev kuyruğu oluştur
+    queue := termos.NewQueue("TUI Uygulamam")
+
+    // Onay görevi ekle
+    confirm := termos.NewYesNoTask("Onay", "Devam et?")
+
+    // Seçim görevi ekle
+    options := []string{"development", "staging", "production"}
+    env := termos.NewSingleSelectTask("Ortam seçin", options)
+
+    // Görevleri kuyruğa ekle ve çalıştır
+    queue.AddTasks(confirm, env)
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+## Gömülü Sistemler İçin Optimize
+
+Termos, gömülü sistemlerde çalışmak için otomatik olarak algılar ve optimize eder:
+
+- **Bellek Yönetimi** - yük izleme ve string interning
+- **Uyarlanabilir Renk Şemaları** - sınırlı terminaller için basitleştirilmiş renkler
+- **Otomatik Yapılandırma** - router, IoT cihaz algılama ve parametre ayarlama
+
+<Card title="Başlayın" icon="rocket" href="/tr/installation">
+  Termos'u yükleyin ve ilk TUI uygulamanızı oluşturun
+</Card>
+
+---
+
+## Topluluk ve Destek
+
+<CardGroup cols={3}>
+  <Card title="GitHub" icon="github" href="https://github.com/qzeleza/termos">
+    Kaynak kodu, issue tracker ve sürümler
+  </Card>
+  <Card title="Go Package" icon="golang" href="https://pkg.go.dev/github.com/qzeleza/termos">
+    API belgeleri ve kullanım örnekleri
+  </Card>
+  <Card title="Örnekler" icon="code" href="/tr/examples/basic-usage">
+    Hızlı başlangıç için hazır örnekler
+  </Card>
+</CardGroup>

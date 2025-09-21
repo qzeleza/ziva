@@ -1,0 +1,416 @@
+---
+title: "Temel Örnekler"
+description: "TUI uygulamaları oluşturmak için Termos'un basit kullanım örnekleri"
+---
+
+# Temel Kullanım Örnekleri
+
+Bu sayfa Termos ile TUI uygulamaları oluşturmanın pratik örneklerini içerir. Tüm örnekler çalıştırılmaya hazırdır ve kütüphanenin ana özelliklerini gösterir.
+
+## Örnek 1: Basit Onay
+
+Onay görevi ile temel örnek:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Onay görevi oluştur
+    confirm := termos.NewYesNoTask(
+        "Eylem Onayı",
+        "Tüm geçici dosyalar silinsin mi?",
+    )
+
+    // Kuyruk oluştur ve görev ekle
+    queue := termos.NewQueue("Sistem Temizliği")
+    queue.AddTasks(confirm)
+
+    // Çalıştır
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Sonucu işle
+    if confirm.IsYes() {
+        fmt.Println("🗑️  Geçici dosyalar silindi")
+    } else {
+        fmt.Println("❌ İşlem iptal edildi")
+    }
+}
+```
+
+## Örnek 2: Listeden Seçim
+
+Listeden tek seçenek seçme örneği:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Açıklamalı seçenekler
+    environments := []string{
+        "dev||Geliştirme ortamı - yerel makine",
+        "staging||Test ortamı - QA için",
+        "production||Canlı ortam - kullanıcılar",
+    }
+
+    // Seçim görevi oluştur
+    envTask := termos.NewSingleSelectTask(
+        "Dağıtım Ortamı Seçimi",
+        environments,
+    ).WithDefaultItem("staging")
+
+    // Kuyruğu yapılandır ve çalıştır
+    queue := termos.NewQueue("Uygulama Dağıtımı")
+    queue.WithAppName("DeployTool")
+    queue.AddTasks(envTask)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Sonucu al
+    selected := envTask.GetSelected()
+    fmt.Printf("🚀 Dağıtım ortamı: %s\n", selected)
+}
+```
+
+## Örnek 3: Çoklu Seçim
+
+Birden fazla bileşen seçme örneği:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "strings"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Kurulacak bileşenler
+    components := []string{
+        "web||Web sunucusu",
+        "api||REST API",
+        "db||Veritabanı",
+        "cache||Önbellek",
+        "monitoring||İzleme",
+        "backup||Yedekleme",
+    }
+
+    // Çoklu seçim görevi oluştur
+    compTask := termos.NewMultiSelectTask(
+        "Kurulacak bileşenleri seçin",
+        components,
+    ).WithSelectAll("Tümünü kur").
+      WithDefaultItems([]string{"web", "api"})
+
+    queue := termos.NewQueue("Sistem Kurulumu")
+    queue.AddTasks(compTask)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Seçilen bileşenleri göster
+    selected := compTask.GetSelected()
+    if len(selected) > 0 {
+        fmt.Printf("📦 Kurulacaklar: %s\n",
+            strings.Join(selected, ", "))
+    } else {
+        fmt.Println("❌ Hiçbir bileşen seçilmedi")
+    }
+}
+```
+
+## Örnek 4: Doğrulama ile Giriş
+
+Doğrulama ile kullanıcı verisi toplama örneği:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    v := termos.DefaultValidators
+
+    // Doğrulama ile giriş alanları oluştur
+    name := termos.NewInputTask("İsim", "Adınızı girin:").
+        WithValidator(v.Required())
+
+    email := termos.NewInputTask("Email", "Email adresinizi girin:").
+        WithInputType(termos.InputTypeEmail).
+        WithValidator(v.Email())
+
+    website := termos.NewInputTask("Site", "Website URL (opsiyonel):").
+        WithValidator(v.OptionalURL())
+
+    // Kuyruk oluştur
+    queue := termos.NewQueue("Kullanıcı Kaydı")
+    queue.WithAppName("UserReg")
+    queue.AddTasks(name, email, website)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Toplanan bilgileri göster
+    fmt.Println("\n✅ Kayıt tamamlandı:")
+    fmt.Printf("İsim: %s\n", name.GetValue())
+    fmt.Printf("Email: %s\n", email.GetValue())
+    if website.GetValue() != "" {
+        fmt.Printf("Website: %s\n", website.GetValue())
+    }
+}
+```
+
+## Örnek 5: Fonksiyonel Görev
+
+Uzun süren işlem yürütme örneği:
+
+```go
+package main
+
+import (
+    "log"
+    "math/rand"
+    "time"
+    "github.com/qzeleza/termos"
+)
+
+func main() {
+    // Rapor verileri
+    var stats struct {
+        FilesProcessed int
+        Errors         int
+        Duration       time.Duration
+    }
+
+    // Fonksiyonel görev oluştur
+    processTask := termos.NewFuncTask(
+        "Dosya İşleme",
+        func() error {
+            start := time.Now()
+
+            // Dosya işleme simülasyonu
+            for i := 0; i < 100; i++ {
+                time.Sleep(50 * time.Millisecond)
+                stats.FilesProcessed++
+
+                // Rastgele hatalar
+                if rand.Intn(20) == 0 {
+                    stats.Errors++
+                }
+            }
+
+            stats.Duration = time.Since(start)
+            return nil
+        },
+        // Sonuç özeti fonksiyonu
+        termos.WithSummaryFunction(func() []string {
+            return []string{
+                fmt.Sprintf("İşlenen dosya: %d", stats.FilesProcessed),
+                fmt.Sprintf("Hata: %d", stats.Errors),
+                fmt.Sprintf("Süre: %v", stats.Duration.Round(time.Millisecond)),
+            }
+        }),
+    )
+
+    queue := termos.NewQueue("Toplu İşlem")
+    queue.AddTasks(processTask)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+}
+```
+
+## Örnek 6: Kapsamlı Uygulama
+
+Web sunucusu yapılandırması için tam örnek:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "strconv"
+    "time"
+    "github.com/qzeleza/termos"
+)
+
+type ServerConfig struct {
+    Host    string
+    Port    int
+    SSL     bool
+    CertPath string
+    Modules  []string
+}
+
+func main() {
+    config := &ServerConfig{}
+
+    // Yapılandırma görevlerini oluştur
+    tasks := createConfigTasks(config)
+
+    // Kuyruğu yapılandır
+    queue := termos.NewQueue("Web Sunucusu Yapılandırması")
+    queue.WithAppName("WebServerSetup").
+          WithTasksNumbered(true, "[%02d]").
+          WithTitleColor(termos.BlueBright, true)
+
+    queue.AddTasks(tasks...)
+
+    if err := queue.Run(); err != nil {
+        log.Fatal(err)
+    }
+
+    // Son yapılandırmayı göster
+    printConfig(config)
+}
+
+func createConfigTasks(config *ServerConfig) []termos.Task {
+    v := termos.DefaultValidators
+
+    // 1. Host
+    hostTask := termos.NewInputTask("Sunucu Host", "IP adresi veya domain:").
+        WithValidator(v.Required()).
+        WithTimeout(30*time.Second, "localhost")
+
+    // 2. Port
+    portTask := termos.NewInputTask("Port", "Sunucu portu (1-65535):").
+        WithInputType(termos.InputTypeNumber).
+        WithValidator(v.Port()).
+        WithTimeout(15*time.Second, "8080")
+
+    // 3. SSL
+    sslTask := termos.NewYesNoTask("SSL", "HTTPS etkinleştirilsin mi?").
+        WithDefaultItem("Evet")
+
+    // 4. Modüller
+    modules := []string{
+        "auth||Kullanıcı kimlik doğrulama",
+        "cors||Cross-Origin Resource Sharing",
+        "compress||Yanıt sıkıştırma",
+        "static||Statik dosyalar",
+        "proxy||Ters proxy",
+        "cache||Önbellek",
+    }
+
+    moduleTask := termos.NewMultiSelectTask("Modüller", modules).
+        WithSelectAll("Tüm modülleri etkinleştir").
+        WithDefaultItems([]string{"auth", "static"})
+
+    // 5. Yapılandırma uygulama fonksiyonel görevi
+    applyTask := termos.NewFuncTask(
+        "Yapılandırma Uygulama",
+        func() error {
+            // Yapılandırmayı topla
+            config.Host = hostTask.GetValue()
+            if port, err := strconv.Atoi(portTask.GetValue()); err == nil {
+                config.Port = port
+            }
+            config.SSL = sslTask.IsYes()
+            config.Modules = moduleTask.GetSelected()
+
+            // Ayar uygulama simülasyonu
+            time.Sleep(2 * time.Second)
+            return nil
+        },
+        termos.WithSummaryFunction(func() []string {
+            return []string{
+                "Yapılandırma uygulandı",
+                "Sunucu başlatılmaya hazır",
+            }
+        }),
+    )
+
+    return []termos.Task{hostTask, portTask, sslTask, moduleTask, applyTask}
+}
+
+func printConfig(config *ServerConfig) {
+    fmt.Println("\n🔧 Sunucu Yapılandırması:")
+    fmt.Printf("Adres: %s:%d\n", config.Host, config.Port)
+    fmt.Printf("SSL: %v\n", config.SSL)
+    fmt.Printf("Modüller: %v\n", config.Modules)
+
+    // Bağlantı URL'si
+    protocol := "http"
+    if config.SSL {
+        protocol = "https"
+    }
+    fmt.Printf("\n🌐 URL: %s://%s:%d\n", protocol, config.Host, config.Port)
+}
+```
+
+## Kullanım İpuçları
+
+### 1. Görev Gruplandırma
+
+İlgili görevleri mantıksal olarak gruplandırın:
+
+```go
+// Kimlik doğrulama grubu
+authTasks := []termos.Task{
+    termos.NewInputTask("Username", "Kullanıcı adı:"),
+    termos.NewInputTask("Password", "Şifre:").WithInputType(termos.InputTypePassword),
+}
+
+// Ayarlar grubu
+configTasks := []termos.Task{
+    termos.NewSingleSelectTask("Theme", themes),
+    termos.NewYesNoTask("Notifications", "Bildirimler etkinleştirilsin mi?"),
+}
+
+queue.AddTasks(authTasks...)
+queue.AddTasks(configTasks...)
+```
+
+### 2. İptal İşleme
+
+```go
+queue := termos.NewQueue("Kurulum")
+if err := queue.Run(); err != nil {
+    if err == context.Canceled {
+        fmt.Println("❌ Kurulum kullanıcı tarafından iptal edildi")
+        return
+    }
+    log.Fatal(err)
+}
+```
+
+### 3. Yapılandırma Kaydetme
+
+```go
+// Başarılı yürütmeden sonra
+config := collectResults(tasks...)
+if err := saveConfig(config); err != nil {
+    log.Printf("Kayıt hatası: %v", err)
+}
+```
+
+## Ayrıca Bakınız
+
+- [Gelişmiş Örnekler](/tr/examples/advanced-queue) - karmaşık kullanım senaryoları
+- [Bileşenler](/tr/components/queue) - her bileşen hakkında detaylar
+- [Doğrulama](/tr/validation/overview) - veri doğrulama sistemi

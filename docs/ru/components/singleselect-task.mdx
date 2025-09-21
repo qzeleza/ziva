@@ -1,0 +1,61 @@
+---
+title: "SingleSelectTask"
+description: "Задача выбора одного варианта из списка"
+---
+
+# SingleSelectTask
+
+`SingleSelectTask` предоставляет интерфейс для выбора одного варианта из предоставленного списка опций. Это один из наиболее часто используемых типов задач в Termos.
+
+## Создание задачи
+
+```go
+options := []string{"option1", "option2", "option3"}
+task := termos.NewSingleSelectTask("Заголовок", options)
+```
+
+## Основные методы
+
+### Создание с настройками
+
+```go
+task := termos.NewSingleSelectTask("Выбор среды", environments).
+    WithDefaultItem("staging").                    // значение по умолчанию
+    WithTimeout(10*time.Second, "production").     // таймаут с fallback
+    WithViewport(5, true).                         // ограничение отображения
+    WithItemsDisabled([]string{"maintenance"})     // отключенные элементы
+```
+
+### Получение результатов
+
+```go
+// После выполнения задачи
+selected := task.GetSelected()      // string - выбранное значение
+index := task.GetSelectedIndex()    // int - индекс выбранного элемента
+```
+
+## Подсказки в опциях
+
+Для создания более информативных списков используйте разделитель подсказок:
+
+```go
+// Используя разделитель "::" (по умолчанию)
+options := []string{
+    "dev::Среда разработки",
+    "staging::Тестовая среда", 
+    "prod::Боевая среда",
+}
+
+// Или настройте собственный разделитель
+termos.SetChoiceHelpDelimiter("||")
+options = []string{
+    "api||REST API сервер",
+    "web||Веб интерфейс",
+    "cli||Командная строка",
+}
+```
+
+## См. также
+
+- [MultiSelectTask](/ru/components/multiselect-task) - для выбора нескольких вариантов
+- [YesNoTask](/ru/components/yesno-task) - для бинарного выбора

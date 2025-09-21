@@ -1,0 +1,210 @@
+---
+title: "Task Queue"
+description: "Task sequence management system in Termos"
+---
+
+# Task Queue
+
+`Queue` is the central component of Termos that manages sequential task execution and provides a unified interface for user interaction.
+
+## Creating a Queue
+
+```go
+queue := termos.NewQueue("Queue title")
+```
+
+## Main Methods
+
+### Adding Tasks
+
+```go
+// Add single task
+queue.AddTasks(task1)
+
+// Add multiple tasks
+queue.AddTasks(task1, task2, task3)
+
+// Chained addition
+queue.AddTasks(task1).AddTasks(task2)
+```
+
+### Running the Queue
+
+```go
+if err := queue.Run(); err != nil {
+    log.Fatal(err)
+}
+```
+
+## Display Configuration
+
+### Application Name
+
+```go
+queue.WithAppName("MyApplication")
+```
+
+### Name and Title Colors
+
+```go
+// Application name color
+queue.WithAppNameColor(termos.BlueBright, true) // color, bold
+
+// Queue title color
+queue.WithTitleColor(termos.GreenBright, false) // color, normal
+```
+
+### Task Numbering
+
+```go
+// Enable numbering with format
+queue.WithTasksNumbered(true, "[%02d]") // [01], [02], [03]...
+
+// Alternative formats
+queue.WithTasksNumbered(true, "(%d)")   // (1), (2), (3)...
+queue.WithTasksNumbered(true, "%d.")    // 1., 2., 3....
+
+// Keep first character of format
+queue.WithTasksNumbered(true, "[%02d]") // preserve '['
+```
+
+### Summary Management
+
+```go
+// Disable completion summary
+queue.WithOutSummary(true)
+
+// Disable result separator lines
+queue.WithOutResultLine()
+```
+
+### Screen Clearing
+
+```go
+// Clear screen before running
+queue.WithClearScreen(true)
+```
+
+## Error Management
+
+### Error Color Configuration
+
+```go
+// Import error types
+import "github.com/qzeleza/termos/internal/query"
+
+// Set error color
+queue.SetErrorColor(query.ErrorColorRed)    // Red
+queue.SetErrorColor(query.ErrorColorYellow) // Yellow
+queue.SetErrorColor(query.ErrorColorNone)   // No color
+```
+
+## Configuration Examples
+
+### Minimal Configuration
+
+```go
+queue := termos.NewQueue("Simple application")
+queue.AddTasks(task1, task2)
+queue.Run()
+```
+
+### Full Configuration
+
+```go
+queue := termos.NewQueue("Advanced TUI Application")
+queue.WithAppName("AdvancedApp").
+      WithAppNameColor(termos.BlueBright, true).
+      WithTitleColor(termos.GreenBright, false).
+      WithTasksNumbered(true, "[%02d]").
+      WithClearScreen(true).
+      WithOutResultLine().
+      SetErrorColor(query.ErrorColorRed)
+
+queue.AddTasks(
+    confirmTask,
+    selectTask,
+    inputTask,
+    functionTask,
+)
+
+if err := queue.Run(); err != nil {
+    log.Fatalf("Execution error: %v", err)
+}
+```
+
+### Embedded Systems Configuration
+
+```go
+queue := termos.NewQueue("IoT Configuration")
+queue.WithAppName("RouterSetup").
+      WithOutSummary(true).        // Space saving
+      WithOutResultLine().         // Simplified output
+      WithTasksNumbered(false, ""). // No numbering
+      WithClearScreen(false)       // Preserve context
+
+// Use simplified colors
+queue.WithAppNameColor(termos.WhiteBright, false).
+      WithTitleColor(termos.GrayBright, false)
+```
+
+## Queue Lifecycle
+
+1. **Creation** - `NewQueue(title)`
+2. **Configuration** - `With*` method calls
+3. **Task Addition** - `AddTasks(...)`
+4. **Execution** - `Run()`
+
+## State Handling
+
+### Successful Execution
+
+When all tasks complete successfully, `Run()` returns `nil`.
+
+### User Cancellation
+
+If the user cancels execution (Ctrl+C), the queue terminates gracefully.
+
+### Execution Errors
+
+```go
+if err := queue.Run(); err != nil {
+    switch err {
+    case context.Canceled:
+        fmt.Println("Execution canceled by user")
+    default:
+        fmt.Printf("Error: %v\n", err)
+    }
+}
+```
+
+## Performance Optimization
+
+### For Large Queues
+
+```go
+// Limit completed task history
+os.Setenv("TERMOS_MAX_COMPLETED_TASKS", "5")
+
+// Memory monitoring
+os.Setenv("TERMOS_MEMORY_PRESSURE_THRESHOLD", "100M")
+```
+
+### For Slow Terminals
+
+```go
+// Simplified display mode
+queue.WithOutResultLine().
+      WithOutSummary(true).
+      WithTasksNumbered(false, "")
+```
+
+<Info>
+**Tip:** Experiment with different settings to achieve optimal user experience in your specific environment.
+</Info>
+
+## See Also
+
+- [Task Types](/en/components/tasks) - overview of all available tasks
+- [Styling](/en/customization/styling) - appearance customization
+- [Embedded Systems](/en/customization/embedded-systems) - IoT optimization

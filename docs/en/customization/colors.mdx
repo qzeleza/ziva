@@ -1,0 +1,60 @@
+---
+title: "Color Customization"
+description: "Working with colors and themes in Termos"
+---
+
+# Color Customization
+
+Termos provides a rich color system for creating visually appealing TUI applications.
+
+## Available Colors
+
+```go
+// Bright colors
+termos.GreenBright
+termos.RedBright
+termos.BlueBright
+termos.YellowBright
+termos.OrangeBright
+termos.CyanBright
+termos.MagentaBright
+termos.WhiteBright
+
+// Dark colors
+termos.RedDark
+termos.YellowDark
+termos.OrangeDark
+termos.BlueDark
+termos.CyanDark
+termos.GrayDark
+termos.DarkGreen
+
+// Special colors
+termos.LightBlue
+termos.GrayBright
+termos.Black
+```
+
+## Queue Color Configuration
+
+```go
+queue := termos.NewQueue("Colorful App")
+
+// Application name styling
+queue.WithAppNameColor(termos.BlueBright, true)  // blue and bold
+
+// Title styling
+queue.WithTitleColor(termos.GreenBright, false) // green, normal weight
+
+// Error colors
+queue.SetErrorColor(query.ErrorColorRed)        // red errors
+```
+
+## Terminal Compatibility
+
+Termos automatically adapts colors based on terminal capabilities:
+
+- **True color terminals** - full color palette
+- **256-color terminals** - optimized color mapping
+- **16-color terminals** - basic color fallback
+- **Monochrome terminals** - styling with intensity only
