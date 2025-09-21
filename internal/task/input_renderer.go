@@ -41,9 +41,11 @@ func (r *InputRenderer) WithHelp(enabled bool) *InputRenderer {
 }
 
 // RenderInput отображает активное состояние задачи ввода с поддержкой таймера
-func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, validator validation.Validator, err error, inputType InputType, width int, timerStr ...string) string {
-	// Используем правильный префикс для задач ввода (О вместо └─>)
-	prefix := ui.GetCurrentTaskPrefix()
+func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, validator validation.Validator, err error, inputType InputType, prefix string, width int, timerStr ...string) string {
+	// Используем переданный префикс или значение по умолчанию
+	if strings.TrimSpace(prefix) == "" {
+		prefix = ui.GetCurrentTaskPrefix()
+	}
 
 	// Формируем заголовок с префиксом
 	titleWithPrefix := fmt.Sprintf("%s%s", prefix, ui.ActiveTaskStyle.Render(title))
@@ -131,7 +133,7 @@ func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, val
 }
 
 // RenderFinal отображает финальное состояние задачи ввода
-func (r *InputRenderer) RenderFinal(title string, value string, hasError bool, err error, width int) string {
+func (r *InputRenderer) RenderFinal(title string, value string, hasError bool, err error, prefix string, width int) string {
 	var statusStyle lipgloss.Style
 	var valueToShow string
 
@@ -148,8 +150,10 @@ func (r *InputRenderer) RenderFinal(title string, value string, hasError bool, e
 		}
 	}
 
-	// Используем новый префикс для завершенных текстовых задач
-	prefix := ui.GetCompletedInputTaskPrefix(!hasError)
+	// Используем префикс, переданный очередью, либо значение по умолчанию
+	if strings.TrimSpace(prefix) == "" {
+		prefix = ui.GetCompletedInputTaskPrefix(!hasError)
+	}
 	leftPart := fmt.Sprintf("%s %s", prefix, title)
 	rightPart := statusStyle.Render(valueToShow)
 

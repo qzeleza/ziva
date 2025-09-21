@@ -19,6 +19,7 @@ type SingleSelectTask struct {
 	disabled    map[int]struct{} // Набор отключённых пунктов меню
 	cursor      int              // Текущая позиция курсора
 	activeStyle lipgloss.Style   // Стиль для активного элемента
+	itemHelps   []string         // Справочные сообщения для элементов
 	// Viewport (окно просмотра) для ограничения количества отображаемых элементов
 	viewportSize  int // Размер viewport (количество видимых элементов), 0 = показать все
 	viewportStart int // Начальная позиция viewport в списке элементов
@@ -31,9 +32,12 @@ type SingleSelectTask struct {
 // @param choices Список вариантов выбора
 // @return Указатель на новую задачу выбора
 func NewSingleSelectTask(title string, choices []string) *SingleSelectTask {
+	labels, helps := parseChoicesWithHelp(choices)
+
 	task := &SingleSelectTask{
 		BaseTask:    NewBaseTask(title),
-		choices:     choices,
+		choices:     labels,
+		itemHelps:   helps,
 		disabled:    make(map[int]struct{}),
 		activeStyle: ui.ActiveStyle,
 		// Viewport по умолчанию отключен (показываем все элементы)
@@ -203,8 +207,10 @@ func (t *SingleSelectTask) resolveDisabledIndices(input interface{}) []int {
 
 // choiceIndex возвращает индекс элемента по значению или -1, если элемент не найден
 func (t *SingleSelectTask) choiceIndex(value string) int {
+	normalized, _ := splitChoiceAndHelp(value)
+	normalized = strings.TrimSpace(normalized)
 	for i, choice := range t.choices {
-		if choice == value {
+		if choice == value || choice == normalized {
 			return i
 		}
 	}
@@ -229,11 +235,8 @@ func (t *SingleSelectTask) WithDefaultItem(selection interface{}) *SingleSelectT
 	case int:
 		setCursor(v)
 	case string:
-		for i, choice := range t.choices {
-			if choice == v {
-				setCursor(i)
-				break
-			}
+		if idx := t.choiceIndex(v); idx != -1 {
+			setCursor(idx)
 		}
 	}
 
@@ -420,12 +423,8 @@ func (t *SingleSelectTask) applyDefaultValue() {
 				targetIndex = val
 			}
 		case string:
-			// Ищем строку в списке вариантов
-			for i, choice := range t.choices {
-				if choice == val {
-					targetIndex = i
-					break
-				}
+			if idx := t.choiceIndex(val); idx != -1 {
+				targetIndex = idx
 			}
 		}
 
@@ -487,6 +486,8 @@ func (t *SingleSelectTask) View(width int) string {
 		sb.WriteString("\n")
 	}
 
+	activeHelp := ""
+
 	// Отображаем только видимые элементы списка
 	for i := startIdx; i < endIdx; i++ {
 		if i >= len(t.choices) {
@@ -503,6 +504,7 @@ func (t *SingleSelectTask) View(width int) string {
 		}
 
 		// Определяем тип элемента для получения правильного префикса
+		helpsAvailable := i < len(t.itemHelps)
 		if t.cursor == i {
 			// Активный элемент
 			itemPrefix = ui.GetSelectItemPrefix("active")
@@ -535,6 +537,13 @@ func (t *SingleSelectTask) View(width int) string {
 			}
 			sb.WriteString(fmt.Sprintf("%s%s%s%s %s\n", itemPrefix, openBracket, checked, closeBracket, choice))
 		}
+
+		if t.cursor == i && helpsAvailable {
+			help := strings.TrimSpace(t.itemHelps[i])
+			if help != "" {
+				activeHelp = help
+			}
+		}
 	}
 
 	// Добавляем индикатор прокрутки вниз, если есть скрытые элементы ниже
@@ -554,8 +563,12 @@ func (t *SingleSelectTask) View(width int) string {
 
 	// Добавляем подсказку о навигации с новым отступом
 	helpIndent := performance.RepeatEfficient(" ", ui.MainLeftIndent)
-	sb.WriteString("\n" + ui.DrawLine(width) +
-		ui.SubtleStyle.Render(fmt.Sprintf("%s%s", helpIndent, defauilt.SingleSelectHelp)))
+
+	sb.WriteString("\n" + ui.DrawLine(width))
+	if activeHelp != "" {
+		sb.WriteString(ui.HelpTextStyle.Render(fmt.Sprintf("%s%s", helpIndent, activeHelp)))
+	}
+	sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s\n%s%s", helpIndent, helpIndent, defauilt.SingleSelectHelp)))
 
 	return sb.String()
 }

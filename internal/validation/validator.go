@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/qzeleza/termos/internal/performance"
 )
 
@@ -32,7 +33,7 @@ func (vf ValidatorFunc) Validate(input string) error {
 
 // Description возвращает базовое описание для функции-валидатора
 func (vf ValidatorFunc) Description() string {
-	return "Пользовательская валидация"
+	return defauilt.ValidatorCustomValidation
 }
 
 // PasswordValidator валидатор для паролей
@@ -51,7 +52,7 @@ func NewPasswordValidator(minLength int) *PasswordValidator {
 // Validate проверяет надежность пароля
 func (pv *PasswordValidator) Validate(password string) error {
 	if len(password) < pv.MinLength {
-		return fmt.Errorf("пароль должен содержать не менее %d символов", pv.MinLength)
+		return fmt.Errorf(defauilt.ValidatorPasswordMinLength, pv.MinLength)
 	}
 
 	// Проверка на наличие кириллических символов
@@ -65,7 +66,7 @@ func (pv *PasswordValidator) Validate(password string) error {
 	}
 
 	if hasCyrillic {
-		return errors.New("пароль содержит кириллические символы.\n  пожалуйста, переключитесь на английскую раскладку клавиатуры")
+		return errors.New(defauilt.ValidatorPasswordCyrillic)
 	}
 
 	hasDigit := false
@@ -88,20 +89,20 @@ func (pv *PasswordValidator) Validate(password string) error {
 
 	var missing []string
 	if !hasDigit {
-		missing = append(missing, "цифры")
+		missing = append(missing, defauilt.ValidatorPasswordRequirementDigits)
 	}
 	if !hasSpecial {
-		missing = append(missing, "специальные символы")
+		missing = append(missing, defauilt.ValidatorPasswordRequirementSpecial)
 	}
 	if !hasUpper {
-		missing = append(missing, "заглавные буквы")
+		missing = append(missing, defauilt.ValidatorPasswordRequirementUpper)
 	}
 	if !hasLower {
-		missing = append(missing, "строчные буквы")
+		missing = append(missing, defauilt.ValidatorPasswordRequirementLower)
 	}
 
 	if len(missing) > 0 {
-		return fmt.Errorf("пароль должен содержать %s", performance.JoinEfficient(missing, ", "))
+		return fmt.Errorf(defauilt.ValidatorPasswordMissingRequirements, performance.JoinEfficient(missing, defauilt.ValidatorListSeparator))
 	}
 
 	return nil
@@ -109,7 +110,7 @@ func (pv *PasswordValidator) Validate(password string) error {
 
 // Description возвращает описание требований к паролю
 func (pv *PasswordValidator) Description() string {
-	return fmt.Sprintf("Пароль должен содержать не менее %d символов,\n  включая цифры, специальные символы, заглавные и строчные буквы", pv.MinLength)
+	return fmt.Sprintf(defauilt.ValidatorPasswordDescription, pv.MinLength)
 }
 
 // EmailValidator валидатор для email адресов
@@ -127,14 +128,14 @@ func NewEmailValidator() *EmailValidator {
 // Validate проверяет корректность email адреса
 func (ev *EmailValidator) Validate(email string) error {
 	if !ev.pattern.MatchString(email) {
-		return errors.New("некорректный email адрес")
+		return errors.New(defauilt.ValidatorEmailInvalid)
 	}
 	return nil
 }
 
 // Description возвращает описание требований к email
 func (ev *EmailValidator) Description() string {
-	return "Email адрес в формате user@domain.com"
+	return defauilt.ValidatorEmailDescription
 }
 
 // NumberValidator валидатор для чисел в диапазоне
@@ -152,17 +153,17 @@ func NewNumberValidator(min, max int) *NumberValidator {
 func (nv *NumberValidator) Validate(s string) error {
 	num, err := strconv.Atoi(s)
 	if err != nil {
-		return errors.New("введите корректное число")
+		return errors.New(defauilt.ValidatorNumberInvalid)
 	}
 	if num < nv.Min || num > nv.Max {
-		return fmt.Errorf("число должно быть в диапазоне от %d до %d", nv.Min, nv.Max)
+		return fmt.Errorf(defauilt.ValidatorNumberRange, nv.Min, nv.Max)
 	}
 	return nil
 }
 
 // Description возвращает описание требований к числу
 func (nv *NumberValidator) Description() string {
-	return fmt.Sprintf("Число в диапазоне от %d до %d", nv.Min, nv.Max)
+	return fmt.Sprintf(defauilt.ValidatorNumberDescription, nv.Min, nv.Max)
 }
 
 // IPValidator валидатор для IP адресов
@@ -194,7 +195,7 @@ func NewIPv6Validator() *IPValidator {
 func (iv *IPValidator) Validate(ip string) error {
 	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
-		return errors.New("некорректный IP-адрес")
+		return errors.New(defauilt.ValidatorIPInvalid)
 	}
 
 	// Проверяем тип IP адреса
@@ -202,10 +203,10 @@ func (iv *IPValidator) Validate(ip string) error {
 	isIPv6 := !isIPv4
 
 	if isIPv4 && !iv.allowIPv4 {
-		return errors.New("IPv4 адреса не разрешены")
+		return errors.New(defauilt.ValidatorIPv4NotAllowed)
 	}
 	if isIPv6 && !iv.allowIPv6 {
-		return errors.New("IPv6 адреса не разрешены")
+		return errors.New(defauilt.ValidatorIPv6NotAllowed)
 	}
 
 	return nil
@@ -214,13 +215,13 @@ func (iv *IPValidator) Validate(ip string) error {
 // Description возвращает описание требований к IP адресу
 func (iv *IPValidator) Description() string {
 	if iv.allowIPv4 && iv.allowIPv6 {
-		return "IPv4 или IPv6 адрес"
+		return defauilt.ValidatorIPBothDescription
 	} else if iv.allowIPv4 {
-		return "IPv4 адрес (например, 192.168.1.1)"
+		return defauilt.ValidatorIPv4Description
 	} else if iv.allowIPv6 {
-		return "IPv6 адрес (например, 2001:db8::1)"
+		return defauilt.ValidatorIPv6Description
 	}
-	return "IP адрес"
+	return defauilt.ValidatorIPGenericDescription
 }
 
 // DomainValidator валидатор для доменных имен
@@ -238,14 +239,14 @@ func NewDomainValidator() *DomainValidator {
 // Validate проверяет корректность доменного имени
 func (dv *DomainValidator) Validate(domain string) error {
 	if !dv.pattern.MatchString(domain) {
-		return errors.New("некорректное доменное имени")
+		return errors.New(defauilt.ValidatorDomainInvalid)
 	}
 	return nil
 }
 
 // Description возвращает описание требований к домену
 func (dv *DomainValidator) Description() string {
-	return "Доменное имя (например, example.com)"
+	return defauilt.ValidatorDomainDescription
 }
 
 // TextValidator базовый валидатор для текста
@@ -269,15 +270,15 @@ func (tv *TextValidator) WithPattern(pattern string) *TextValidator {
 // Validate проверяет текст по заданным критериям
 func (tv *TextValidator) Validate(text string) error {
 	if tv.MinLength > 0 && len(text) < tv.MinLength {
-		return fmt.Errorf("текст должен содержать не менее %d символов", tv.MinLength)
+		return fmt.Errorf(defauilt.ValidatorTextMin, tv.MinLength)
 	}
 
 	if tv.MaxLength > 0 && len(text) > tv.MaxLength {
-		return fmt.Errorf("текст должен содержать не более %d символов", tv.MaxLength)
+		return fmt.Errorf(defauilt.ValidatorTextMax, tv.MaxLength)
 	}
 
 	if tv.Pattern != nil && !tv.Pattern.MatchString(text) {
-		return errors.New("текст не соответствует требуемому формату.\n  попробуйте переключить раскладку клавиатуры")
+		return errors.New(defauilt.ValidatorTextPattern)
 	}
 
 	return nil
@@ -285,14 +286,14 @@ func (tv *TextValidator) Validate(text string) error {
 
 // Description возвращает описание требований к тексту
 func (tv *TextValidator) Description() string {
-	desc := "Текст"
+	desc := defauilt.ValidatorTextBase
 	if tv.MinLength > 0 || tv.MaxLength > 0 {
 		if tv.MinLength > 0 && tv.MaxLength > 0 {
-			desc += fmt.Sprintf(" длиной от %d до %d символов", tv.MinLength, tv.MaxLength)
+			desc += fmt.Sprintf(defauilt.ValidatorTextRange, tv.MinLength, tv.MaxLength)
 		} else if tv.MinLength > 0 {
-			desc += fmt.Sprintf(" не менее %d символов", tv.MinLength)
+			desc += fmt.Sprintf(defauilt.ValidatorTextMinOnly, tv.MinLength)
 		} else {
-			desc += fmt.Sprintf(" не более %d символов", tv.MaxLength)
+			desc += fmt.Sprintf(defauilt.ValidatorTextMaxOnly, tv.MaxLength)
 		}
 	}
 	return desc
@@ -338,7 +339,7 @@ func (cv *CompositeValidator) Validate(input string) error {
 			}
 		}
 		if len(errors) > 0 {
-			return fmt.Errorf("ошибки валидации: %s", performance.JoinEfficient(errors, "; "))
+			return fmt.Errorf(defauilt.ValidatorCompositeAllErrors, performance.JoinEfficient(errors, defauilt.ValidatorCompositeAllSeparator))
 		}
 		return nil
 
@@ -350,17 +351,17 @@ func (cv *CompositeValidator) Validate(input string) error {
 				errors = append(errors, err.Error())
 			}
 		}
-		return fmt.Errorf("ни один валидатор не прошел проверку: %s", performance.JoinEfficient(errors, "; "))
+		return fmt.Errorf(defauilt.ValidatorCompositeNonePassed, performance.JoinEfficient(errors, defauilt.ValidatorCompositeAllSeparator))
 
 	default:
-		return fmt.Errorf("неизвестный режим композитного валидатора")
+		return fmt.Errorf(defauilt.ValidatorCompositeUnknownMode)
 	}
 }
 
 // Description возвращает описание композитного валидатора
 func (cv *CompositeValidator) Description() string {
 	if len(cv.validators) == 0 {
-		return "Без валидации"
+		return defauilt.ValidatorCompositeNoValidation
 	}
 
 	var descriptions []string
@@ -370,10 +371,10 @@ func (cv *CompositeValidator) Description() string {
 
 	switch cv.mode {
 	case AllMustPass:
-		return fmt.Sprintf("Все требования: %s", performance.JoinEfficient(descriptions, "; "))
+		return fmt.Sprintf(defauilt.ValidatorCompositeAllDescription, performance.JoinEfficient(descriptions, defauilt.ValidatorCompositeAllSeparator))
 	case AnyCanPass:
-		return fmt.Sprintf("Любое из требований: %s", performance.JoinEfficient(descriptions, " ИЛИ "))
+		return fmt.Sprintf(defauilt.ValidatorCompositeAnyDescription, performance.JoinEfficient(descriptions, defauilt.ValidatorCompositeAnySeparator))
 	default:
-		return "Композитная валидация"
+		return defauilt.ValidatorCompositeDescription
 	}
 }

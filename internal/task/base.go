@@ -26,6 +26,8 @@ type BaseTask struct {
 	stopOnError bool   // Флаг, указывающий, нужно ли останавливать очередь при ошибке
 	// customCompletedPrefix позволяет очереди подменять префикс завершённой задачи (например, на номер)
 	completedPrefix string
+	// inProgressPrefix используется очередью для нумерации активных задач
+	inProgressPrefix string
 
 	// Флаг, указывающий, нужно ли сохранять переносы строк в сообщениях об ошибках
 	preserveErrorNewLines bool
@@ -250,6 +252,19 @@ func (t *BaseTask) SetCompletedPrefix(prefix string) {
 // CompletedPrefix возвращает текущий переопределённый префикс (если установлен)
 func (t *BaseTask) CompletedPrefix() string {
 	return t.completedPrefix
+}
+
+// SetInProgressPrefix позволяет очереди переопределять префикс активной задачи
+func (t *BaseTask) SetInProgressPrefix(prefix string) {
+	t.inProgressPrefix = prefix
+}
+
+// InProgressPrefix возвращает текущий префикс активной задачи (с учётом значения по умолчанию)
+func (t *BaseTask) InProgressPrefix() string {
+	if strings.TrimSpace(t.inProgressPrefix) != "" {
+		return t.inProgressPrefix
+	}
+	return ui.GetCurrentTaskPrefix()
 }
 
 // IsTextInputTask определяет, является ли задача текстовой задачей ввода

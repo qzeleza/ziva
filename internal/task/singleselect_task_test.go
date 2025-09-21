@@ -238,3 +238,16 @@ func TestSingleSelectTaskViewportIndicators(t *testing.T) {
 	assert.NotContains(t, viewWithoutCounters, "above", "При отключении счётчиков текст не должен отображаться")
 	assert.NotContains(t, viewWithoutCounters, "выше", "При отключении счётчиков текст не должен отображаться")
 }
+
+func TestSingleSelectTaskHelpTagRendering(t *testing.T) {
+	task := NewSingleSelectTask("Выбор", []string{"Опция 1::подсказка 1", "Опция 2"})
+	view := task.View(80)
+	assert.Contains(t, view, "Опция 1", "Отображается базовое название без подсказки")
+	assert.Contains(t, view, "подсказка 1", "Подсказка должна отображаться под активным элементом")
+
+	// Перемещаемся на элемент без подсказки
+	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
+	task, _ = updated.(*SingleSelectTask)
+	view = task.View(80)
+	assert.NotContains(t, view, "подсказка 1", "Пустая подсказка не должна добавлять строку")
+}

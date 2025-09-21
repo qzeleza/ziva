@@ -95,6 +95,7 @@ type MultiSelectTask struct {
 	selectAllText   string           // Текст опции "Выбрать все"
 	showHelpMessage bool             // Показывать ли сообщение-подсказку
 	helpMessage     string           // Текст сообщения-подсказки
+	itemHelps       []string         // Справочные сообщения для элементов
 	// Viewport (окно просмотра) для ограничения количества отображаемых элементов
 	viewportSize  int // Размер viewport (количество видимых элементов), 0 = показать все
 	viewportStart int // Начальная позиция viewport в списке элементов
@@ -107,9 +108,12 @@ type MultiSelectTask struct {
 // @param choices Список вариантов выбора
 // @return Указатель на новую задачу множественного выбора
 func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
+	labels, helps := parseChoicesWithHelp(choices)
+
 	task := &MultiSelectTask{
 		BaseTask:        NewBaseTask(title),
-		choices:         choices,
+		choices:         labels,
+		itemHelps:       helps,
 		disabled:        make(map[int]struct{}),
 		cursor:          0, // Начинаем с первого элемента списка
 		activeStyle:     ui.ActiveStyle,
@@ -294,8 +298,10 @@ func (t *MultiSelectTask) resolveDisabledIndices(input interface{}) []int {
 
 // choiceIndex возвращает индекс элемента по значению или -1, если элемент не найден
 func (t *MultiSelectTask) choiceIndex(value string) int {
+	normalized, _ := splitChoiceAndHelp(value)
+	normalized = strings.TrimSpace(normalized)
 	for i, choice := range t.choices {
-		if choice == value {
+		if choice == value || choice == normalized {
 			return i
 		}
 	}
@@ -529,12 +535,9 @@ func (t *MultiSelectTask) WithDefaultItems(defaultSelection interface{}) *MultiS
 	case int:
 		anyApplied = setSelected(v) || anyApplied
 	case string:
-		for i, choice := range t.choices {
-			if choice == v {
-				if setSelected(i) {
-					anyApplied = true
-				}
-				break
+		if idx := t.choiceIndex(v); idx != -1 {
+			if setSelected(idx) {
+				anyApplied = true
 			}
 		}
 	case []int:
@@ -545,12 +548,9 @@ func (t *MultiSelectTask) WithDefaultItems(defaultSelection interface{}) *MultiS
 		}
 	case []string:
 		for _, val := range v {
-			for i, choice := range t.choices {
-				if choice == val {
-					if setSelected(i) {
-						anyApplied = true
-					}
-					break
+			if idx := t.choiceIndex(val); idx != -1 {
+				if setSelected(idx) {
+					anyApplied = true
 				}
 			}
 		}
@@ -726,7 +726,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 				// Если ничего не выбрано, показываем сообщение-подсказку
 				// но НЕ устанавливаем ошибку и НЕ завершаем задачу
 				t.showHelpMessage = true
-				t.helpMessage = "! Необходимо выбрать хотя бы один элемент"
+				t.helpMessage = defauilt.NeedSelectAtLeastOne
 				return t, nil
 			}
 			// Если есть выбранные элементы, завершаем задачу успешно
@@ -783,16 +783,11 @@ func (t *MultiSelectTask) applyDefaultValue() {
 		case []string:
 			// Если это список строк для выбора
 			for _, strVal := range val {
-				// Ищем строку в списке вариантов
-				for i, choice := range t.choices {
-					if choice == strVal && !t.isDisabled(i) {
-						// Устанавливаем выбор для этого элемента
-						if len(t.choices) > 32 && t.fallbackMap != nil {
-							t.fallbackMap[i] = struct{}{}
-						} else {
-							t.selected.Set(i)
-						}
-						break
+				if idx := t.choiceIndex(strVal); idx != -1 && !t.isDisabled(idx) {
+					if len(t.choices) > 32 && t.fallbackMap != nil {
+						t.fallbackMap[idx] = struct{}{}
+					} else {
+						t.selected.Set(idx)
 					}
 				}
 			}
@@ -906,6 +901,8 @@ func (t *MultiSelectTask) View(width int) string {
 		sb.WriteString("\n")
 	}
 
+	activeHelp := ""
+
 	// Отображаем только видимые элементы списка
 	for i := startIdx; i < endIdx; i++ {
 		if i >= len(t.choices) {
@@ -916,6 +913,7 @@ func (t *MultiSelectTask) View(width int) string {
 		checked := " "
 		var itemPrefix string
 		itemDisabled := t.isDisabled(i)
+		helpsAvailable := i < len(t.itemHelps)
 
 		// Проверяем, выбран ли этот элемент
 		if t.isSelected(i) {
@@ -952,6 +950,13 @@ func (t *MultiSelectTask) View(width int) string {
 			closeBracket = ui.DisabledStyle.Render(closeBracket)
 		}
 		sb.WriteString(fmt.Sprintf("%s%s%s%s %s\n", itemPrefix, openBracket, checked, closeBracket, choice))
+
+		if t.cursor == i && helpsAvailable {
+			help := strings.TrimSpace(t.itemHelps[i])
+			if help != "" {
+				activeHelp = help
+			}
+		}
 	}
 
 	// Добавляем индикатор прокрутки вниз, если есть скрытые элементы ниже
@@ -972,34 +977,56 @@ func (t *MultiSelectTask) View(width int) string {
 		sb.WriteString("\n")
 	}
 
-	// Добавляем подсказку о навигации и управлении с новым отступом
+	// Формируем отступ для подсказки
 	helpIndent := performance.RepeatEfficient(" ", ui.MainLeftIndent)
+
+	// Новая строка для подсказки
+	var helpLine string
+	if activeHelp != "" {
+		helpLine = "\n"
+	}
 
 	// Добавляем сообщение-подсказку если нужно
 	var warning string
 	if t.showHelpMessage && t.helpMessage != "" {
+		activeHelp = ""
+		helpLine = ""
 		warning = ui.GetErrorMessageStyle().Render(fmt.Sprintf("%s%s", helpIndent, t.helpMessage))
-		warning += "\n"
 	}
 
+	// Если есть опция "Выбрать все", добавляем её в подсказку
 	helpText := defauilt.MultiSelectHelp
 	if t.hasSelectAll {
 		helpText = defauilt.MultiSelectHelpSelectAll
 	}
-	sb.WriteString("\n" + ui.DrawLine(width) +
-		ui.SubtleStyle.Render(fmt.Sprintf("%s%s%s", warning, helpIndent, helpText)))
+	// Добавляем разделительную линию
+	sb.WriteString("\n" + ui.DrawLine(width))
+	// Добавляем сообщение-подсказку если нужно
+	if warning != "" {
+		sb.WriteString(warning + "\n")
+	}
+	// Если есть активный элемент, добавляем его подсказку
+	if activeHelp != "" {
+		sb.WriteString(ui.HelpTextStyle.Render(fmt.Sprintf("%s%s", helpIndent, activeHelp)))
+	}
+	// Добавляем подсказку
+	sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s%s%s", helpLine, helpIndent, helpText)))
 
 	return sb.String()
 }
 
 func (t *MultiSelectTask) FinalView(width int) string {
 	// Получаем базовое финальное представление
-	result := t.BaseTask.FinalView(width) + "\n"
+	result := t.BaseTask.FinalView(width)
 
 	// Если задача завершилась успешно и есть дополнительные строки для вывода
 	if t.icon == ui.IconDone && len(t.choices) > 0 {
-		for _, selected := range t.GetSelected() {
-			result += ui.DrawSummaryLine(selected)
+		selected := t.GetSelected()
+		if len(selected) > 0 {
+			result += "\n"
+			for _, value := range selected {
+				result += ui.DrawSummaryLine(value)
+			}
 		}
 		result += performance.RepeatEfficient(" ", ui.MainLeftIndent) + ui.VerticalLineSymbol
 	}

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/qzeleza/termos"
+	"github.com/qzeleza/termos/internal/task"
 )
 
 // pingResult представляет результат проверки подключения
@@ -27,6 +28,8 @@ func main() {
 	activeLang := configureLanguage()
 	warnTerminalCapabilities(activeLang)
 	termos.SetDefaultLanguage("en")
+	// Используем собственный разделитель для подсказок в пунктах меню
+	termos.SetChoiceHelpDelimiter("||")
 
 	// Заголовок и краткое описание для TUI
 	header := "Демонстрация всех типов задач Termos"
@@ -35,24 +38,31 @@ func main() {
 	queue := termos.NewQueue(header).
 		WithAppName("Термос").
 		WithSummary(true).
-		WithTasksNumbered(true, true, "[%d]")
+		WithTasksNumbered(true, false, "[%d]")
 
 	// Формируем очередь задач
 	var msel = []string{
-		"CLI",
-		"Сервер",
+		"CLI||Командный интерфейс для администрирования",
+		"Сервер||Бэкенд сервисы",
 		"Агент",
-		"Web UI",
-		"Документация",
-		"Компилировать",
-		"Выходные данные",
+		"Web UI||Веб-интерфейс для пользователей",
+		"Документация||Автоматическая генерация документации",
+		"Компилировать||Сборка исполняемых файлов",
+		"Выходные данные||Архивация результатов",
 		"Область просмотра",
-		"Поле ввода",
-		"Мультивыбор",
-		"Одиночный выбор",
-		"Проверка ввода"}
+		"Поле ввода||Пример текстовой задачи",
+		"Мультивыбор||Дополнительные параметры",
+		"Одиночный выбор||Переключатель режимов",
+		"Проверка ввода||Встроенные валидаторы"}
 
-	var ssel = []string{"development", "staging", "production", "другое", "отмена", "выход"}
+	var ssel = []string{
+		"development||Среда разработки",
+		"staging||Промежуточная среда",
+		"production||Боевая среда",
+		"другое||Пользовательское значение",
+		"отмена||Отмена выбора",
+		"выход||Выход из программы",
+	}
 	// 1) Задачи мультивыбора (без и с пунктом "Выбрать все")
 	//    Пример без "Выбрать все"
 	ms1 := termos.NewMultiSelectTask("Выберите компоненты установки", msel).
@@ -71,18 +81,18 @@ func main() {
 	// 2) Одиночный выбор
 	ss := termos.NewSingleSelectTask(
 		"Выберите среду развертывания",
-		[]string{"development", "staging", "production", "другое", "отмена", "выход"},
+		ssel,
 	).WithViewport(3).
 		// WithTimeout(3*time.Second, "staging")
 		WithDefaultItem("production")
 
 	// 3) Ввод с использованием всех стандартных валидаторов
 	//    Валидация будет происходить в момент подтверждения (Enter)
-	// v := termos.DefaultValidators
+	v := termos.DefaultValidators
 
-	// inUsername := termos.NewInputTask("Имя пользователя", "Введите username:").
-	// 	WithValidator(v.Username()).
-	// 	WithTimeout(10*time.Second, "Alex")
+	inUsername := termos.NewInputTask("Имя пользователя", "Введите username:").
+		WithValidator(v.Username()).
+		WithTimeout(10*time.Second, "Alex")
 
 	// inEmail := task.NewInputTaskNew("Email", "Введите email:").
 	// 	WithInputType(task.InputTypeEmail).WithValidator(v.Email()).
@@ -91,8 +101,8 @@ func main() {
 	// inOptionalEmail := task.NewInputTaskNew("Доп. Email (опционально)", "Введите email или оставьте пустым:").
 	// 	WithInputType(task.InputTypeEmail).WithValidator(v.OptionalEmail())
 
-	// inPath := task.NewInputTaskNew("Путь к файлу/директории", "Введите путь:").
-	// 	WithValidator(v.Path())
+	inPath := task.NewInputTaskNew("Путь к файлу/директории", "Введите путь:").
+		WithValidator(v.Path())
 
 	// inURL := task.NewInputTaskNew("URL", "Введите URL (http/https):").
 	// 	WithValidator(v.URL())
@@ -161,9 +171,10 @@ func main() {
 
 	queue.AddTasks(
 		ss,
-		// inUsername,
+		inUsername,
 		ms1,
 		ms2,
+		inPath,
 		//  inEmail, inOptionalEmail,
 		// inPath, inURL, inPort, inRange,
 		// inIPv4, inIPv6, inIPAny, inDomain,

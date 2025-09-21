@@ -267,6 +267,19 @@ func TestMultiSelectTaskViewportIndicators(t *testing.T) {
 	assert.NotContains(t, viewWithoutCounters, "выше", "При отключении счётчиков текст не должен отображаться")
 }
 
+func TestMultiSelectTaskHelpTagRendering(t *testing.T) {
+	task := NewMultiSelectTask("Выбор", []string{"Опция 1::подсказка 1", "Опция 2::подсказка 2"})
+	view := task.View(80)
+	assert.Contains(t, view, "подсказка 1", "Под активным элементом должна отображаться подсказка")
+
+	// Перемещаемся на следующий элемент, чтобы убедиться, что подсказка сменяется
+	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
+	task, _ = updated.(*MultiSelectTask)
+	view = task.View(80)
+	assert.Contains(t, view, "подсказка 2", "Подсказка должна отображаться для активного элемента")
+	assert.NotContains(t, view, "подсказка 1", "Старая подсказка не должна отображаться")
+}
+
 func TestMultiSelectTaskWithDefaultItems(t *testing.T) {
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}

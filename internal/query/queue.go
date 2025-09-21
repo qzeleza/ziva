@@ -443,15 +443,21 @@ func (m *Model) View() string {
 				if m.summaryStyle.GetForeground() != nil {
 					summaryStyle = m.summaryStyle
 				} else {
+					// Если стиль не установлен, используем стиль по умолчанию
 					summaryStyle = ui.SubtleStyle
 				}
 			}
 
 			// Создаем левую часть футера
-			leftPart := performance.FastConcat(
+			summaryPrefix := performance.FastConcat(
+				performance.RepeatEfficient(" ", ui.MainLeftIndent),
+				ui.VerticalLineSymbol, "\n",
 				"  ",
+			)
+			leftPart := performance.FastConcat(
+				summaryPrefix,
 				ui.FinishedLabelStyle.Render(ui.TaskCompletedSymbol),
-				" ",
+				"  ",
 				summaryStyle.Render(leftSummary),
 			)
 
@@ -466,7 +472,7 @@ func (m *Model) View() string {
 			// Заменяем вертикальные линии перед символами задач ПЕРЕД добавлением финальных элементов
 			removeVerticalLinesBeforeTaskSymbols(&sb)
 			// Если сводка отключена, добавляем только финальную линию
-			// sb.WriteString("\n")
+			sb.WriteString("\n")
 			sb.WriteString(ui.DrawLine(layoutWidth) + "\n")
 		}
 	}

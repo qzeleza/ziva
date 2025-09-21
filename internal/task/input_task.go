@@ -424,6 +424,7 @@ func (t *InputTaskNew) View(width int) string {
 		t.validator,
 		t.validationErr,
 		t.inputType,
+		t.InProgressPrefix(),
 		width,
 		timerStr,
 	)
@@ -431,11 +432,12 @@ func (t *InputTaskNew) View(width int) string {
 
 // FinalView отображает финальное состояние задачи
 func (t *InputTaskNew) FinalView(width int) string {
+	completedPrefix := t.CompletedPrefix()
 	if t.HasError() {
-		return t.renderer.RenderFinal(t.title, "", true, t.Error(), width)
+		return t.renderer.RenderFinal(t.title, "", true, t.Error(), completedPrefix, width)
 	}
 
-	return t.renderer.RenderFinal(t.title, t.getDisplayValue(), false, nil, width)
+	return t.renderer.RenderFinal(t.title, t.getDisplayValue(), false, nil, completedPrefix, width)
 }
 
 // InputTaskBuilder предоставляет fluent API для создания InputTask

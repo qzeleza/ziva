@@ -56,6 +56,7 @@ var (
 	CancelStyle       = lipgloss.NewStyle().Foreground(ColorBrightYellow)            // Вывод статуса ошибки: ярко-жёлтый
 	SubtleStyle       = lipgloss.NewStyle().Foreground(ColorBrightGray)              // Подписи: светло-серый
 	DisabledStyle     = lipgloss.NewStyle().Foreground(ColorBrightGray)              // Неактивные элементы: светло-серый
+	HelpTextStyle     = lipgloss.NewStyle().Foreground(ColorLightBlue)               // Подсказки для элементов
 	SelectionStyle    = lipgloss.NewStyle().Foreground(ColorBrightGreen)             // Выделение (Да): ярко-зелёный
 	SelectionNoStyle  = lipgloss.NewStyle().Foreground(ColorBrightRed).Bold(true)    // Выделение (Нет): ярко-красный
 	ActiveStyle       = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Активный элемент: ярко-синий
