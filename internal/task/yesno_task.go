@@ -65,9 +65,10 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 	switch msg := msg.(type) {
 	case TimeoutMsg:
 		// Когда истекает тайм-аут, применяем значение по умолчанию
+		// Обрабатываем локально для надежности (как в SingleSelectTask)
+		// Значение по умолчанию уже нормализовано в WithTimeout
 		t.applyDefaultValue()
 		return t, nil
-	// Обработка периодического обновления для счетчика времени
 	case TickMsg:
 		// Если таймер активен, продолжаем обновления
 		if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
@@ -125,8 +126,8 @@ func (t *YesNoTask) Run() tea.Cmd {
 // applyDefaultValue применяет значение по умолчанию при истечении таймера
 func (t *YesNoTask) applyDefaultValue() {
 	// Если есть значение по умолчанию
-	if t.defauiltValue != nil {
-		switch val := t.defauiltValue.(type) {
+	if t.defaultValue != nil {
+		switch val := t.defaultValue.(type) {
 		case int:
 			// Если это индекс (0 - Да, 1 - Нет)
 			if val >= 0 && val < len(t.choices) {
@@ -210,8 +211,10 @@ func (t *YesNoTask) FinalView(width int) string {
 		styledTitle = ui.GetErrorStatusStyle().Render(t.title)
 	}
 
+	// Сформируем левую часть строки
 	left := fmt.Sprintf("%s  %s", prefix, styledTitle)
 
+	// Сформируем правую часть строки
 	var right string
 	switch t.selectedOption {
 	case YesOption:
@@ -221,6 +224,7 @@ func (t *YesNoTask) FinalView(width int) string {
 		right = ui.GetErrorStatusStyle().Render(defaults.DefaultNoLabel)
 	}
 
+	// Сформируем строку результата
 	var result string
 	// Если задача завершилась успешно и есть дополнительные строки для вывода
 	if t.icon == ui.IconDone && len(t.choices) > 0 {
@@ -350,10 +354,38 @@ func (t *YesNoTask) Error() error {
 
 // WithTimeout устанавливает тайм-аут для задачи Да/Нет
 // @param duration Длительность тайм-аута
-// @param defauiltValue Значение по умолчанию ("Да", "Нет" или индекс 0/1)
+// @param defaultValue Значение по умолчанию ("Да", "Нет" или индекс 0/1)
 // @return Указатель на задачу для цепочки вызовов
-func (t *YesNoTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *YesNoTask {
-	t.BaseTask.WithTimeout(duration, defauiltValue)
+func (t *YesNoTask) WithTimeout(duration time.Duration, defaultValue interface{}) *YesNoTask {
+	// Нормализуем тип значения по умолчанию до ожидаемых BaseTask/SingleSelectTask типов (int или string)
+	var normalized interface{} = nil
+	if defaultValue != nil {
+		switch v := defaultValue.(type) {
+		case YesNoOption:
+			if v == YesOption {
+				normalized = 0 // индекс "Да"
+			} else {
+				normalized = 1 // индекс "Нет"
+			}
+		case bool:
+			if v {
+				normalized = 0 // Да
+			} else {
+				normalized = 1 // Нет
+			}
+		case int:
+			normalized = v
+		case string:
+			// Оставляем как есть (должно совпадать с одним из labels в t.choices)
+			normalized = v
+		default:
+			// Неизвестный тип — не задаем значение по умолчанию
+			normalized = nil
+		}
+	}
+
+	// Проксируем в SingleSelectTask с нормализованным значением
+	t.SingleSelectTask.WithTimeout(duration, normalized)
 	return t
 }
 

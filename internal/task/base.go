@@ -35,7 +35,7 @@ type BaseTask struct {
 	// Поля для управления тайм-аутом
 	timeoutManager *TimeoutManager // Менеджер тайм-аута
 	timeoutEnabled bool            // Флаг, указывающий, включен ли тайм-аут
-	defauiltValue  interface{}     // Значение по умолчанию, которое будет выбрано при тайм-ауте
+	defaultValue   interface{}     // Значение по умолчанию, которое будет выбрано при тайм-ауте
 	showTimeout    bool            // Флаг, указывающий, нужно ли отображать оставшееся время
 }
 
@@ -99,12 +99,12 @@ func (t *BaseTask) View(_ int) string {
 
 // WithTimeout устанавливает тайм-аут для задачи
 // @param duration Длительность тайм-аута
-// @param defauiltValue Значение, которое будет выбрано при тайм-ауте
+// @param defaultValue Значение, которое будет выбрано при тайм-ауте
 // @return Указатель на текущую задачу для цепочки вызовов
-func (t *BaseTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *BaseTask {
+func (t *BaseTask) WithTimeout(duration time.Duration, defaultValue interface{}) *BaseTask {
 	t.timeoutManager = NewTimeoutManager(duration)
 	t.timeoutEnabled = true
-	t.defauiltValue = defauiltValue
+	t.defaultValue = defaultValue
 	return t
 }
 

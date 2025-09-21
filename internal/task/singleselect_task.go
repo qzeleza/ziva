@@ -414,9 +414,9 @@ func (t *SingleSelectTask) Run() tea.Cmd {
 // applyDefaultValue применяет значение по умолчанию при истечении таймера
 func (t *SingleSelectTask) applyDefaultValue() {
 	// Если есть значение по умолчанию и это число (индекс)
-	if t.defauiltValue != nil {
+	if t.defaultValue != nil {
 		targetIndex := -1
-		switch val := t.defauiltValue.(type) {
+		switch val := t.defaultValue.(type) {
 		case int:
 			// Если индекс в допустимом диапазоне
 			if val >= 0 && val < len(t.choices) {
@@ -613,9 +613,9 @@ func (t *SingleSelectTask) GetSelectedIndex() int {
 
 // WithTimeout устанавливает тайм-аут для задачи выбора
 // @param duration Длительность тайм-аута
-// @param defauiltValue Значение по умолчанию (индекс или строка)
+// @param defaultValue Значение по умолчанию (индекс или строка)
 // @return Указатель на задачу для цепочки вызовов
-func (t *SingleSelectTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *SingleSelectTask {
-	t.BaseTask.WithTimeout(duration, defauiltValue)
+func (t *SingleSelectTask) WithTimeout(duration time.Duration, defaultValue interface{}) *SingleSelectTask {
+	t.BaseTask.WithTimeout(duration, defaultValue)
 	return t
 }

@@ -187,10 +187,10 @@ type YesNoTask struct {
 // WithTimeout устанавливает тайм-аут для задачи с значением по умолчанию
 //
 // @param duration Тайм-аут
-// @param defauiltValue Значение по умолчанию
+// @param defaultValue Значение по умолчанию
 // @return Указатель на задачу для цепочки вызовов
-func (t *YesNoTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *YesNoTask {
-	t.WithDefaultOption(defauiltValue, duration)
+func (t *YesNoTask) WithTimeout(duration time.Duration, defaultValue interface{}) *YesNoTask {
+	t.WithDefaultOption(defaultValue, duration)
 	return t
 }
 
@@ -272,10 +272,10 @@ func (t *SingleSelectTask) WithViewport(size int, showCounters ...bool) *SingleS
 // WithTimeout устанавливает тайм-аут для задачи с значением по умолчанию
 //
 // @param duration Тайм-аут в миллисекундах
-// @param defauiltValue Значение по умолчанию
+// @param defaultValue Значение по умолчанию
 // @return Указатель на задачу для цепочки вызовов
-func (t *SingleSelectTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *SingleSelectTask {
-	t.SingleSelectTask.WithTimeout(duration, defauiltValue)
+func (t *SingleSelectTask) WithTimeout(duration time.Duration, defaultValue interface{}) *SingleSelectTask {
+	t.SingleSelectTask.WithTimeout(duration, defaultValue)
 	return t
 }
 
@@ -344,10 +344,10 @@ func (t *MultiSelectTask) WithViewport(size int, showCounters ...bool) *MultiSel
 // WithTimeout устанавливает тайм-аут для задачи с значениями по умолчанию
 //
 // @param duration Тайм-аут в миллисекундах
-// @param defauiltValues Значения по умолчанию
+// @param defaultValues Значения по умолчанию
 // @return Указатель на задачу для цепочки вызовов
-func (t *MultiSelectTask) WithTimeout(duration time.Duration, defauiltValues interface{}) *MultiSelectTask {
-	t.MultiSelectTask.WithTimeout(duration, defauiltValues)
+func (t *MultiSelectTask) WithTimeout(duration time.Duration, defaultValues interface{}) *MultiSelectTask {
+	t.MultiSelectTask.WithTimeout(duration, defaultValues)
 	return t
 }
 
@@ -407,10 +407,10 @@ type InputTask struct {
 // WithTimeout устанавливает тайм-аут для задачи с значением по умолчанию
 //
 // @param duration Тайм-аут в миллисекундах
-// @param defauiltValue Значение по умолчанию
+// @param defaultValue Значение по умолчанию
 // @return Указатель на задачу для цепочки вызовов
-func (t *InputTask) WithTimeout(duration time.Duration, defauiltValue string) *InputTask {
-	t.InputTaskNew.WithTimeout(duration, defauiltValue)
+func (t *InputTask) WithTimeout(duration time.Duration, defaultValue string) *InputTask {
+	t.InputTaskNew.WithTimeout(duration, defaultValue)
 	return t
 }
 

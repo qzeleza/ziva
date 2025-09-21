@@ -345,9 +345,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	currentTask := m.tasks[m.current]
 	var cmd tea.Cmd
 
-	m.tasks[m.current], cmd = currentTask.Update(msg)
+	// Обновляем текущую задачу и сохраняем её обратно
+	updatedTask, cmd := currentTask.Update(msg)
+	m.tasks[m.current] = updatedTask
 
-	if currentTask.IsDone() {
+	// Проверяем завершение уже ОБНОВЛЁННОЙ задачи
+	if m.tasks[m.current].IsDone() {
 		// Обновляем статистику выполненных задач
 		m.updateTaskStats()
 
@@ -355,11 +358,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.checkMemoryPressure()
 
 		// Проверяем, есть ли ошибка в текущей задаче
-		if currentTask.HasError() && currentTask.StopOnError() {
+		if updatedTask.HasError() && updatedTask.StopOnError() {
 			// Если есть ошибка и флаг StopOnError установлен,
 			// прекращаем выполнение очереди и сохраняем информацию об ошибке
 			m.stoppedOnError = true
-			m.errorTask = currentTask
+			m.errorTask = updatedTask
 
 			// Явно увеличиваем счетчик ошибок для текущей задачи
 			m.errorCount++
@@ -492,7 +495,7 @@ func (m *Model) View() string {
 			// Заменяем вертикальные линии перед символами задач ПЕРЕД добавлением финальных элементов
 			removeVerticalLinesBeforeTaskSymbols(&sb)
 			// Если сводка отключена, добавляем только финальную линию
-			sb.WriteString("\n")
+			// sb.WriteString("\n")
 			sb.WriteString(ui.DrawLine(layoutWidth) + "\n")
 		}
 	}

@@ -349,10 +349,10 @@ func (t *InputTaskNew) getDisplayValue() string {
 // applyDefaultValue применяет значение по умолчанию при истечении таймера
 func (t *InputTaskNew) applyDefaultValue() {
 	// Если есть значение по умолчанию
-	if t.defauiltValue != nil {
+	if t.defaultValue != nil {
 		var valueToSet string
 
-		switch val := t.defauiltValue.(type) {
+		switch val := t.defaultValue.(type) {
 		case string:
 			valueToSet = val
 		case int:
@@ -519,9 +519,9 @@ func (b *InputTaskBuilder) Build() *InputTaskNew {
 
 // WithTimeout устанавливает тайм-аут для задачи ввода
 // @param duration Длительность тайм-аута
-// @param defauiltValue Значение по умолчанию (строка)
+// @param defaultValue Значение по умолчанию (строка)
 // @return Указатель на задачу для цепочки вызовов
-func (t *InputTaskNew) WithTimeout(duration time.Duration, defauiltValue interface{}) *InputTaskNew {
-	t.BaseTask.WithTimeout(duration, defauiltValue)
+func (t *InputTaskNew) WithTimeout(duration time.Duration, defaultValue interface{}) *InputTaskNew {
+	t.BaseTask.WithTimeout(duration, defaultValue)
 	return t
 }

@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/qzeleza/termos"
-	"github.com/qzeleza/termos/internal/task"
 )
 
 // pingResult представляет результат проверки подключения
@@ -71,13 +70,13 @@ func main() {
 		WithTimeout(3*time.Second, []string{msel[0], msel[1]}).
 		WithItemsDisabled([]string{msel[2], msel[3]})
 
-	//    Пример с пунктом "Выбрать все"
-	ms2 := termos.NewMultiSelectTask("Выберите модули для сборки", ssel).
-		WithViewport(3, false).
-		WithSelectAll("Выбрать все").
-		WithTimeout(10*time.Second, []string{ssel[0], ssel[1]}).
-		WithDefaultItems([]string{ssel[0], ssel[1]}).
-		WithItemsDisabled([]string{ssel[2], ssel[3]})
+	// //    Пример с пунктом "Выбрать все"
+	// ms2 := termos.NewMultiSelectTask("Выберите модули для сборки", ssel).
+	// 	WithViewport(3, false).
+	// 	WithSelectAll("Выбрать все").
+	// 	WithTimeout(10*time.Second, []string{ssel[0], ssel[1]}).
+	// 	WithDefaultItems([]string{ssel[0], ssel[1]}).
+	// 	WithItemsDisabled([]string{ssel[2], ssel[3]})
 
 	// 2) Одиночный выбор
 	ss := termos.NewSingleSelectTask(
@@ -89,17 +88,17 @@ func main() {
 
 	// 3) Ввод с использованием всех стандартных валидаторов
 	//    Валидация будет происходить в момент подтверждения (Enter)
-	v := termos.DefaultValidators
+	// v := termos.DefaultValidators
 
-	inPath := task.NewInputTaskNew("Путь к файлу/директории", "Введите путь:").
-		WithValidator(v.Path())
+	// inPath := task.NewInputTaskNew("Путь к файлу/директории", "Введите путь:").
+	// 	WithValidator(v.Path())
 
 	queue.AddTasks(
 		ss,
 		// inUsername,
 		ms1,
-		ms2,
-		inPath,
+		// ms2,
+		// inPath,
 	)
 
 	// 4) Задача-выполнение функции (FuncTask)
@@ -127,7 +126,7 @@ func main() {
 		queue.AddTasks(fn)
 	}
 	// 5) Подтверждение Да/Нет (например, для сохранения настроек)
-	ys := termos.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeout(5*time.Second, "Нет")
+	ys := termos.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeout(2*time.Second, "Нет")
 
 	// inUsername := termos.NewInputTask("Имя пользователя", "Введите username:").
 	// 	WithValidator(v.Username()).

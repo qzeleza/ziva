@@ -765,8 +765,8 @@ func (t *MultiSelectTask) Run() tea.Cmd {
 // applyDefaultValue применяет значение по умолчанию при истечении таймера
 func (t *MultiSelectTask) applyDefaultValue() {
 	// Если есть значение по умолчанию
-	if t.defauiltValue != nil {
-		switch val := t.defauiltValue.(type) {
+	if t.defaultValue != nil {
+		switch val := t.defaultValue.(type) {
 		case []int:
 			// Если это список индексов для выбора
 			for _, index := range val {
@@ -1045,10 +1045,10 @@ func (t *MultiSelectTask) WithDefaultOptions(defauiltOptions interface{}, timeou
 
 // WithTimeout устанавливает тайм-аут для задачи множественного выбора
 // @param duration Длительность тайм-аута
-// @param defauiltValue Значение по умолчанию (список индексов или строк)
+// @param defaultValue Значение по умолчанию (список индексов или строк)
 // @return Указатель на задачу для цепочки вызовов
-func (t *MultiSelectTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *MultiSelectTask {
-	t.BaseTask.WithTimeout(duration, defauiltValue)
+func (t *MultiSelectTask) WithTimeout(duration time.Duration, defaultValue interface{}) *MultiSelectTask {
+	t.BaseTask.WithTimeout(duration, defaultValue)
 	return t
 }
 
