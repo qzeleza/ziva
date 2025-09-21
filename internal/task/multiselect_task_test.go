@@ -3,6 +3,7 @@
 package task
 
 import (
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -240,6 +241,30 @@ func TestMultiSelectTaskDisabledItemsWithSelectAll(t *testing.T) {
 	task, _ = updated.(*MultiSelectTask)
 	assert.False(t, task.isSelected(0), "После повторного выбора все элементы должны быть сняты")
 	assert.False(t, task.isSelected(2), "После повторного выбора все элементы должны быть сняты")
+}
+
+func TestMultiSelectTaskViewportIndicators(t *testing.T) {
+	title := "Выберите опции"
+	options := []string{"Опция 1", "Опция 2", "Опция 3", "Опция 4"}
+
+	task := NewMultiSelectTask(title, options).WithViewport(2)
+	// Перемещаем курсор вниз, чтобы появился индикатор сверху
+	for i := 0; i < 3; i++ {
+		updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
+		task, _ = updated.(*MultiSelectTask)
+	}
+	viewWithCounters := task.View(80)
+	assert.True(t, strings.Contains(viewWithCounters, "▲  1"), "Индикатор должен содержать двойной пробел и количество")
+
+	task = NewMultiSelectTask(title, options).WithViewport(2, false)
+	for i := 0; i < 3; i++ {
+		updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
+		task, _ = updated.(*MultiSelectTask)
+	}
+	viewWithoutCounters := task.View(80)
+	assert.Contains(t, viewWithoutCounters, "▲", "Индикатор должен содержать символ стрелки")
+	assert.NotContains(t, viewWithoutCounters, "above", "При отключении счётчиков текст не должен отображаться")
+	assert.NotContains(t, viewWithoutCounters, "выше", "При отключении счётчиков текст не должен отображаться")
 }
 
 func TestMultiSelectTaskWithDefaultItems(t *testing.T) {

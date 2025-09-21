@@ -56,13 +56,13 @@ func main() {
 	// 1) Задачи мультивыбора (без и с пунктом "Выбрать все")
 	//    Пример без "Выбрать все"
 	ms1 := termos.NewMultiSelectTask("Выберите компоненты установки", msel).
-		WithViewport(5).
+		WithViewport(5, false).
 		WithTimeout(3*time.Second, []string{msel[0], msel[1]}).
 		WithItemsDisabled([]string{msel[2], msel[3]})
 
 	//    Пример с пунктом "Выбрать все"
 	ms2 := termos.NewMultiSelectTask("Выберите модули для сборки", ssel).
-		WithViewport(3).
+		WithViewport(3, false).
 		WithSelectAll("Выбрать все").
 		WithTimeout(10*time.Second, []string{ssel[0], ssel[1]}).
 		WithDefaultItems([]string{ssel[0], ssel[1]}).

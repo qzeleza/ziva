@@ -3,6 +3,7 @@
 package task
 
 import (
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -213,4 +214,27 @@ func TestSingleSelectTaskDisabledItems(t *testing.T) {
 	updated, _ = task.Update(tea.KeyMsg{Type: tea.KeyUp})
 	task, _ = updated.(*SingleSelectTask)
 	assert.Equal(t, 1, task.GetSelectedIndex(), "После включения элемента курсор должен уметь на него переходить")
+}
+
+func TestSingleSelectTaskViewportIndicators(t *testing.T) {
+	title := "Выберите опцию"
+	options := []string{"Опция 1", "Опция 2", "Опция 3", "Опция 4"}
+
+	task := NewSingleSelectTask(title, options).WithViewport(2)
+	for i := 0; i < 3; i++ {
+		updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
+		task, _ = updated.(*SingleSelectTask)
+	}
+	viewWithCounters := task.View(80)
+	assert.True(t, strings.Contains(viewWithCounters, "▲  1"), "Индикатор должен содержать двойной пробел и количество")
+
+	task = NewSingleSelectTask(title, options).WithViewport(2, false)
+	for i := 0; i < 3; i++ {
+		updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
+		task, _ = updated.(*SingleSelectTask)
+	}
+	viewWithoutCounters := task.View(80)
+	assert.Contains(t, viewWithoutCounters, "▲", "Индикатор должен содержать символ стрелки")
+	assert.NotContains(t, viewWithoutCounters, "above", "При отключении счётчиков текст не должен отображаться")
+	assert.NotContains(t, viewWithoutCounters, "выше", "При отключении счётчиков текст не должен отображаться")
 }

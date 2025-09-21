@@ -98,6 +98,7 @@ type MultiSelectTask struct {
 	// Viewport (окно просмотра) для ограничения количества отображаемых элементов
 	viewportSize  int // Размер viewport (количество видимых элементов), 0 = показать все
 	viewportStart int // Начальная позиция viewport в списке элементов
+	showCounters  bool
 }
 
 // NewMultiSelectTask создает новую задачу множественного выбора.
@@ -119,6 +120,7 @@ func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
 		// Viewport по умолчанию отключен (показываем все элементы)
 		viewportSize:  0,
 		viewportStart: 0,
+		showCounters:  true,
 	}
 
 	// Для embedded устройств: используем битсет для списков <= 32 элементов,
@@ -362,11 +364,15 @@ func (t *MultiSelectTask) selectAllEnabled() {
 //
 // @param size Количество элементов для отображения одновременно (0 = показать все)
 // @return Указатель на задачу для цепочки вызовов
-func (t *MultiSelectTask) WithViewport(size int) *MultiSelectTask {
+func (t *MultiSelectTask) WithViewport(size int, showCounters ...bool) *MultiSelectTask {
 	if size < 0 {
 		size = 0
 	}
 	t.viewportSize = size
+	t.showCounters = true
+	if len(showCounters) > 0 {
+		t.showCounters = showCounters[0]
+	}
 	return t
 }
 
@@ -887,8 +893,15 @@ func (t *MultiSelectTask) View(width int) string {
 			// Если есть пункт "Выбрать все" и он скрыт, добавляем +1 к счетчику
 			itemsAbove = t.viewportStart
 		}
-		// Не добавляем перенос строки в конце, чтобы не нарушать форматирование
-		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf(defauilt.ScrollAboveFormat, indentPrefix, ui.UpArrowSymbol, itemsAbove)))
+		var indicator string
+		if t.showCounters {
+			arrow := ui.UpArrowSymbol + " "
+			indicator = fmt.Sprintf(defauilt.ScrollAboveFormat, indentPrefix, arrow, itemsAbove)
+		} else {
+			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.UpArrowSymbol)
+		}
+		// Не добавляем перенос строки в самой строке, чтобы не нарушать форматирование
+		sb.WriteString(ui.SubtleStyle.Render(indicator))
 		// Добавляем перенос строки отдельно
 		sb.WriteString("\n")
 	}
@@ -946,7 +959,15 @@ func (t *MultiSelectTask) View(width int) string {
 		// Используем точно такой же префикс как у элементов "below"
 		indentPrefix := ui.GetSelectItemPrefix("below")
 		// Не добавляем перенос строки в конце, чтобы не нарушать форматирование
-		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf(defauilt.ScrollBelowFormat, indentPrefix, ui.DownArrowSymbol, len(t.choices)-endIdx)))
+		remaining := len(t.choices) - endIdx
+		var indicator string
+		if t.showCounters {
+			arrow := ui.DownArrowSymbol + " "
+			indicator = fmt.Sprintf(defauilt.ScrollBelowFormat, indentPrefix, arrow, remaining)
+		} else {
+			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.DownArrowSymbol)
+		}
+		sb.WriteString(ui.SubtleStyle.Render(indicator))
 		// Добавляем перенос строки отдельно
 		sb.WriteString("\n")
 	}

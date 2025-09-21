@@ -22,6 +22,7 @@ type SingleSelectTask struct {
 	// Viewport (окно просмотра) для ограничения количества отображаемых элементов
 	viewportSize  int // Размер viewport (количество видимых элементов), 0 = показать все
 	viewportStart int // Начальная позиция viewport в списке элементов
+	showCounters  bool
 }
 
 // NewSingleSelectTask создает новую задачу выбора одного варианта из списка.
@@ -38,6 +39,7 @@ func NewSingleSelectTask(title string, choices []string) *SingleSelectTask {
 		// Viewport по умолчанию отключен (показываем все элементы)
 		viewportSize:  0,
 		viewportStart: 0,
+		showCounters:  true,
 	}
 
 	task.ensureCursorSelectable()
@@ -246,11 +248,15 @@ func (t *SingleSelectTask) WithDefaultItem(selection interface{}) *SingleSelectT
 //
 // @param size Количество элементов для отображения одновременно (0 = показать все)
 // @return Указатель на задачу для цепочки вызовов
-func (t *SingleSelectTask) WithViewport(size int) *SingleSelectTask {
+func (t *SingleSelectTask) WithViewport(size int, showCounters ...bool) *SingleSelectTask {
 	if size < 0 {
 		size = 0
 	}
 	t.viewportSize = size
+	t.showCounters = true
+	if len(showCounters) > 0 {
+		t.showCounters = showCounters[0]
+	}
 	return t
 }
 
@@ -470,7 +476,14 @@ func (t *SingleSelectTask) View(width int) string {
 	// Добавляем индикатор прокрутки вверх, если есть скрытые элементы выше
 	if t.viewportSize > 0 && startIdx > 0 {
 		indentPrefix := ui.GetSelectItemPrefix("above")
-		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf(defauilt.ScrollAboveFormat, indentPrefix, ui.UpArrowSymbol, startIdx)))
+		var indicator string
+		if t.showCounters {
+			arrow := ui.UpArrowSymbol + " "
+			indicator = fmt.Sprintf(defauilt.ScrollAboveFormat, indentPrefix, arrow, startIdx)
+		} else {
+			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.UpArrowSymbol)
+		}
+		sb.WriteString(ui.SubtleStyle.Render(indicator))
 		sb.WriteString("\n")
 	}
 
@@ -527,7 +540,15 @@ func (t *SingleSelectTask) View(width int) string {
 	// Добавляем индикатор прокрутки вниз, если есть скрытые элементы ниже
 	if t.viewportSize > 0 && endIdx < len(t.choices) {
 		indentPrefix := ui.GetSelectItemPrefix("below")
-		sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf(defauilt.ScrollBelowFormat, indentPrefix, ui.DownArrowSymbol, len(t.choices)-endIdx)))
+		var indicator string
+		remaining := len(t.choices) - endIdx
+		if t.showCounters {
+			arrow := ui.DownArrowSymbol + " "
+			indicator = fmt.Sprintf(defauilt.ScrollBelowFormat, indentPrefix, arrow, remaining)
+		} else {
+			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.DownArrowSymbol)
+		}
+		sb.WriteString(ui.SubtleStyle.Render(indicator))
 		sb.WriteString("\n")
 	}
 
