@@ -6,26 +6,29 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/qzeleza/termos/internal/ui"
 	"github.com/stretchr/testify/assert"
 )
 
 // MockErrorTask для тестирования ошибок
 type MockErrorTask struct {
-	title string
-	done  bool
-	err   error
+	title                 string
+	done                  bool
+	err                   error
 	preserveErrorNewLines bool
 }
 
-func (m *MockErrorTask) Title() string                             { return m.title }
-func (m *MockErrorTask) IsDone() bool                              { return m.done }
-func (m *MockErrorTask) HasError() bool                            { return m.err != nil }
-func (m *MockErrorTask) Error() error                              { return m.err }
-func (m *MockErrorTask) StopOnError() bool                         { return false }
-func (m *MockErrorTask) SetStopOnError(stop bool)                  {}
-func (m *MockErrorTask) WithNewLinesInErrors(preserve bool) common.Task { m.preserveErrorNewLines = preserve; return m }
+func (m *MockErrorTask) Title() string            { return m.title }
+func (m *MockErrorTask) IsDone() bool             { return m.done }
+func (m *MockErrorTask) HasError() bool           { return m.err != nil }
+func (m *MockErrorTask) Error() error             { return m.err }
+func (m *MockErrorTask) StopOnError() bool        { return false }
+func (m *MockErrorTask) SetStopOnError(stop bool) {}
+func (m *MockErrorTask) WithNewLinesInErrors(preserve bool) common.Task {
+	m.preserveErrorNewLines = preserve
+	return m
+}
 func (m *MockErrorTask) Run() tea.Cmd                              { return nil }
 func (m *MockErrorTask) Update(msg tea.Msg) (common.Task, tea.Cmd) { return m, nil }
 func (m *MockErrorTask) View(width int) string                     { return m.title }
@@ -73,7 +76,7 @@ func TestSetErrorColorInQueue(t *testing.T) {
 	view := model.View()
 
 	// Проверяем, что в представлении есть статус с ошибками
-	assert.Contains(t, view, defauilt.StatusProblem, "View должен содержать статус ошибки")
+	assert.Contains(t, view, defaults.StatusProblem, "View должен содержать статус ошибки")
 	assert.Contains(t, view, "(1/2)", "View должен показывать правильную статистику")
 
 	// Восстанавливаем исходные стили
@@ -153,7 +156,7 @@ func TestErrorColorWithDifferentTasks(t *testing.T) {
 	// Получаем представление
 	view := model.View()
 	assert.Contains(t, view, "(2/4)", "Должно быть 2 успешных из 4")
-	assert.Contains(t, view, defauilt.StatusProblem, "Должен быть статус с ошибками")
+	assert.Contains(t, view, defaults.StatusProblem, "Должен быть статус с ошибками")
 
 	// Проверяем, что цвет установился правильно
 	assert.Equal(t, Orange, ui.GetErrorStatusStyle().GetForeground())

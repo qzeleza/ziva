@@ -182,7 +182,7 @@ select := termos.NewSingleSelectTask("Выбор", options).
 
 // Автоматический ввод значения по умолчанию
 input := termos.NewInputTask("Ввод", "Значение:").
-	WithTimeout(10*time.Second, "default")
+	WithTimeout(10*time.Second, "defauilt")
 ```
 
 ### Настройка очереди

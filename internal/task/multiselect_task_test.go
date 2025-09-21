@@ -7,9 +7,8 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/qzeleza/termos/internal/defauilt"
 )
 
 // TestMultiSelectTaskCreation проверяет корректность создания задачи MultiSelectTask
@@ -178,11 +177,11 @@ func TestMultiSelectTaskWithSelectAll(t *testing.T) {
 	// Проверяем, что опция "Выбрать все" включена
 	assert.True(t, multiSelectTask.hasSelectAll, "Опция 'Выбрать все' должна быть включена")
 	assert.Equal(t, -1, multiSelectTask.cursor, "Курсор должен быть на опции 'Выбрать все'")
-	assert.Equal(t, defauilt.SelectAllDefaultText, multiSelectTask.selectAllText, "Текст по умолчанию должен совпадать с локализацией")
+	assert.Equal(t, defaults.SelectAllDefaultText, multiSelectTask.selectAllText, "Текст по умолчанию должен совпадать с локализацией")
 
 	// Проверяем, что View содержит опцию "Выбрать все"
 	view := multiSelectTask.View(80)
-	assert.Contains(t, view, defauilt.SelectAllDefaultText, "View должен содержать опцию 'Выбрать все'")
+	assert.Contains(t, view, defaults.SelectAllDefaultText, "View должен содержать опцию 'Выбрать все'")
 
 	// Выбираем "Выбрать все" с помощью пробела
 	updatedTask1, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeySpace})
@@ -309,7 +308,7 @@ func TestMultiSelectTaskLeftCancels(t *testing.T) {
 	assert.True(t, ok, "Обновленная задача должна быть типа *MultiSelectTask")
 	assert.True(t, canceledTask.IsDone(), "Задача должна завершиться после нажатия ←")
 	if err := canceledTask.Error(); assert.NotNil(t, err, "Ошибка должна быть установлена") {
-		assert.Equal(t, defauilt.ErrorMsgCanceled, err.Error())
+		assert.Equal(t, defaults.ErrorMsgCanceled, err.Error())
 	}
 }
 

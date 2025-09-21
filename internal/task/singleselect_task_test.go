@@ -7,9 +7,8 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/qzeleza/termos/internal/defauilt"
 )
 
 // TestSingleSelectTaskCreation проверяет корректность создания задачи SingleSelectTask
@@ -90,7 +89,7 @@ func TestSingleSelectTaskWithDefaultIndex(t *testing.T) {
 	// Создаем задачу SingleSelectTask
 	title := "Выберите опцию"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
-	defaultIndex := 1
+	defauiltIndex := 1
 	selectTask := NewSingleSelectTask(title, options)
 
 	// Устанавливаем курсор на нужный индекс
@@ -105,7 +104,7 @@ func TestSingleSelectTaskWithDefaultIndex(t *testing.T) {
 
 	// Проверяем, что выбрана правильная опция
 	finalView := selectTaskDone.FinalView(80)
-	assert.Contains(t, finalView, options[defaultIndex], "Значение задачи должно содержать опцию с выбранным индексом")
+	assert.Contains(t, finalView, options[defauiltIndex], "Значение задачи должно содержать опцию с выбранным индексом")
 }
 
 func TestSingleSelectTaskWithDefaultItemByIndex(t *testing.T) {
@@ -139,7 +138,7 @@ func TestSingleSelectTaskLeftCancels(t *testing.T) {
 	assert.True(t, ok, "Обновленная задача должна быть типа *SingleSelectTask")
 	assert.True(t, canceledTask.IsDone(), "Задача должна завершиться после нажатия ←")
 	if err := canceledTask.Error(); assert.NotNil(t, err, "Ошибка должна быть установлена") {
-		assert.Equal(t, defauilt.ErrorMsgCanceled, err.Error())
+		assert.Equal(t, defaults.ErrorMsgCanceled, err.Error())
 	}
 }
 

@@ -7,7 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
 )
@@ -364,7 +364,7 @@ func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			return t, nil
 		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C", "left", "Left":
 			// Отмена пользователем
-			cancelErr := fmt.Errorf(defauilt.ErrorMsgCanceled)
+			cancelErr := fmt.Errorf(defaults.ErrorMsgCanceled)
 			t.done = true
 			t.err = cancelErr
 			t.icon = ui.IconCancelled
@@ -414,9 +414,9 @@ func (t *SingleSelectTask) Run() tea.Cmd {
 // applyDefaultValue применяет значение по умолчанию при истечении таймера
 func (t *SingleSelectTask) applyDefaultValue() {
 	// Если есть значение по умолчанию и это число (индекс)
-	if t.defaultValue != nil {
+	if t.defauiltValue != nil {
 		targetIndex := -1
-		switch val := t.defaultValue.(type) {
+		switch val := t.defauiltValue.(type) {
 		case int:
 			// Если индекс в допустимом диапазоне
 			if val >= 0 && val < len(t.choices) {
@@ -478,7 +478,7 @@ func (t *SingleSelectTask) View(width int) string {
 		var indicator string
 		if t.showCounters {
 			arrow := ui.UpArrowSymbol + " "
-			indicator = fmt.Sprintf(defauilt.ScrollAboveFormat, indentPrefix, arrow, startIdx)
+			indicator = fmt.Sprintf(defaults.ScrollAboveFormat, indentPrefix, arrow, startIdx)
 		} else {
 			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.UpArrowSymbol)
 		}
@@ -553,7 +553,7 @@ func (t *SingleSelectTask) View(width int) string {
 		remaining := len(t.choices) - endIdx
 		if t.showCounters {
 			arrow := ui.DownArrowSymbol + " "
-			indicator = fmt.Sprintf(defauilt.ScrollBelowFormat, indentPrefix, arrow, remaining)
+			indicator = fmt.Sprintf(defaults.ScrollBelowFormat, indentPrefix, arrow, remaining)
 		} else {
 			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.DownArrowSymbol)
 		}
@@ -568,7 +568,7 @@ func (t *SingleSelectTask) View(width int) string {
 	if activeHelp != "" {
 		sb.WriteString(ui.HelpTextStyle.Render(fmt.Sprintf("%s%s", helpIndent, activeHelp)))
 	}
-	sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s\n%s%s", helpIndent, helpIndent, defauilt.SingleSelectHelp)))
+	sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s\n%s%s", helpIndent, helpIndent, defaults.SingleSelectHelp)))
 
 	return sb.String()
 }
@@ -613,9 +613,9 @@ func (t *SingleSelectTask) GetSelectedIndex() int {
 
 // WithTimeout устанавливает тайм-аут для задачи выбора
 // @param duration Длительность тайм-аута
-// @param defaultValue Значение по умолчанию (индекс или строка)
+// @param defauiltValue Значение по умолчанию (индекс или строка)
 // @return Указатель на задачу для цепочки вызовов
-func (t *SingleSelectTask) WithTimeout(duration time.Duration, defaultValue interface{}) *SingleSelectTask {
-	t.BaseTask.WithTimeout(duration, defaultValue)
+func (t *SingleSelectTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *SingleSelectTask {
+	t.BaseTask.WithTimeout(duration, defauiltValue)
 	return t
 }

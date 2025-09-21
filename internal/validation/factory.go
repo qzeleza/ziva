@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/qzeleza/termos/internal/performance"
 )
 
@@ -71,7 +71,7 @@ func (f *ValidatorFactory) Username() Validator {
 func (f *ValidatorFactory) Required() Validator {
 	return ValidatorFunc(func(input string) error {
 		if len(performance.TrimSpaceEfficient(input)) == 0 {
-			return errors.New(defauilt.ErrFieldRequired)
+			return errors.New(defaults.ErrFieldRequired)
 		}
 		return nil
 	})
@@ -92,14 +92,14 @@ func (f *ValidatorFactory) OptionalEmail() Validator {
 func (f *ValidatorFactory) Path() Validator {
 	return ValidatorFunc(func(input string) error {
 		if len(performance.TrimSpaceEfficient(input)) == 0 {
-			return errors.New(defauilt.ErrPathEmpty)
+			return errors.New(defaults.ErrPathEmpty)
 		}
 		// Проверяем на недопустимые символы для большинства ОС
 		invalidChars := `<>:"|?*`
 		if performance.ContainsAnyEfficient(input, invalidChars) {
 			for _, char := range input {
 				if strings.ContainsRune(invalidChars, char) {
-					return fmt.Errorf(defauilt.ErrPathInvalidChar, char)
+					return fmt.Errorf(defaults.ErrPathInvalidChar, char)
 				}
 			}
 		}
@@ -112,14 +112,14 @@ func (f *ValidatorFactory) URL() Validator {
 	return ValidatorFunc(func(input string) error {
 		trimmed := performance.TrimSpaceEfficient(input)
 		if trimmed == "" {
-			return errors.New(defauilt.ErrURLEmpty)
+			return errors.New(defaults.ErrURLEmpty)
 		}
 
 		// Простая проверка URL
 		lowerTrimmed := performance.ToLowerEfficient(trimmed)
 		if !strings.HasPrefix(lowerTrimmed, "http://") &&
 			!strings.HasPrefix(lowerTrimmed, "https://") {
-			return errors.New(defauilt.ErrURLScheme)
+			return errors.New(defaults.ErrURLScheme)
 		}
 
 		return nil
@@ -150,12 +150,12 @@ func (f *ValidatorFactory) Length(exactLen int) Validator {
 func (f *ValidatorFactory) AlphaNumeric() Validator {
 	return ValidatorFunc(func(input string) error {
 		if len(performance.TrimSpaceEfficient(input)) == 0 {
-			return errors.New(defauilt.ErrValueEmpty)
+			return errors.New(defaults.ErrValueEmpty)
 		}
 
 		for _, char := range input {
 			if (char < 'a' || char > 'z') && (char < 'A' || char > 'Z') && (char < '0' || char > '9') {
-				return errors.New(defauilt.ErrValueAlphaNumeric)
+				return errors.New(defaults.ErrValueAlphaNumeric)
 			}
 		}
 		return nil

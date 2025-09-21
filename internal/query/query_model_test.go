@@ -10,17 +10,17 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 )
 
 // mockTask - мок задачи для тестирования модели Query.
 // Реализует интерфейс common.Task
 type mockTask struct {
-	title     string
-	done      bool
-	err       error
-	value     string
-	stopOnErr bool // Флаг остановки при ошибке
+	title                 string
+	done                  bool
+	err                   error
+	value                 string
+	stopOnErr             bool // Флаг остановки при ошибке
 	preserveErrorNewLines bool // Флаг сохранения переносов строк в сообщениях об ошибках
 }
 
@@ -246,5 +246,5 @@ func TestQueryModelResults(t *testing.T) {
 	assert.Contains(t, view, "Задача 1: Результат 1", "View должен содержать финальное представление первой задачи")
 	assert.Contains(t, view, "Задача 2: Результат 2", "View должен содержать финальное представление второй задачи")
 	assert.Contains(t, view, "Успешно завершено", "View должен содержать сводку")
-	assert.Contains(t, view, defauilt.StatusSuccess, "View должен показывать статус УСПЕШНО")
+	assert.Contains(t, view, defaults.StatusSuccess, "View должен показывать статус УСПЕШНО")
 }

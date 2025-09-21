@@ -21,16 +21,16 @@ func NewStringPool(size int) *StringPool {
 	if size < 4 {
 		size = 4
 	}
-	
+
 	pool := &StringPool{
 		buffers: make(chan *strings.Builder, size),
 	}
-	
+
 	// Предварительно заполняем пул
 	for i := 0; i < size; i++ {
 		pool.buffers <- &strings.Builder{}
 	}
-	
+
 	return pool
 }
 
@@ -50,12 +50,12 @@ func (p *StringPool) Put(buf *strings.Builder) {
 	if buf == nil {
 		return
 	}
-	
+
 	// Для embedded устройств ограничиваем размер буфера
 	if buf.Cap() > 4096 {
 		return // Не возвращаем слишком большие буферы
 	}
-	
+
 	select {
 	case p.buffers <- buf:
 	default:
@@ -81,24 +81,24 @@ func TrimSpaceEfficient(s string) string {
 	if len(s) == 0 {
 		return s
 	}
-	
+
 	start := 0
 	end := len(s)
-	
+
 	// Ищем начало без пробелов
 	for start < end && unicode.IsSpace(rune(s[start])) {
 		start++
 	}
-	
+
 	// Ищем конец без пробелов
 	for end > start && unicode.IsSpace(rune(s[end-1])) {
 		end--
 	}
-	
+
 	if start == 0 && end == len(s) {
 		return s // Нет изменений
 	}
-	
+
 	return s[start:end]
 }
 
@@ -110,16 +110,16 @@ func JoinEfficient(parts []string, separator string) string {
 	if len(parts) == 1 {
 		return parts[0]
 	}
-	
+
 	buf := GetBuffer()
 	defer PutBuffer(buf)
-	
+
 	buf.WriteString(parts[0])
 	for i := 1; i < len(parts); i++ {
 		buf.WriteString(separator)
 		buf.WriteString(parts[i])
 	}
-	
+
 	return buf.String()
 }
 
@@ -131,7 +131,7 @@ func RepeatEfficient(s string, count int) string {
 	if count == 1 {
 		return s
 	}
-	
+
 	// Для embedded устройств ограничиваем размер результата
 	const maxResult = 2048
 	if len(s)*count > maxResult {
@@ -140,15 +140,15 @@ func RepeatEfficient(s string, count int) string {
 			count = 1
 		}
 	}
-	
+
 	buf := GetBuffer()
 	defer PutBuffer(buf)
-	
+
 	buf.Grow(len(s) * count)
 	for i := 0; i < count; i++ {
 		buf.WriteString(s)
 	}
-	
+
 	return buf.String()
 }
 
@@ -157,7 +157,7 @@ func ToLowerEfficient(s string) string {
 	if len(s) == 0 {
 		return s
 	}
-	
+
 	// Быстрая проверка - нужно ли изменение
 	hasUpper := false
 	for _, r := range s {
@@ -170,11 +170,11 @@ func ToLowerEfficient(s string) string {
 			break
 		}
 	}
-	
+
 	if !hasUpper {
 		return s
 	}
-	
+
 	return strings.ToLower(s)
 }
 
@@ -183,7 +183,7 @@ func ContainsAnyEfficient(s string, chars string) bool {
 	if len(s) == 0 || len(chars) == 0 {
 		return false
 	}
-	
+
 	// Для коротких строк используем простой поиск
 	if len(chars) <= 8 {
 		for _, c := range s {
@@ -195,19 +195,19 @@ func ContainsAnyEfficient(s string, chars string) bool {
 		}
 		return false
 	}
-	
+
 	// Для длинных строк используем map
 	charMap := make(map[rune]bool, len(chars))
 	for _, c := range chars {
 		charMap[c] = true
 	}
-	
+
 	for _, c := range s {
 		if charMap[c] {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -216,27 +216,27 @@ func ReplaceAllEfficient(s, old, new string) string {
 	if len(s) == 0 || len(old) == 0 || old == new {
 		return s
 	}
-	
+
 	// Подсчитываем количество замен
 	count := strings.Count(s, old)
 	if count == 0 {
 		return s
 	}
-	
+
 	// Для одной замены используем простой способ
 	if count == 1 {
 		return strings.Replace(s, old, new, 1)
 	}
-	
+
 	buf := GetBuffer()
 	defer PutBuffer(buf)
-	
+
 	// Предварительно вычисляем размер результата
 	newSize := len(s) + count*(len(new)-len(old))
 	if newSize > 0 {
 		buf.Grow(newSize)
 	}
-	
+
 	start := 0
 	for {
 		idx := strings.Index(s[start:], old)
@@ -244,12 +244,12 @@ func ReplaceAllEfficient(s, old, new string) string {
 			buf.WriteString(s[start:])
 			break
 		}
-		
+
 		buf.WriteString(s[start : start+idx])
 		buf.WriteString(new)
 		start += idx + len(old)
 	}
-	
+
 	return buf.String()
 }
 
@@ -258,12 +258,12 @@ func CleanWhitespaceEfficient(s string) string {
 	if len(s) == 0 {
 		return s
 	}
-	
+
 	buf := GetBuffer()
 	defer PutBuffer(buf)
-	
+
 	lastWasSpace := true // Чтобы удалить ведущие пробелы
-	
+
 	for _, r := range s {
 		if unicode.IsSpace(r) {
 			if !lastWasSpace {
@@ -275,13 +275,13 @@ func CleanWhitespaceEfficient(s string) string {
 			lastWasSpace = false
 		}
 	}
-	
+
 	result := buf.String()
 	// Удаляем завершающий пробел
 	if len(result) > 0 && result[len(result)-1] == ' ' {
 		result = result[:len(result)-1]
 	}
-	
+
 	return result
 }
 
@@ -293,25 +293,25 @@ func FastConcat(parts ...string) string {
 	if len(parts) == 1 {
 		return parts[0]
 	}
-	
+
 	// Вычисляем общую длину
 	totalLen := 0
 	for _, part := range parts {
 		totalLen += len(part)
 	}
-	
+
 	if totalLen == 0 {
 		return ""
 	}
-	
+
 	buf := GetBuffer()
 	defer PutBuffer(buf)
-	
+
 	buf.Grow(totalLen)
 	for _, part := range parts {
 		buf.WriteString(part)
 	}
-	
+
 	return buf.String()
 }
 
@@ -328,15 +328,15 @@ func NewByteBufferPool(size int) *ByteBufferPool {
 	if size < 2 {
 		size = 2
 	}
-	
+
 	pool := &ByteBufferPool{
 		buffers: make(chan *bytes.Buffer, size),
 	}
-	
+
 	for i := 0; i < size; i++ {
 		pool.buffers <- &bytes.Buffer{}
 	}
-	
+
 	return pool
 }
 
@@ -356,7 +356,7 @@ func (p *ByteBufferPool) Put(buf *bytes.Buffer) {
 	if buf == nil || buf.Cap() > 2048 {
 		return
 	}
-	
+
 	select {
 	case p.buffers <- buf:
 	default:
@@ -381,33 +381,33 @@ func IntToString(n int) string {
 	if n == 0 {
 		return "0"
 	}
-	
+
 	// Для отрицательных чисел
 	negative := n < 0
 	if negative {
 		n = -n
 	}
-	
+
 	buf := GetBuffer()
 	defer PutBuffer(buf)
-	
+
 	// Преобразуем цифры в обратном порядке
 	for n > 0 {
 		buf.WriteByte(byte('0' + n%10))
 		n /= 10
 	}
-	
+
 	if negative {
 		buf.WriteByte('-')
 	}
-	
+
 	// Переворачиваем строку
 	result := buf.String()
 	runes := []rune(result)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
 		runes[i], runes[j] = runes[j], runes[i]
 	}
-	
+
 	return string(runes)
 }
 
@@ -421,7 +421,7 @@ func EmergencyPoolCleanup() {
 			goto nextPool
 		}
 	}
-	
+
 nextPool:
 	// Очищаем глобальный пул байтов
 	for {
@@ -431,7 +431,7 @@ nextPool:
 			goto cleanupComplete
 		}
 	}
-	
+
 cleanupComplete:
 	// Примечание: Для полной очистки также нужно вызвать ui.ClearInternCache()
 	// но мы избегаем импорта ui пакета здесь для предотвращения циклических зависимостей
@@ -443,7 +443,7 @@ func (p *StringPool) Cleanup() {
 	if targetSize < 2 {
 		targetSize = 2
 	}
-	
+
 	for len(p.buffers) > targetSize {
 		select {
 		case <-p.buffers:
@@ -459,7 +459,7 @@ func (p *ByteBufferPool) Cleanup() {
 	if targetSize < 1 {
 		targetSize = 1
 	}
-	
+
 	for len(p.buffers) > targetSize {
 		select {
 		case <-p.buffers:

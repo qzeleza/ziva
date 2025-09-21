@@ -10,26 +10,34 @@ import (
 	"github.com/qzeleza/termos/internal/performance"
 )
 
+var (
+	// NumberingEnabled определяет, включена ли нумерация задач
+	NumberingEnabled bool
+)
+
 // Яркая цветовая палитра для UI
 var (
-	ColorBrightGreen   = lipgloss.Color("#00ff00") // Ярко-зелёный
-	ColorBrightRed     = lipgloss.Color("#FF2104") // Ярко-красный
-	ColorDarkRed       = lipgloss.Color("#B10C01") // Темно-красный
-	ColorBrightYellow  = lipgloss.Color("#ffff00") // Ярко-жёлтый
-	ColorDarkYellow    = lipgloss.Color("#D2BE88") // Темно-жёлтый
-	ColorBrightOrange  = lipgloss.Color("#FFA500") // Ярко-оранжевый
-	ColorDarkOrange    = lipgloss.Color("#D2691E") // Темно-оранжевый
-	ColorBrightBlue    = lipgloss.Color("#0000ff") // Ярко-синий
-	ColorDarkBlue      = lipgloss.Color("#01189B") // Темно-синий
-	ColorBrightCyan    = lipgloss.Color("#00ffff") // Ярко-голубой
-	ColorDarkCyan      = lipgloss.Color("#006875") // Темно-голубой
-	ColorBrightMagenta = lipgloss.Color("#ff00ff") // Ярко-фиолетовый
-	ColorBrightWhite   = lipgloss.Color("#fff")    // Ярко-белый
-	ColorBrightGray    = lipgloss.Color("#777")    // Светло-серый
-	ColorDarkGray      = lipgloss.Color("#333")    // Темно-серый
-	ColorLightBlue     = lipgloss.Color("#5DA9E9") // Светло-голубой
-	ColorBlack         = lipgloss.Color("#000")    // Черный
-	ColorDarkGreen     = lipgloss.Color("#008000") // Темно-зелёный
+	ColorBrightGreen    = lipgloss.Color("#00ff00") // Ярко-зелёный
+	ColorBrightRed      = lipgloss.Color("#FF2104") // Ярко-красный
+	ColorDarkRed        = lipgloss.Color("#B10C01") // Темно-красный
+	ColorBrightYellow   = lipgloss.Color("#ffff00") // Ярко-жёлтый
+	ColorDarkYellow     = lipgloss.Color("#D2BE88") // Темно-жёлтый
+	ColorBrightOrange   = lipgloss.Color("#FFA500") // Ярко-оранжевый
+	ColorDarkOrange     = lipgloss.Color("#D2691E") // Темно-оранжевый
+	ColorBrightBlue     = lipgloss.Color("#0000ff") // Ярко-синий
+	ColorDarkBlue       = lipgloss.Color("#01189B") // Темно-синий
+	ColorBrightCyan     = lipgloss.Color("#00ffff") // Ярко-голубой
+	ColorDarkCyan       = lipgloss.Color("#006875") // Темно-голубой
+	ColorBrightMagenta  = lipgloss.Color("#ff00ff") // Ярко-фиолетовый
+	ColorBrightWhite    = lipgloss.Color("#fff")    // Ярко-белый
+	ColorBrightGray     = lipgloss.Color("#777")    // Светло-серый
+	ColorDarkGray       = lipgloss.Color("#333")    // Темно-серый
+	ColorLightBlue      = lipgloss.Color("#5DA9E9") // Светло-голубой
+	ColorBlack          = lipgloss.Color("#000")    // Черный
+	ColorDarkGreen      = lipgloss.Color("#008000") // Темно-зелёный
+	ColorVeryDarkGray   = lipgloss.Color("#444")    // Очень темно-серый (для едва заметных элементов)
+	ColorVeryDarkYellow = lipgloss.Color("#666633") // Очень темно-желтый (для приглушенных ошибок)
+	ColorMutedGreen     = lipgloss.Color("#4a7c59") // Приглушенно-зеленый (для сводки при успехе)
 )
 
 // Яркие иконки
@@ -51,22 +59,27 @@ var (
 	TitleStyle = lipgloss.NewStyle().Bold(true)
 
 	// Динамические стили ошибок (могут быть изменены через SetErrorColor)
-	ErrorMessageStyle = lipgloss.NewStyle().Foreground(ColorDarkYellow)              // Ошибка: ярко-красный (без курсива)
-	ErrorStatusStyle  = lipgloss.NewStyle().Foreground(ColorBrightYellow).Bold(true) // Вывод сообщений об ошибках: ярко-красный (курсив)
-	CancelStyle       = lipgloss.NewStyle().Foreground(ColorBrightYellow)            // Вывод статуса ошибки: ярко-жёлтый
-	SubtleStyle       = lipgloss.NewStyle().Foreground(ColorBrightGray)              // Подписи: светло-серый
-	DisabledStyle     = lipgloss.NewStyle().Foreground(ColorBrightGray)              // Неактивные элементы: светло-серый
-	HelpTextStyle     = lipgloss.NewStyle().Foreground(ColorLightBlue)               // Подсказки для элементов
-	SelectionStyle    = lipgloss.NewStyle().Foreground(ColorBrightGreen)             // Выделение (Да): ярко-зелёный
-	SelectionNoStyle  = lipgloss.NewStyle().Foreground(ColorBrightRed).Bold(true)    // Выделение (Нет): ярко-красный
-	ActiveStyle       = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Активный элемент: ярко-синий
-	InputStyle        = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Стиль для активного ввода
-	SpinnerStyle      = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Стиль для спиннера
-	ActiveTitleStyle  = lipgloss.NewStyle().Foreground(ColorBrightGreen).Bold(true)  // Активный заголовок ввода
-	ActiveTaskStyle   = lipgloss.NewStyle().Foreground(ColorBrightGreen)             // Стиль для активной задачи
-	SuccessLabelStyle = lipgloss.NewStyle().Foreground(ColorBrightGreen).Bold(true)  // Успешное завершение
+	ErrorMessageStyle    = lipgloss.NewStyle().Foreground(ColorDarkYellow)              // Ошибка: ярко-красный (без курсива)
+	ErrorStatusStyle     = lipgloss.NewStyle().Foreground(ColorBrightYellow).Bold(true) // Вывод сообщений об ошибках: ярко-красный (курсив)
+	CancelStyle          = lipgloss.NewStyle().Foreground(ColorBrightYellow)            // Вывод статуса ошибки: ярко-жёлтый
+	SubtleStyle          = lipgloss.NewStyle().Foreground(ColorBrightGray)              // Подписи: светло-серый
+	DisabledStyle        = lipgloss.NewStyle().Foreground(ColorBrightGray)              // Неактивные элементы: светло-серый
+	HelpTextStyle        = lipgloss.NewStyle().Foreground(ColorLightBlue)               // Подсказки для элементов
+	SelectionStyle       = lipgloss.NewStyle().Foreground(ColorBrightGreen)             // Выделение (Да): ярко-зелёный
+	SelectionNoStyle     = lipgloss.NewStyle().Foreground(ColorBrightRed).Bold(true)    // Выделение (Нет): ярко-красный
+	ActiveStyle          = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Активный элемент: ярко-синий
+	InputStyle           = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Стиль для активного ввода
+	SpinnerStyle         = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Стиль для спиннера
+	ActiveTitleStyle     = lipgloss.NewStyle().Foreground(ColorBrightGreen).Bold(true)  // Активный заголовок ввода
+	ActiveTaskStyle      = lipgloss.NewStyle().Foreground(ColorBrightGreen)             // Стиль для активной задачи
+	SuccessLabelStyle    = lipgloss.NewStyle().Foreground(ColorBrightGreen).Bold(true)  // Успешное завершение
+	VerySubtleStyle      = lipgloss.NewStyle().Foreground(ColorVeryDarkGray)            // Едва заметные элементы
+	VerySubtleErrorStyle = lipgloss.NewStyle().Foreground(ColorVeryDarkYellow)          // Едва заметные элементы ошибок
 
-	FinishedLabelStyle = lipgloss.NewStyle().Foreground(ColorBrightWhite).Bold(true) // Завершение
+	FinishedLabelStyle     = lipgloss.NewStyle().Foreground(ColorBrightWhite).Bold(true) // Завершение
+	SummaryLabelStyle      = lipgloss.NewStyle().Foreground(ColorBrightWhite).Bold(true) // Стиль для сводки
+	SummarySuccessStyle    = lipgloss.NewStyle().Foreground(ColorMutedGreen).Bold(true)  // Приглушенно-зеленый стиль для успешной сводки
+	TaskStatusSuccessStyle = lipgloss.NewStyle().Foreground(ColorBrightGreen).Bold(true) // Стиль для статуса успешных задач (соответствует SelectionStyle)
 )
 
 // Константы отступов (в пробелах)
@@ -153,10 +166,11 @@ func GetCompletedTaskPrefix(success bool) string {
 //	│   Комментарий
 //	│
 func GetCommentPrefix(value string) string {
+
 	return performance.FastConcat(
 		performance.RepeatEfficient(" ", MainLeftIndent),
 		VerticalLineSymbol,
-		"   ",
+		GetResultIndentWhenNumberingEnabled(),
 		SubtleStyle.Render(value),
 		"\n",
 		performance.RepeatEfficient(" ", MainLeftIndent),
@@ -165,7 +179,7 @@ func GetCommentPrefix(value string) string {
 }
 
 // GetCompletedInputTaskPrefix возвращает префикс для завершенной задачи с текстовым вводом
-// success = true: "  │ ✔", success = false: "  │ ✕"
+// success = true: "  │ ●", success = false: "  │ ○"
 func GetCompletedInputTaskPrefix(success bool) string {
 	var icon string
 	if success {
@@ -319,11 +333,20 @@ func findOptimalCutPointRunes(textRunes []rune, start, maxWidth int) int {
 	return maxWidth
 }
 
+// GetResultIndent возвращает отступ для результата, в зависимости от включенной нумерации задач
+func GetResultIndentWhenNumberingEnabled() string {
+	textIndent := performance.RepeatEfficient(" ", 3) // отступ по умолчанию
+	if NumberingEnabled {
+		textIndent = performance.RepeatEfficient(" ", 4) // больший отступ при включенной нумерации
+	}
+	return textIndent
+}
+
 // DrawSummaryLine рисует дополнительные строки с отступом
 func DrawSummaryLine(text string) string {
 	styledLine := SubtleStyle.Render(text)
-	indent := performance.RepeatEfficient(" ", 2)
-	return indent + VerticalLineSymbol + "   " + styledLine + "\n"
+	indent := performance.RepeatEfficient(" ", MainLeftIndent)
+	return indent + VerticalLineSymbol + GetResultIndentWhenNumberingEnabled() + styledLine + "\n"
 }
 
 // DrawLine создает горизонтальную линию заданной ширины

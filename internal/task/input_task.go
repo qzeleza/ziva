@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 	terrors "github.com/qzeleza/termos/internal/errors"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
@@ -60,10 +60,10 @@ func NewInputTaskNew(title, prompt string) *InputTaskNew {
 
 	// Инициализируем компонент ввода
 	ti := textinput.New()
-	ti.Placeholder = defauilt.DefaultPlaceholder
+	ti.Placeholder = defaults.DefaultPlaceholder
 	ti.Focus()
-	ti.CharLimit = defauilt.MaxInputLength
-	ti.Width = defauilt.DefaultInputWidth
+	ti.CharLimit = defaults.MaxInputLength
+	ti.Width = defaults.DefaultInputWidth
 
 	return &InputTaskNew{
 		BaseTask:     baseTask,
@@ -72,8 +72,8 @@ func NewInputTaskNew(title, prompt string) *InputTaskNew {
 		errorHandler: terrors.DefaultErrorHandler,
 		inputType:    InputTypeText,
 		prompt:       prompt,
-		placeholder:  defauilt.DefaultPlaceholder,
-		width:        defauilt.DefaultInputWidth,
+		placeholder:  defaults.DefaultPlaceholder,
+		width:        defaults.DefaultInputWidth,
 		maskInput:    false,
 		allowEmpty:   false,
 	}
@@ -94,7 +94,7 @@ func (t *InputTaskNew) WithInputType(inputType InputType) *InputTaskNew {
 	case InputTypePassword:
 		t.maskInput = true
 		t.textInput.EchoMode = textinput.EchoPassword
-		t.textInput.EchoCharacter = defauilt.PasswordMask
+		t.textInput.EchoCharacter = defaults.PasswordMask
 
 		// Если валидатор не установлен, используем стандартный валидатор паролей
 		if t.validator == nil {
@@ -108,7 +108,7 @@ func (t *InputTaskNew) WithInputType(inputType InputType) *InputTaskNew {
 
 	case InputTypeNumber:
 		if t.validator == nil {
-			t.validator = validation.NewNumberValidator(defauilt.DefaultNumberMin, defauilt.DefaultNumberMax)
+			t.validator = validation.NewNumberValidator(defaults.DefaultNumberMin, defaults.DefaultNumberMax)
 		}
 
 	case InputTypeIP:
@@ -127,10 +127,10 @@ func (t *InputTaskNew) WithInputType(inputType InputType) *InputTaskNew {
 
 // WithWidth устанавливает ширину поля ввода
 func (t *InputTaskNew) WithWidth(width int) *InputTaskNew {
-	if width < defauilt.MinInputWidth {
-		width = defauilt.MinInputWidth
-	} else if width > defauilt.MaxInputWidth {
-		width = defauilt.MaxInputWidth
+	if width < defaults.MinInputWidth {
+		width = defaults.MinInputWidth
+	} else if width > defaults.MaxInputWidth {
+		width = defaults.MaxInputWidth
 	}
 
 	t.width = width
@@ -293,7 +293,7 @@ func (t *InputTaskNew) handleSubmit() (Task, tea.Cmd) {
 
 	// Финальная валидация
 	if !t.allowEmpty && performance.TrimSpaceEfficient(currentValue) == "" {
-		emptyErr := terrors.NewValidationError(t.title, errors.New(defauilt.ErrFieldRequired)).
+		emptyErr := terrors.NewValidationError(t.title, errors.New(defaults.ErrFieldRequired)).
 			WithContext("required", true)
 		t.validationErr = emptyErr
 		t.SetError(emptyErr)
@@ -333,7 +333,7 @@ func (t *InputTaskNew) handleCancel() (Task, tea.Cmd) {
 	t.SetError(cancelErr)
 	t.done = true
 	t.icon = ui.IconCancelled
-	t.finalValue = ui.CancelStyle.Render(defauilt.CancelShort)
+	t.finalValue = ui.CancelStyle.Render(defaults.CancelShort)
 
 	return t, nil
 }
@@ -341,7 +341,7 @@ func (t *InputTaskNew) handleCancel() (Task, tea.Cmd) {
 // getDisplayValue возвращает значение для отображения (маскирует пароли)
 func (t *InputTaskNew) getDisplayValue() string {
 	if t.maskInput {
-		return performance.RepeatEfficient(string(defauilt.PasswordMask), len(t.value))
+		return performance.RepeatEfficient(string(defaults.PasswordMask), len(t.value))
 	}
 	return t.value
 }
@@ -349,10 +349,10 @@ func (t *InputTaskNew) getDisplayValue() string {
 // applyDefaultValue применяет значение по умолчанию при истечении таймера
 func (t *InputTaskNew) applyDefaultValue() {
 	// Если есть значение по умолчанию
-	if t.defaultValue != nil {
+	if t.defauiltValue != nil {
 		var valueToSet string
 
-		switch val := t.defaultValue.(type) {
+		switch val := t.defauiltValue.(type) {
 		case string:
 			valueToSet = val
 		case int:
@@ -369,26 +369,26 @@ func (t *InputTaskNew) applyDefaultValue() {
 			if err := t.validator.Validate(valueToSet); err != nil {
 				// Если значение по умолчанию не прошло валидацию, завершаем с ошибкой
 				validationErr := terrors.NewValidationError(t.title, err).
-					WithContext("default_value", true).
+					WithContext("defauilt_value", true).
 					WithContext("input_type", t.inputType)
 				t.validationErr = validationErr
 				t.SetError(validationErr)
 				t.done = true
 				t.icon = ui.IconError
-				t.finalValue = ui.GetErrorMessageStyle().Render(defauilt.ErrDefaultValueInvalid)
+				t.finalValue = ui.GetErrorMessageStyle().Render(defaults.ErrDefaultValueInvalid)
 				return
 			}
 		}
 
 		// Проверяем на пустоту, если пустые значения не разрешены
 		if !t.allowEmpty && performance.TrimSpaceEfficient(valueToSet) == "" {
-			emptyErr := terrors.NewValidationError(t.title, errors.New(defauilt.ErrFieldRequired)).
-				WithContext("default_value", true)
+			emptyErr := terrors.NewValidationError(t.title, errors.New(defaults.ErrFieldRequired)).
+				WithContext("defauilt_value", true)
 			t.validationErr = emptyErr
 			t.SetError(emptyErr)
 			t.done = true
 			t.icon = ui.IconError
-			t.finalValue = ui.GetErrorMessageStyle().Render(defauilt.ErrDefaultValueEmpty)
+			t.finalValue = ui.GetErrorMessageStyle().Render(defaults.ErrDefaultValueEmpty)
 			return
 		}
 
@@ -519,9 +519,9 @@ func (b *InputTaskBuilder) Build() *InputTaskNew {
 
 // WithTimeout устанавливает тайм-аут для задачи ввода
 // @param duration Длительность тайм-аута
-// @param defaultValue Значение по умолчанию (строка)
+// @param defauiltValue Значение по умолчанию (строка)
 // @return Указатель на задачу для цепочки вызовов
-func (t *InputTaskNew) WithTimeout(duration time.Duration, defaultValue interface{}) *InputTaskNew {
-	t.BaseTask.WithTimeout(duration, defaultValue)
+func (t *InputTaskNew) WithTimeout(duration time.Duration, defauiltValue interface{}) *InputTaskNew {
+	t.BaseTask.WithTimeout(duration, defauiltValue)
 	return t
 }

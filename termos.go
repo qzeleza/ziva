@@ -93,20 +93,31 @@ func (q *Queue) WithAppName(appName string) *Queue {
 // WithSummary включает/выключает отображение сводки по завершению
 //
 // @param show Флаг, указывающий, нужно ли отображать сводку
+// @param lineEnabled Флаг, указывающий, нужно ли отображать линию сводки, под которой выводится сводка
 // @return Указатель на очередь задач
-func (q *Queue) WithSummary(show bool) *Queue {
-	q.model.WithSummary(show)
+func (q *Queue) WithOutSummary(lineEnabled bool) *Queue {
+	q.model.WithSummary(false)
+
+	return q
+}
+
+// WithResultFormatting включает форматирование результатов задач с разделительными линиями.
+// Если enabled=true, то перед каждым результатом задачи будет добавляться разделительная линия
+// из префикса и указанного количества символов "─".
+// При enabled=false поведение остается как и раньше - результаты выводятся сразу после строки с задачей.
+// @param enabled - включить/выключить форматирование
+func (q *Queue) WithOutResultLine() *Queue {
+	q.model.WithResultFormatting(false)
 	return q
 }
 
 // WithTasksNumbered включает отображение номеров для задач и задаёт формат (например "[%02d]" или "(%d)").
 //
-// @param enable Флаг, указывающий, нужно ли отображать номера задач
 // @param keepFirstSymbol Флаг, указывающий, нужно ли сохранять первый символ формата
 // @param numberFormat Формат номеров задач
 // @return Указатель на очередь задач
-func (q *Queue) WithTasksNumbered(enable bool, keepFirstSymbol bool, numberFormat string) *Queue {
-	q.model.WithTasksNumbered(enable, keepFirstSymbol, numberFormat)
+func (q *Queue) WithTasksNumbered(keepFirstSymbol bool, numberFormat string) *Queue {
+	q.model.WithTasksNumbered(true, keepFirstSymbol, numberFormat)
 	return q
 }
 
@@ -176,10 +187,10 @@ type YesNoTask struct {
 // WithTimeout устанавливает тайм-аут для задачи с значением по умолчанию
 //
 // @param duration Тайм-аут
-// @param defaultValue Значение по умолчанию
+// @param defauiltValue Значение по умолчанию
 // @return Указатель на задачу для цепочки вызовов
-func (t *YesNoTask) WithTimeout(duration time.Duration, defaultValue interface{}) *YesNoTask {
-	t.WithDefaultOption(defaultValue, duration)
+func (t *YesNoTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *YesNoTask {
+	t.WithDefaultOption(defauiltValue, duration)
 	return t
 }
 
@@ -261,10 +272,10 @@ func (t *SingleSelectTask) WithViewport(size int, showCounters ...bool) *SingleS
 // WithTimeout устанавливает тайм-аут для задачи с значением по умолчанию
 //
 // @param duration Тайм-аут в миллисекундах
-// @param defaultValue Значение по умолчанию
+// @param defauiltValue Значение по умолчанию
 // @return Указатель на задачу для цепочки вызовов
-func (t *SingleSelectTask) WithTimeout(duration time.Duration, defaultValue interface{}) *SingleSelectTask {
-	t.SingleSelectTask.WithTimeout(duration, defaultValue)
+func (t *SingleSelectTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *SingleSelectTask {
+	t.SingleSelectTask.WithTimeout(duration, defauiltValue)
 	return t
 }
 
@@ -333,10 +344,10 @@ func (t *MultiSelectTask) WithViewport(size int, showCounters ...bool) *MultiSel
 // WithTimeout устанавливает тайм-аут для задачи с значениями по умолчанию
 //
 // @param duration Тайм-аут в миллисекундах
-// @param defaultValues Значения по умолчанию
+// @param defauiltValues Значения по умолчанию
 // @return Указатель на задачу для цепочки вызовов
-func (t *MultiSelectTask) WithTimeout(duration time.Duration, defaultValues interface{}) *MultiSelectTask {
-	t.MultiSelectTask.WithTimeout(duration, defaultValues)
+func (t *MultiSelectTask) WithTimeout(duration time.Duration, defauiltValues interface{}) *MultiSelectTask {
+	t.MultiSelectTask.WithTimeout(duration, defauiltValues)
 	return t
 }
 
@@ -361,10 +372,10 @@ func (t *MultiSelectTask) WithSelectAll(text ...string) *MultiSelectTask {
 
 // WithDefaultItems задает элементы, которые будут отмечены при открытии задачи.
 //
-// @param defaultSelection Индекс или значение элемента, который будет подсвечен
+// @param defauiltSelection Индекс или значение элемента, который будет подсвечен
 // @return Указатель на задачу для цепочки вызовов
-func (t *MultiSelectTask) WithDefaultItems(defaultSelection interface{}) *MultiSelectTask {
-	t.MultiSelectTask.WithDefaultItems(defaultSelection)
+func (t *MultiSelectTask) WithDefaultItems(defauiltSelection interface{}) *MultiSelectTask {
+	t.MultiSelectTask.WithDefaultItems(defauiltSelection)
 	return t
 }
 
@@ -396,10 +407,10 @@ type InputTask struct {
 // WithTimeout устанавливает тайм-аут для задачи с значением по умолчанию
 //
 // @param duration Тайм-аут в миллисекундах
-// @param defaultValue Значение по умолчанию
+// @param defauiltValue Значение по умолчанию
 // @return Указатель на задачу для цепочки вызовов
-func (t *InputTask) WithTimeout(duration time.Duration, defaultValue string) *InputTask {
-	t.InputTaskNew.WithTimeout(duration, defaultValue)
+func (t *InputTask) WithTimeout(duration time.Duration, defauiltValue string) *InputTask {
+	t.InputTaskNew.WithTimeout(duration, defauiltValue)
 	return t
 }
 

@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/qzeleza/termos/internal/defauilt"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/qzeleza/termos/internal/defaults"
 )
 
 /**
@@ -110,7 +110,7 @@ func NewFuncTask(title string, funcAction func() error, options ...FuncTaskOptio
 		function:     funcAction,
 		summaryFunc:  nil,
 		summaryLines: nil,
-		successLabel: defauilt.DefaultSuccessLabel,
+		successLabel: defaults.DefaultSuccessLabel,
 	}
 
 	// Применяем функциональные опции
@@ -166,7 +166,7 @@ func (t *FuncTask) Run() tea.Cmd {
 
 		// Делаем задержку перед завершением
 		// для лучшей визуальной анимации
-		time.Sleep(defauilt.DefaultCompletionDelay)
+		time.Sleep(defaults.DefaultCompletionDelay)
 
 		// Возвращаем специальное сообщение об успешном завершении
 		return funcTaskCompleteMsg{}
@@ -222,7 +222,7 @@ func (t *FuncTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			// Помечаем задачу как выполненную с отменой
 			t.done = true
 			t.icon = ui.IconCancelled
-			t.finalValue = fmt.Sprintf("%s %s %s", ui.IconCancelled, t.title, defauilt.TaskCancelledByUser)
+			t.finalValue = fmt.Sprintf("%s %s %s", ui.IconCancelled, t.title, defaults.TaskCancelledByUser)
 			return t, nil
 		}
 	}
@@ -248,7 +248,7 @@ func (t *FuncTask) View(width int) string {
 	result := fmt.Sprintf("%s%s%s\n", prefix, t.spinner.View(), ui.ActiveTaskStyle.Render(t.title))
 	// Добавляем подсказку о навигации с новым отступом
 	helpIndent := performance.RepeatEfficient(" ", ui.MainLeftIndent)
-	result += "\n" + ui.DrawLine(width) + ui.SubtleStyle.Render(fmt.Sprintf("%s%s", helpIndent, defauilt.TaskExitHint))
+	result += "\n" + ui.DrawLine(width) + ui.SubtleStyle.Render(fmt.Sprintf("%s%s", helpIndent, defaults.TaskExitHint))
 
 	return result
 }

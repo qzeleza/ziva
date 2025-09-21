@@ -9,7 +9,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/qzeleza/termos/internal/ui"
 )
 
@@ -35,7 +35,7 @@ type BaseTask struct {
 	// Поля для управления тайм-аутом
 	timeoutManager *TimeoutManager // Менеджер тайм-аута
 	timeoutEnabled bool            // Флаг, указывающий, включен ли тайм-аут
-	defaultValue   interface{}     // Значение по умолчанию, которое будет выбрано при тайм-ауте
+	defauiltValue  interface{}     // Значение по умолчанию, которое будет выбрано при тайм-ауте
 	showTimeout    bool            // Флаг, указывающий, нужно ли отображать оставшееся время
 }
 
@@ -91,7 +91,7 @@ func (t *BaseTask) WithNewLinesInErrors(preserve bool) common.Task {
 // SetError устанавливает ошибку для задачи
 func (t *BaseTask) SetError(err error) { t.err = err }
 
-// View provides a default implementation for active tasks.
+// View provides a defauilt implementation for active tasks.
 func (t *BaseTask) View(_ int) string {
 	// Most active tasks manage their own view, so this is a fallback.
 	return t.title
@@ -99,12 +99,12 @@ func (t *BaseTask) View(_ int) string {
 
 // WithTimeout устанавливает тайм-аут для задачи
 // @param duration Длительность тайм-аута
-// @param defaultValue Значение, которое будет выбрано при тайм-ауте
+// @param defauiltValue Значение, которое будет выбрано при тайм-ауте
 // @return Указатель на текущую задачу для цепочки вызовов
-func (t *BaseTask) WithTimeout(duration time.Duration, defaultValue interface{}) *BaseTask {
+func (t *BaseTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *BaseTask {
 	t.timeoutManager = NewTimeoutManager(duration)
 	t.timeoutEnabled = true
-	t.defaultValue = defaultValue
+	t.defauiltValue = defauiltValue
 	return t
 }
 
@@ -168,7 +168,7 @@ func (t *BaseTask) FinalView(width int) string {
 	}
 
 	// Определяем успешность выполнения задачи
-	success := !t.HasError() && t.finalValue != defauilt.TaskStatusCancelled
+	success := !t.HasError() && t.finalValue != defaults.TaskStatusCancelled
 
 	// Определяем тип задачи для выбора правильного префикса
 	isTextInputTask := IsTextInputTask(t)
@@ -185,11 +185,19 @@ func (t *BaseTask) FinalView(width int) string {
 	}
 
 	// Для простых значений Yes/No используем отдельные стили для "Да" и "Нет"
-	if t.finalValue == defauilt.DefaultYes || t.finalValue == defauilt.DefaultNo {
-		left := fmt.Sprintf("%s %s", prefix, t.title)
+	if t.finalValue == defaults.DefaultYes || t.finalValue == defaults.DefaultNo {
+		// Определяем стиль заголовка в зависимости от результата
+		var styledTitle string
+		if t.finalValue == defaults.DefaultYes {
+			styledTitle = t.title
+		} else {
+			styledTitle = ui.GetErrorStatusStyle().Render(t.title)
+		}
+
+		left := fmt.Sprintf("%s  %s", prefix, styledTitle)
 		var right string
-		if t.finalValue == defauilt.DefaultYes {
-			right = ui.SelectionStyle.Render(t.finalValue)
+		if t.finalValue == defaults.DefaultYes {
+			right = ui.TaskStatusSuccessStyle.Render(t.finalValue)
 		} else {
 			right = ui.GetErrorStatusStyle().Render(t.finalValue)
 		}
@@ -199,10 +207,12 @@ func (t *BaseTask) FinalView(width int) string {
 	// Для ошибок выводим текст ошибки с отступом и слово "Ошибка" справа
 	if t.icon == ui.IconError {
 		// Создаем левую часть с заголовком и префиксом (prefix уже содержит ✕)
-		left := fmt.Sprintf("%s %s", prefix, t.title)
+		// Заголовок окрашиваем в цвет ошибки
+		styledTitle := ui.GetErrorStatusStyle().Render(t.title)
+		left := fmt.Sprintf("%s  %s", prefix, styledTitle)
 
 		// Создаем правую часть со словом "Ошибка"
-		right := ui.GetErrorStatusStyle().Render(defauilt.TaskStatusError)
+		right := ui.GetErrorStatusStyle().Render(defaults.TaskStatusError)
 
 		// Создаем верхнюю строку с выравниванием
 		result := ui.AlignTextToRight(left, right, width) + "\n"
@@ -227,10 +237,18 @@ func (t *BaseTask) FinalView(width int) string {
 
 	// Для обычных задач используем стандартное форматирование с новым префиксом
 	if t.finalValue != "" && !strings.Contains(t.finalValue, t.title) {
-		left := fmt.Sprintf("%s %s", prefix, t.title)
+		// Определяем стиль заголовка в зависимости от успешности
+		var styledTitle string
+		if success {
+			styledTitle = t.title
+		} else {
+			styledTitle = ui.GetErrorStatusStyle().Render(t.title)
+		}
+
+		left := fmt.Sprintf("%s  %s", prefix, styledTitle)
 		// right := ui.SelectionStyle.Render(t.finalValue)
-		ready := strings.ToUpper(defauilt.DefaultSuccessLabel)
-		right := ui.SelectionStyle.Render(ready)
+		ready := strings.ToUpper(defaults.DefaultSuccessLabel)
+		right := ui.TaskStatusSuccessStyle.Render(ready)
 		//
 		return ui.AlignTextToRight(left, right, width)
 	}
@@ -241,7 +259,14 @@ func (t *BaseTask) FinalView(width int) string {
 	}
 
 	// Запасной вариант - просто отображаем заголовок с префиксом
-	return fmt.Sprintf("%s %s", prefix, t.title)
+	// Определяем стиль заголовка в зависимости от успешности
+	var styledTitle string
+	if success {
+		styledTitle = t.title
+	} else {
+		styledTitle = ui.GetErrorStatusStyle().Render(t.title)
+	}
+	return fmt.Sprintf("%s  %s", prefix, styledTitle)
 }
 
 // SetCompletedPrefix позволяет переопределить префикс завершённой задачи (используется очередью)

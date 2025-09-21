@@ -35,10 +35,11 @@ func main() {
 	header := "Демонстрация всех типов задач Termos"
 
 	// Создаем очередь и добавляем задачи
-	queue := termos.NewQueue(header).
-		WithAppName("Термос").
-		WithSummary(true).
-		WithTasksNumbered(true, false, "[%d]")
+	queue := termos.NewQueue(header)
+	queue.WithAppName("Термос")
+	// queue.WithOutResultLine()
+	// queue.WithOutSummary()
+	// queue.WithTasksNumbered(false, "[%d]")
 
 	// Формируем очередь задач
 	var msel = []string{
@@ -83,26 +84,61 @@ func main() {
 		"Выберите среду развертывания",
 		ssel,
 	).WithViewport(3).
-		// WithTimeout(3*time.Second, "staging")
+		WithTimeout(3*time.Second, "staging").
 		WithDefaultItem("production")
 
 	// 3) Ввод с использованием всех стандартных валидаторов
 	//    Валидация будет происходить в момент подтверждения (Enter)
 	v := termos.DefaultValidators
 
-	inUsername := termos.NewInputTask("Имя пользователя", "Введите username:").
-		WithValidator(v.Username()).
-		WithTimeout(10*time.Second, "Alex")
+	inPath := task.NewInputTaskNew("Путь к файлу/директории", "Введите путь:").
+		WithValidator(v.Path())
+
+	queue.AddTasks(
+		ss,
+		// inUsername,
+		ms1,
+		ms2,
+		inPath,
+	)
+
+	// 4) Задача-выполнение функции (FuncTask)
+	//    Выполняет полезную работу и выводит результат в финальном представлении задачи (без fmt.Print)
+	errorTaskRun := false
+	var fn *termos.FuncTask
+	if errorTaskRun {
+		data := pingResult{}
+		fn = termos.NewFuncTask(
+			"Проверка соединения",
+			func() error {
+				// return checkConnection(&data)
+				return errors.New("симуляция ошибки в середине выполнения очереди\nне ясная причина стимуляции проблемы\nдополнительная информация")
+			},
+			// Выводим краткую сводку под заголовком после успеха
+			termos.WithSummaryFunction(func() []string {
+				return []string{
+					"Пинг: " + data.Ping,
+					"Потери пакетов: " + data.Loss,
+				}
+			}),
+			// Не останавливать очередь при ошибке (для демонстрации поведения)
+			termos.WithStopOnError(true),
+		)
+		queue.AddTasks(fn)
+	}
+	// 5) Подтверждение Да/Нет (например, для сохранения настроек)
+	ys := termos.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeout(5*time.Second, "Нет")
+
+	// inUsername := termos.NewInputTask("Имя пользователя", "Введите username:").
+	// 	WithValidator(v.Username()).
+	// 	WithTimeout(10*time.Second, "Alex")
 
 	// inEmail := task.NewInputTaskNew("Email", "Введите email:").
 	// 	WithInputType(task.InputTypeEmail).WithValidator(v.Email()).
-	// 	WithTimeout(10*time.Second, "default@example.com")
+	// 	WithTimeout(10*time.Second, "defauilt@example.com")
 
 	// inOptionalEmail := task.NewInputTaskNew("Доп. Email (опционально)", "Введите email или оставьте пустым:").
 	// 	WithInputType(task.InputTypeEmail).WithValidator(v.OptionalEmail())
-
-	inPath := task.NewInputTaskNew("Путь к файлу/директории", "Введите путь:").
-		WithValidator(v.Path())
 
 	// inURL := task.NewInputTaskNew("URL", "Введите URL (http/https):").
 	// 	WithValidator(v.URL())
@@ -146,41 +182,14 @@ func main() {
 	// inRequired := task.NewInputTaskNew("Обязательное поле", "Нельзя оставлять пустым:").
 	// 	WithValidator(v.Required())
 
-	// 4) Задача-выполнение функции (FuncTask)
-	//    Выполняет полезную работу и выводит результат в финальном представлении задачи (без fmt.Print)
-	data := pingResult{}
-	fn := termos.NewFuncTask(
-		"Проверка соединения",
-		func() error {
-			// return checkConnection(&data)
-			return errors.New("симуляция ошибки в середине выполнения очереди\nне ясная причина стимуляции проблемы\nдополнительная информация")
-		},
-		// Выводим краткую сводку под заголовком после успеха
-		termos.WithSummaryFunction(func() []string {
-			return []string{
-				"Пинг: " + data.Ping,
-				"Потери пакетов: " + data.Loss,
-			}
-		}),
-		// Не останавливать очередь при ошибке (для демонстрации поведения)
-		termos.WithStopOnError(true),
-	)
-
-	// 5) Подтверждение Да/Нет (например, для сохранения настроек)
-	ys := termos.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeout(5*time.Second, "Нет")
-
 	queue.AddTasks(
-		ss,
-		inUsername,
-		ms1,
-		ms2,
-		inPath,
+
 		//  inEmail, inOptionalEmail,
 		// inPath, inURL, inPort, inRange,
 		// inIPv4, inIPv6, inIPAny, inDomain,
 		// inAlphaNum, inMinLen, inMaxLen, inExactLen,
 		// inStdPwd, inStrongPwd, inRequired,
-		fn, ys,
+		ys,
 	)
 
 	// Запускаем TUI c очередью задач. Результаты отображаются внутри интерфейса;

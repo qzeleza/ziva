@@ -5,7 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/qzeleza/termos/internal/query"
 	"github.com/qzeleza/termos/internal/task"
 	"github.com/stretchr/testify/assert"
@@ -59,7 +59,7 @@ func TestYesNoTaskInQueueStatistics(t *testing.T) {
 	// Проверяем, что в статистике правильно подсчитываются ошибки
 	// Должно быть: 1 успешных из 3 всего и статус ПРОБЛЕМА
 	assert.Contains(t, view, "Успешно завершено 1 из 3 задач", "Статистика должна показывать 1 успешных из 3 всего")
-	assert.Contains(t, view, defauilt.StatusProblem, "Статус должен показывать проблему из-за task2")
+	assert.Contains(t, view, defaults.StatusProblem, "Статус должен показывать проблему из-за task2")
 }
 
 // TestYesNoTaskInQueueAllSuccess проверяет очередь, где все YesNoTask выбирают "Да"
@@ -126,5 +126,5 @@ func TestYesNoTaskInQueueAllNo(t *testing.T) {
 
 	// Проверяем статистику с ошибками
 	assert.Contains(t, view, "Успешно завершено 0 из 2 задач", "Статистика должна показывать 0 успешных из 2 всего")
-	assert.Contains(t, view, defauilt.StatusProblem, "Статус должен показывать проблему")
+	assert.Contains(t, view, defaults.StatusProblem, "Статус должен показывать проблему")
 }

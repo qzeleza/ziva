@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/qzeleza/termos/internal/performance"
 )
 
@@ -33,7 +33,7 @@ func (vf ValidatorFunc) Validate(input string) error {
 
 // Description возвращает базовое описание для функции-валидатора
 func (vf ValidatorFunc) Description() string {
-	return defauilt.ValidatorCustomValidation
+	return defaults.ValidatorCustomValidation
 }
 
 // PasswordValidator валидатор для паролей
@@ -52,7 +52,7 @@ func NewPasswordValidator(minLength int) *PasswordValidator {
 // Validate проверяет надежность пароля
 func (pv *PasswordValidator) Validate(password string) error {
 	if len(password) < pv.MinLength {
-		return fmt.Errorf(defauilt.ValidatorPasswordMinLength, pv.MinLength)
+		return fmt.Errorf(defaults.ValidatorPasswordMinLength, pv.MinLength)
 	}
 
 	// Проверка на наличие кириллических символов
@@ -66,7 +66,7 @@ func (pv *PasswordValidator) Validate(password string) error {
 	}
 
 	if hasCyrillic {
-		return errors.New(defauilt.ValidatorPasswordCyrillic)
+		return errors.New(defaults.ValidatorPasswordCyrillic)
 	}
 
 	hasDigit := false
@@ -89,20 +89,20 @@ func (pv *PasswordValidator) Validate(password string) error {
 
 	var missing []string
 	if !hasDigit {
-		missing = append(missing, defauilt.ValidatorPasswordRequirementDigits)
+		missing = append(missing, defaults.ValidatorPasswordRequirementDigits)
 	}
 	if !hasSpecial {
-		missing = append(missing, defauilt.ValidatorPasswordRequirementSpecial)
+		missing = append(missing, defaults.ValidatorPasswordRequirementSpecial)
 	}
 	if !hasUpper {
-		missing = append(missing, defauilt.ValidatorPasswordRequirementUpper)
+		missing = append(missing, defaults.ValidatorPasswordRequirementUpper)
 	}
 	if !hasLower {
-		missing = append(missing, defauilt.ValidatorPasswordRequirementLower)
+		missing = append(missing, defaults.ValidatorPasswordRequirementLower)
 	}
 
 	if len(missing) > 0 {
-		return fmt.Errorf(defauilt.ValidatorPasswordMissingRequirements, performance.JoinEfficient(missing, defauilt.ValidatorListSeparator))
+		return fmt.Errorf(defaults.ValidatorPasswordMissingRequirements, performance.JoinEfficient(missing, defaults.ValidatorListSeparator))
 	}
 
 	return nil
@@ -110,7 +110,7 @@ func (pv *PasswordValidator) Validate(password string) error {
 
 // Description возвращает описание требований к паролю
 func (pv *PasswordValidator) Description() string {
-	return fmt.Sprintf(defauilt.ValidatorPasswordDescription, pv.MinLength)
+	return fmt.Sprintf(defaults.ValidatorPasswordDescription, pv.MinLength)
 }
 
 // EmailValidator валидатор для email адресов
@@ -128,14 +128,14 @@ func NewEmailValidator() *EmailValidator {
 // Validate проверяет корректность email адреса
 func (ev *EmailValidator) Validate(email string) error {
 	if !ev.pattern.MatchString(email) {
-		return errors.New(defauilt.ValidatorEmailInvalid)
+		return errors.New(defaults.ValidatorEmailInvalid)
 	}
 	return nil
 }
 
 // Description возвращает описание требований к email
 func (ev *EmailValidator) Description() string {
-	return defauilt.ValidatorEmailDescription
+	return defaults.ValidatorEmailDescription
 }
 
 // NumberValidator валидатор для чисел в диапазоне
@@ -153,17 +153,17 @@ func NewNumberValidator(min, max int) *NumberValidator {
 func (nv *NumberValidator) Validate(s string) error {
 	num, err := strconv.Atoi(s)
 	if err != nil {
-		return errors.New(defauilt.ValidatorNumberInvalid)
+		return errors.New(defaults.ValidatorNumberInvalid)
 	}
 	if num < nv.Min || num > nv.Max {
-		return fmt.Errorf(defauilt.ValidatorNumberRange, nv.Min, nv.Max)
+		return fmt.Errorf(defaults.ValidatorNumberRange, nv.Min, nv.Max)
 	}
 	return nil
 }
 
 // Description возвращает описание требований к числу
 func (nv *NumberValidator) Description() string {
-	return fmt.Sprintf(defauilt.ValidatorNumberDescription, nv.Min, nv.Max)
+	return fmt.Sprintf(defaults.ValidatorNumberDescription, nv.Min, nv.Max)
 }
 
 // IPValidator валидатор для IP адресов
@@ -195,7 +195,7 @@ func NewIPv6Validator() *IPValidator {
 func (iv *IPValidator) Validate(ip string) error {
 	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
-		return errors.New(defauilt.ValidatorIPInvalid)
+		return errors.New(defaults.ValidatorIPInvalid)
 	}
 
 	// Проверяем тип IP адреса
@@ -203,10 +203,10 @@ func (iv *IPValidator) Validate(ip string) error {
 	isIPv6 := !isIPv4
 
 	if isIPv4 && !iv.allowIPv4 {
-		return errors.New(defauilt.ValidatorIPv4NotAllowed)
+		return errors.New(defaults.ValidatorIPv4NotAllowed)
 	}
 	if isIPv6 && !iv.allowIPv6 {
-		return errors.New(defauilt.ValidatorIPv6NotAllowed)
+		return errors.New(defaults.ValidatorIPv6NotAllowed)
 	}
 
 	return nil
@@ -215,13 +215,13 @@ func (iv *IPValidator) Validate(ip string) error {
 // Description возвращает описание требований к IP адресу
 func (iv *IPValidator) Description() string {
 	if iv.allowIPv4 && iv.allowIPv6 {
-		return defauilt.ValidatorIPBothDescription
+		return defaults.ValidatorIPBothDescription
 	} else if iv.allowIPv4 {
-		return defauilt.ValidatorIPv4Description
+		return defaults.ValidatorIPv4Description
 	} else if iv.allowIPv6 {
-		return defauilt.ValidatorIPv6Description
+		return defaults.ValidatorIPv6Description
 	}
-	return defauilt.ValidatorIPGenericDescription
+	return defaults.ValidatorIPGenericDescription
 }
 
 // DomainValidator валидатор для доменных имен
@@ -239,14 +239,14 @@ func NewDomainValidator() *DomainValidator {
 // Validate проверяет корректность доменного имени
 func (dv *DomainValidator) Validate(domain string) error {
 	if !dv.pattern.MatchString(domain) {
-		return errors.New(defauilt.ValidatorDomainInvalid)
+		return errors.New(defaults.ValidatorDomainInvalid)
 	}
 	return nil
 }
 
 // Description возвращает описание требований к домену
 func (dv *DomainValidator) Description() string {
-	return defauilt.ValidatorDomainDescription
+	return defaults.ValidatorDomainDescription
 }
 
 // TextValidator базовый валидатор для текста
@@ -270,15 +270,15 @@ func (tv *TextValidator) WithPattern(pattern string) *TextValidator {
 // Validate проверяет текст по заданным критериям
 func (tv *TextValidator) Validate(text string) error {
 	if tv.MinLength > 0 && len(text) < tv.MinLength {
-		return fmt.Errorf(defauilt.ValidatorTextMin, tv.MinLength)
+		return fmt.Errorf(defaults.ValidatorTextMin, tv.MinLength)
 	}
 
 	if tv.MaxLength > 0 && len(text) > tv.MaxLength {
-		return fmt.Errorf(defauilt.ValidatorTextMax, tv.MaxLength)
+		return fmt.Errorf(defaults.ValidatorTextMax, tv.MaxLength)
 	}
 
 	if tv.Pattern != nil && !tv.Pattern.MatchString(text) {
-		return errors.New(defauilt.ValidatorTextPattern)
+		return errors.New(defaults.ValidatorTextPattern)
 	}
 
 	return nil
@@ -286,14 +286,14 @@ func (tv *TextValidator) Validate(text string) error {
 
 // Description возвращает описание требований к тексту
 func (tv *TextValidator) Description() string {
-	desc := defauilt.ValidatorTextBase
+	desc := defaults.ValidatorTextBase
 	if tv.MinLength > 0 || tv.MaxLength > 0 {
 		if tv.MinLength > 0 && tv.MaxLength > 0 {
-			desc += fmt.Sprintf(defauilt.ValidatorTextRange, tv.MinLength, tv.MaxLength)
+			desc += fmt.Sprintf(defaults.ValidatorTextRange, tv.MinLength, tv.MaxLength)
 		} else if tv.MinLength > 0 {
-			desc += fmt.Sprintf(defauilt.ValidatorTextMinOnly, tv.MinLength)
+			desc += fmt.Sprintf(defaults.ValidatorTextMinOnly, tv.MinLength)
 		} else {
-			desc += fmt.Sprintf(defauilt.ValidatorTextMaxOnly, tv.MaxLength)
+			desc += fmt.Sprintf(defaults.ValidatorTextMaxOnly, tv.MaxLength)
 		}
 	}
 	return desc
@@ -339,7 +339,7 @@ func (cv *CompositeValidator) Validate(input string) error {
 			}
 		}
 		if len(errors) > 0 {
-			return fmt.Errorf(defauilt.ValidatorCompositeAllErrors, performance.JoinEfficient(errors, defauilt.ValidatorCompositeAllSeparator))
+			return fmt.Errorf(defaults.ValidatorCompositeAllErrors, performance.JoinEfficient(errors, defaults.ValidatorCompositeAllSeparator))
 		}
 		return nil
 
@@ -351,17 +351,17 @@ func (cv *CompositeValidator) Validate(input string) error {
 				errors = append(errors, err.Error())
 			}
 		}
-		return fmt.Errorf(defauilt.ValidatorCompositeNonePassed, performance.JoinEfficient(errors, defauilt.ValidatorCompositeAllSeparator))
+		return fmt.Errorf(defaults.ValidatorCompositeNonePassed, performance.JoinEfficient(errors, defaults.ValidatorCompositeAllSeparator))
 
 	default:
-		return fmt.Errorf(defauilt.ValidatorCompositeUnknownMode)
+		return fmt.Errorf(defaults.ValidatorCompositeUnknownMode)
 	}
 }
 
 // Description возвращает описание композитного валидатора
 func (cv *CompositeValidator) Description() string {
 	if len(cv.validators) == 0 {
-		return defauilt.ValidatorCompositeNoValidation
+		return defaults.ValidatorCompositeNoValidation
 	}
 
 	var descriptions []string
@@ -371,10 +371,10 @@ func (cv *CompositeValidator) Description() string {
 
 	switch cv.mode {
 	case AllMustPass:
-		return fmt.Sprintf(defauilt.ValidatorCompositeAllDescription, performance.JoinEfficient(descriptions, defauilt.ValidatorCompositeAllSeparator))
+		return fmt.Sprintf(defaults.ValidatorCompositeAllDescription, performance.JoinEfficient(descriptions, defaults.ValidatorCompositeAllSeparator))
 	case AnyCanPass:
-		return fmt.Sprintf(defauilt.ValidatorCompositeAnyDescription, performance.JoinEfficient(descriptions, defauilt.ValidatorCompositeAnySeparator))
+		return fmt.Sprintf(defaults.ValidatorCompositeAnyDescription, performance.JoinEfficient(descriptions, defaults.ValidatorCompositeAnySeparator))
 	default:
-		return defauilt.ValidatorCompositeDescription
+		return defaults.ValidatorCompositeDescription
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
 )
@@ -32,7 +32,7 @@ type YesNoTask struct {
 // NewYesNoTask создает новую задачу выбора с двумя опциями
 func NewYesNoTask(title, question string) *YesNoTask {
 	// Создаем варианты выбора
-	options := []string{defauilt.DefaultYes, defauilt.DefaultNo}
+	options := []string{defaults.DefaultYes, defaults.DefaultNo}
 
 	// Создаем базовую задачу выбора
 	selectTask := NewSingleSelectTask(title, options)
@@ -40,8 +40,8 @@ func NewYesNoTask(title, question string) *YesNoTask {
 	return &YesNoTask{
 		SingleSelectTask: selectTask,
 		question:         question,
-		yesLabel:         defauilt.DefaultYes,
-		noLabel:          defauilt.DefaultNo,
+		yesLabel:         defaults.DefaultYes,
+		noLabel:          defaults.DefaultNo,
 		selectedOption:   YesOption,
 	}
 }
@@ -67,6 +67,13 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		// Когда истекает тайм-аут, применяем значение по умолчанию
 		t.applyDefaultValue()
 		return t, nil
+	// Обработка периодического обновления для счетчика времени
+	case TickMsg:
+		// Если таймер активен, продолжаем обновления
+		if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
+			return t, t.timeoutManager.StartTicker()
+		}
+		return t, nil
 	case tea.KeyMsg:
 		// Обрабатываем нажатие упрвляющих клавиш для отключения таймера
 		switch msg.String() {
@@ -74,7 +81,7 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			t.stopTimeout()
 		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C":
 			// Отмена пользователем
-			cancelErr := fmt.Errorf(defauilt.ErrorMsgCanceled)
+			cancelErr := fmt.Errorf(defaults.ErrorMsgCanceled)
 			t.done = true
 			t.err = cancelErr
 			t.icon = ui.IconCancelled
@@ -97,7 +104,7 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		case 1:
 			t.selectedOption = NoOption
 			// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-			t.SetError(fmt.Errorf("%s \"%s\"", defauilt.DefaultSelectedLabel, defauilt.DefaultNo))
+			t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
 			t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
 		}
 	}
@@ -118,8 +125,8 @@ func (t *YesNoTask) Run() tea.Cmd {
 // applyDefaultValue применяет значение по умолчанию при истечении таймера
 func (t *YesNoTask) applyDefaultValue() {
 	// Если есть значение по умолчанию
-	if t.defaultValue != nil {
-		switch val := t.defaultValue.(type) {
+	if t.defauiltValue != nil {
+		switch val := t.defauiltValue.(type) {
 		case int:
 			// Если это индекс (0 - Да, 1 - Нет)
 			if val >= 0 && val < len(t.choices) {
@@ -137,13 +144,13 @@ func (t *YesNoTask) applyDefaultValue() {
 				case 1: // Нет
 					t.selectedOption = NoOption
 					// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-					t.SetError(fmt.Errorf("%s \"%s\"", defauilt.DefaultSelectedLabel, defauilt.DefaultNo))
+					t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
 					t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
 				}
 			}
 		case string:
 			// Если это строка (Да, Нет)
-			var selectedIndex int
+			selectedIndex := -1 // Инициализируем значением, указывающим что ничего не найдено
 			for i, choice := range t.choices {
 				if strings.EqualFold(choice, val) { // Сравниваем без учета регистра
 					// Устанавливаем курсор на выбранный вариант
@@ -157,15 +164,17 @@ func (t *YesNoTask) applyDefaultValue() {
 				}
 			}
 
-			// Устанавливаем выбранную опцию
-			switch selectedIndex {
-			case 0: // Да
-				t.selectedOption = YesOption
-			case 1: // Нет
-				t.selectedOption = NoOption
-				// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-				t.SetError(fmt.Errorf("%s \"%s\"", defauilt.DefaultSelectedLabel, defauilt.DefaultNo))
-				t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+			// Устанавливаем выбранную опцию только если найдено соответствие
+			if selectedIndex != -1 {
+				switch selectedIndex {
+				case 0: // Да
+					t.selectedOption = YesOption
+				case 1: // Нет
+					t.selectedOption = NoOption
+					// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
+					t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
+					t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+				}
 			}
 		}
 	}
@@ -193,15 +202,23 @@ func (t *YesNoTask) FinalView(width int) string {
 		prefix = ui.GetCompletedTaskPrefix(success)
 	}
 
-	left := fmt.Sprintf("%s %s", prefix, t.title)
+	// Определяем стиль заголовка в зависимости от результата
+	var styledTitle string
+	if success {
+		styledTitle = t.title
+	} else {
+		styledTitle = ui.GetErrorStatusStyle().Render(t.title)
+	}
+
+	left := fmt.Sprintf("%s  %s", prefix, styledTitle)
 
 	var right string
 	switch t.selectedOption {
 	case YesOption:
-		right = ui.SelectionStyle.Render(defauilt.DefaultYesLabel)
+		right = ui.TaskStatusSuccessStyle.Render(defaults.DefaultYesLabel)
 	case NoOption:
 		// Для "Нет" выводим слово ОТКАЗ стилем ошибки
-		right = ui.GetErrorStatusStyle().Render(defauilt.DefaultNoLabel)
+		right = ui.GetErrorStatusStyle().Render(defaults.DefaultNoLabel)
 	}
 
 	var result string
@@ -331,12 +348,21 @@ func (t *YesNoTask) Error() error {
 	return t.SingleSelectTask.Error()
 }
 
+// WithTimeout устанавливает тайм-аут для задачи Да/Нет
+// @param duration Длительность тайм-аута
+// @param defauiltValue Значение по умолчанию ("Да", "Нет" или индекс 0/1)
+// @return Указатель на задачу для цепочки вызовов
+func (t *YesNoTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *YesNoTask {
+	t.BaseTask.WithTimeout(duration, defauiltValue)
+	return t
+}
+
 // WithDefaultOption устанавливает вариант по умолчанию и тайм-аут для задачи
-// @param defaultOption Может быть индексом (0 - Да, 1 - Нет) или строкой ("Да", "Нет")
+// @param defauiltOption Может быть индексом (0 - Да, 1 - Нет) или строкой ("Да", "Нет")
 // @param timeout Время ожидания в секундах до автовыбора
 // @return Указатель на задачу для цепочки вызовов
-func (t *YesNoTask) WithDefaultOption(defaultOption interface{}, timeout time.Duration) *YesNoTask {
-	// Используем метод базового класса для установки тайм-аута
-	t.WithTimeout(timeout, defaultOption)
+func (t *YesNoTask) WithDefaultOption(defauiltOption interface{}, timeout time.Duration) *YesNoTask {
+	// Используем метод WithTimeout для единообразия
+	t.WithTimeout(timeout, defauiltOption)
 	return t
 }

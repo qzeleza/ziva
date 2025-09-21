@@ -56,7 +56,7 @@ func prepareNumberedTasks(titles ...string) ([]common.Task, []*numberedMockTask)
 func expectedLine(n int, title string) string {
 	return performance.FastConcat(
 		performance.RepeatEfficient(" ", ui.MainLeftIndent-1),
-		fmt.Sprintf(defaultNumberFormat, n),
+		fmt.Sprintf(defauiltNumberFormat, n),
 		" ",
 		title,
 	)
@@ -68,7 +68,7 @@ func TestQueueNumberedCompletions(t *testing.T) {
 	model := New("Нумерация задач")
 	model.AddTasks(tasks)
 	model.current = len(model.tasks)
-	model.WithTasksNumbered(true, false, defaultNumberFormat)
+	model.WithTasksNumbered(true, false, defauiltNumberFormat)
 
 	view := model.View()
 
@@ -76,8 +76,8 @@ func TestQueueNumberedCompletions(t *testing.T) {
 	assert.Contains(t, view, expectedLine(2, "Task 2"), "Вторая задача должна отображаться с номером 2")
 	assert.Contains(t, view, expectedLine(3, "Task 3"), "Третья задача должна отображаться с номером 3")
 
-	assert.Equal(t, performance.FastConcat(performance.RepeatEfficient(" ", ui.MainLeftIndent-1), fmt.Sprintf(defaultNumberFormat, 1)), mocks[0].prefix)
-	assert.Equal(t, performance.FastConcat(performance.RepeatEfficient(" ", ui.MainLeftIndent-1), fmt.Sprintf(defaultNumberFormat, 2)), mocks[1].prefix)
+	assert.Equal(t, performance.FastConcat(performance.RepeatEfficient(" ", ui.MainLeftIndent-1), fmt.Sprintf(defauiltNumberFormat, 1)), mocks[0].prefix)
+	assert.Equal(t, performance.FastConcat(performance.RepeatEfficient(" ", ui.MainLeftIndent-1), fmt.Sprintf(defauiltNumberFormat, 2)), mocks[1].prefix)
 }
 
 func TestQueueNumberedCompletionsKeepFirstSymbol(t *testing.T) {
@@ -86,7 +86,7 @@ func TestQueueNumberedCompletionsKeepFirstSymbol(t *testing.T) {
 	model := New("Нумерация с символом")
 	model.AddTasks(tasks)
 	model.current = len(model.tasks)
-	model.WithTasksNumbered(true, true, defaultNumberFormat)
+	model.WithTasksNumbered(true, true, defauiltNumberFormat)
 
 	view := model.View()
 
@@ -98,5 +98,5 @@ func TestQueueNumberedCompletionsKeepFirstSymbol(t *testing.T) {
 	assert.Contains(t, view, expectedLine(1, "Task B"), "Вторая задача должна отображаться с номером 1")
 
 	assert.Equal(t, "", mocks[0].prefix, "Для первой задачи префикс должен оставаться стандартным")
-	assert.Equal(t, performance.FastConcat(performance.RepeatEfficient(" ", ui.MainLeftIndent-1), fmt.Sprintf(defaultNumberFormat, 1)), mocks[1].prefix)
+	assert.Equal(t, performance.FastConcat(performance.RepeatEfficient(" ", ui.MainLeftIndent-1), fmt.Sprintf(defauiltNumberFormat, 1)), mocks[1].prefix)
 }

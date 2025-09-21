@@ -12,7 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
 )
@@ -95,12 +95,12 @@ func parseMemoryEnv(s string) (uint64, error) {
 // Модель очереди задач.
 // Модель представляет собой очередь задач, которые выполняются последовательно.
 type Model struct {
-	tasks          []common.Task  // Список задач.
-	current        int            // Индекс текущей задачи.
-	title          string         // Заголовок очереди.
-	titleStyle     lipgloss.Style // Стиль заголовка.
-	summary        string         // Сводка по выполненным задачам.
-	summaryStyle   lipgloss.Style // Стиль сводки.
+	tasks      []common.Task  // Список задач.
+	current    int            // Индекс текущей задачи.
+	title      string         // Заголовок очереди.
+	titleStyle lipgloss.Style // Стиль заголовка.
+	summary    string         // Сводка по выполненным задачам.
+	// summaryStyle   lipgloss.Style // Стиль сводки.
 	width          int            // Ширина экрана.
 	quitting       bool           // Флаг завершения работы.
 	stoppedOnError bool           // Флаг прерывания очереди из-за ошибки.
@@ -118,20 +118,29 @@ type Model struct {
 	numberCompletedTasks bool   // Включает отображение номеров вместо символа завершения
 	keepFirstSymbol      bool   // Если true, первая завершённая задача сохраняет символ
 	numberFormat         string // Строка формата для отображения номера задачи
+
+	// Параметры форматирования вывода результатов
+	resultFormattingEnabled bool   // Включает форматирование результатов с разделительными линиями
+	resultLinePrefix        string // Префикс для разделительной линии (по умолчанию "  │  ")
+	resultLineLength        int    // Количество символов "─" в разделительной линии
 }
 
-const defaultNumberFormat = "[%02d]" // формат по умолчанию для отображения номеров задач
+const defauiltNumberFormat = "[%02d]" // формат по умолчанию для отображения номеров задач
 
 // New создает новую модель очереди с заданным заголовком и задачами.
 func New(title string) *Model {
 	return &Model{
 		title:        title,
-		summary:      defauilt.SummaryCompleted,
+		summary:      defaults.SummaryCompleted,
 		width:        common.DefaultWidth, // Начальная ширина
 		showSummary:  true,                // По умолчанию сводка отображается
 		clearScreen:  false,               // По умолчанию экран не очищается
 		appNameStyle: lipgloss.NewStyle().Foreground(ui.ColorDarkGray).Background(ui.ColorBrightWhite).Bold(false),
-		numberFormat: defaultNumberFormat,
+		numberFormat: defauiltNumberFormat,
+		// Инициализация параметров форматирования результатов
+		resultFormattingEnabled: true,                           // По умолчанию отключено
+		resultLinePrefix:        "  │  ",                        // Префикс по умолчанию с символом │
+		resultLineLength:        common.DefaultWidth * 93 / 100, // Длина линии перед выводом результатов задачи по умолчанию
 	}
 }
 
@@ -145,9 +154,10 @@ func (m *Model) AddTasks(tasks []common.Task) {
 // Если формат пустой, используется значение по умолчанию.
 func (m *Model) WithTasksNumbered(enable bool, keepFirstSymbol bool, numberFormat string) *Model {
 	m.numberCompletedTasks = enable
+	ui.NumberingEnabled = enable
 	m.keepFirstSymbol = keepFirstSymbol
 	if strings.TrimSpace(numberFormat) == "" {
-		m.numberFormat = defaultNumberFormat
+		m.numberFormat = defauiltNumberFormat
 	} else {
 		m.numberFormat = numberFormat
 	}
@@ -159,13 +169,13 @@ func (m *Model) updateTaskStats() {
 	m.successCount = 0
 	m.errorCount = 0
 
-	// Подсчитываем только завершенные задачи
-	completedTasks := m.current
+	// Подсчитываем все задачи - просматриваем все до текущей позиции или все задачи если завершены
+	tasksToCheck := m.current
 	if m.current >= len(m.tasks) {
-		completedTasks = len(m.tasks)
+		tasksToCheck = len(m.tasks)
 	}
 
-	for i := 0; i < completedTasks; i++ {
+	for i := 0; i < tasksToCheck; i++ {
 		task := m.tasks[i]
 		if task.IsDone() {
 			if task.HasError() {
@@ -182,7 +192,7 @@ func (m *Model) updateTaskStats() {
 		// Проверяем, является ли задача с ошибкой текущей задачей
 		if m.current < len(m.tasks) && m.tasks[m.current] == m.errorTask && m.errorTask.HasError() {
 			// Если текущая задача с ошибкой не была учтена в цикле выше, учитываем её
-			if m.current >= completedTasks {
+			if m.current >= tasksToCheck {
 				m.errorCount++
 			}
 		}
@@ -201,21 +211,23 @@ func (m *Model) formatSummaryWithStats() (string, string) {
 		performance.FastConcat(
 			performance.IntToString(m.successCount),
 			" ",
-			defauilt.DefaultFromSummaryLabel,
+			defaults.DefaultFromSummaryLabel,
 			" ",
 			performance.IntToString(totalTasks),
 		),
 		" ",
-		defauilt.DefaultTasksSummaryLabel,
+		defaults.DefaultTasksSummaryLabel,
 	)
 
 	// Формируем правую часть: УСПЕШНО или С ОШИБКАМИ
 	var rightStatus string
 	if m.errorCount > 0 {
-		rightStatus = defauilt.StatusProblem
+		rightStatus = defaults.StatusProblem
 	} else if completedTasks == totalTasks && completedTasks > 0 {
-		rightStatus = defauilt.StatusSuccess
-
+		rightStatus = defaults.StatusSuccess
+	} else {
+		// Для состояния "В ПРОЦЕССЕ" или когда нет завершенных задач
+		rightStatus = defaults.StatusInProgress
 	}
 
 	return leftSummary, rightStatus
@@ -226,7 +238,7 @@ func (m *Model) Run() error {
 	// Если установлен флаг очистки экрана, очищаем экран перед запуском
 	if m.clearScreen {
 		// Используем ANSI-последовательность для очистки экрана
-		fmt.Print(defauilt.ClearScreen)
+		fmt.Print(defaults.ClearScreen)
 	}
 
 	_, err := tea.NewProgram(m).Run()
@@ -260,6 +272,16 @@ func (m *Model) WithSummary(show bool) *Model {
 // WithClearScreen устанавливает флаг очистки экрана перед запуском очереди задач.
 func (m *Model) WithClearScreen(clear bool) *Model {
 	m.clearScreen = clear
+	return m
+}
+
+// WithResultFormatting включает форматирование результатов задач с разделительными линиями.
+// Если enabled=true, то перед каждым результатом задачи будет добавляться разделительная линия
+// из префикса и указанного количества символов "─".
+// При enabled=false поведение остается как и раньше - результаты выводятся сразу после строки с задачей.
+// @param enabled - включить/выключить форматирование
+func (m *Model) WithResultFormatting(enabled bool) *Model {
+	m.resultFormattingEnabled = enabled
 	return m
 }
 
@@ -343,7 +365,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.errorCount++
 
 			// Финальное обновление статистики перед остановкой из-за ошибки
-			// m.updateTaskStats()
+			m.updateTaskStats()
 			return m, tea.Quit
 		}
 
@@ -354,7 +376,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Batch(cmd, nextCmd)
 		}
 		// Финальное обновление статистики при завершении всех задач
-		// m.updateTaskStats()
+		m.updateTaskStats()
 		return m, tea.Quit
 	}
 
@@ -383,13 +405,13 @@ func (m *Model) View() string {
 		if i < m.current {
 			hasError := t.HasError()
 			m.applyCompletedTaskPrefix(t, i, hasError)
-			// Завершенные задачи: отображаем их финальный, выровненный вид.
-			sb.WriteString(t.FinalView(layoutWidth) + "\n")
+			// Завершенные задачи: отображаем их с форматированием (или без, если отключено)
+			sb.WriteString(m.formatTaskResult(t, layoutWidth) + "\n")
 		} else if i == m.current {
 			hasError := t.HasError()
 			if t.IsDone() {
 				m.applyCompletedTaskPrefix(t, i, hasError)
-				sb.WriteString(t.FinalView(layoutWidth) + "\n")
+				sb.WriteString(m.formatTaskResult(t, layoutWidth) + "\n")
 			} else {
 				m.applyInProgressTaskPrefix(t, i, hasError)
 				// Активная задача: отображаем ее интерактивный вид.
@@ -423,36 +445,34 @@ func (m *Model) View() string {
 			// Определяем стиль для правой части в зависимости от статуса
 			var rightStyle lipgloss.Style
 			switch rightStatus {
-			case defauilt.StatusSuccess:
+			case defaults.StatusSuccess:
 				rightStyle = ui.SuccessLabelStyle
-			case defauilt.StatusProblem:
+			case defaults.StatusProblem:
 				rightStyle = ui.GetErrorStatusStyle()
+			case defaults.StatusInProgress:
+				rightStyle = ui.SubtleStyle
 			default:
 				rightStyle = ui.SubtleStyle
 			}
 
-			// Определяем стиль для левой части (summary) в зависимости от результатов
+			// Определяем стиль для левой части (summary) - используем те же стили что и для правой части
 			var summaryStyle lipgloss.Style
 			switch rightStatus {
-			case defauilt.StatusSuccess:
-				summaryStyle = ui.SuccessLabelStyle
-			case defauilt.StatusProblem:
-				summaryStyle = ui.GetErrorStatusStyle()
+			case defaults.StatusSuccess:
+				summaryStyle = ui.SuccessLabelStyle // Тот же стиль что и для правой части "SUCCESS"
+			case defaults.StatusProblem:
+				summaryStyle = ui.GetErrorStatusStyle() // Тот же стиль что и для правой части при ошибках
+			case defaults.StatusInProgress:
+				// Для состояния "В ПРОЦЕССЕ" используем тот же стиль что и справа
+				summaryStyle = ui.SubtleStyle
 			default:
-				// Для состояния "В ПРОЦЕССЕ" используем оригинальный стиль или стиль по умолчанию
-				if m.summaryStyle.GetForeground() != nil {
-					summaryStyle = m.summaryStyle
-				} else {
-					// Если стиль не установлен, используем стиль по умолчанию
-					summaryStyle = ui.SubtleStyle
-				}
+				summaryStyle = ui.SubtleStyle
 			}
 
 			// Создаем левую часть футера
 			summaryPrefix := performance.FastConcat(
 				performance.RepeatEfficient(" ", ui.MainLeftIndent),
-				ui.VerticalLineSymbol, "\n",
-				"  ",
+				ui.VerticalLineSymbol, "\n", "  ", // лишняя строка при выводе результатов выполнения задач
 			)
 			leftPart := performance.FastConcat(
 				summaryPrefix,
@@ -534,6 +554,90 @@ func (m *Model) applyInProgressTaskPrefix(task common.Task, index int, hasError 
 	setter.SetInProgressPrefix(buildInProgressPrefix(number, m.numberFormat))
 }
 
+// calculateResultLinePrefix вычисляет префикс для разделительной линии и строк результата
+// в зависимости от настроек нумерации
+func (m *Model) calculateResultLinePrefix() string {
+	if m.numberCompletedTasks {
+		// При включенной нумерации нужно учесть ширину номера
+		// Например, для "[1]  " нужно "     │  " (5 пробелов + │ + 2 пробела)
+		// Вычисляем ширину номера для максимального номера задачи
+		maxNumber := len(m.tasks)
+		sampleNumber := fmt.Sprintf(m.numberFormat, maxNumber)
+		numberWidth := len(sampleNumber)
+
+		// Добавляем 2 пробела после номера (как в основном префиксе) + пробел перед │
+		totalSpaces := numberWidth - 1 // +2 после номера, +1 перед │
+		return performance.FastConcat(
+			performance.RepeatEfficient(" ", totalSpaces),
+			ui.VerticalLineSymbol,
+			performance.RepeatEfficient(" ", 3), // 2 пробела после │
+		)
+	} else {
+		// При отключенной нумерации используем стандартный префикс
+		return m.resultLinePrefix
+	}
+}
+
+// formatTaskResult форматирует результат задачи с разделительной линией
+// Создает линию из префикса и символов "─", затем выводит результат задачи с новой строки
+func (m *Model) formatTaskResult(task common.Task, width int) string {
+	if !m.resultFormattingEnabled {
+		// Если форматирование отключено, возвращаем обычное представление
+		return task.FinalView(width)
+	}
+
+	var result strings.Builder
+
+	// Получаем обычное представление задачи
+	taskView := task.FinalView(width)
+
+	// Разделяем на строки
+	lines := strings.Split(taskView, "\n")
+	if len(lines) == 0 {
+		return taskView
+	}
+
+	// Первая строка - это заголовок задачи, добавляем её как есть
+	result.WriteString(lines[0])
+
+	// Если есть дополнительные строки (результаты), добавляем разделительную линию
+	if len(lines) > 1 {
+		result.WriteString("\n")
+
+		// Определяем стиль линии на основе типа результата задачи
+		var lineStyle lipgloss.Style
+		if task.HasError() {
+			// Для ошибок используем очень приглушенный желтый цвет (более приглушенный чем текст ошибки)
+			lineStyle = ui.VerySubtleErrorStyle
+		} else {
+			// Для успешных результатов используем очень приглушенный стиль (едва заметный)
+			lineStyle = ui.VerySubtleStyle
+		}
+
+		// Создаем стилизованную разделительную линию
+		separatorContent := performance.RepeatEfficient(ui.HorizontalLineSymbol, m.resultLineLength)
+		styledSeparator := lineStyle.Render(separatorContent)
+
+		// Вычисляем динамический префикс для разделительной линии
+		dynamicPrefix := m.calculateResultLinePrefix()
+		separatorLine := performance.FastConcat(dynamicPrefix, styledSeparator)
+		result.WriteString(separatorLine + "\n")
+
+		// Добавляем остальные строки результата
+		for i := 1; i < len(lines); i++ {
+			if strings.TrimSpace(lines[i]) != "" { // Пропускаем пустые строки
+				// Строки результата уже содержат префикс, просто добавляем их
+				result.WriteString(lines[i])
+				if i < len(lines)-1 { // Добавляем перенос строки, кроме последней строки
+					result.WriteString("\n")
+				}
+			}
+		}
+	}
+
+	return result.String()
+}
+
 // buildCompletedPrefix возвращает префикс завершённой задачи, учитывая формат номера.
 func buildCompletedPrefix(number int, format string) string {
 	indent := ui.MainLeftIndent - 1
@@ -566,7 +670,7 @@ func formatTaskNumber(number int, format string) string {
 		number = 1
 	}
 	if strings.TrimSpace(format) == "" {
-		format = defaultNumberFormat
+		format = defauiltNumberFormat
 	}
 	if !strings.Contains(format, "%") {
 		format = format + "%d"

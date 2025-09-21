@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 	terrors "github.com/qzeleza/termos/internal/errors"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
@@ -81,7 +81,7 @@ func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, val
 	var helpText string
 	if r.helpEnabled {
 		helpIndent := performance.RepeatEfficient(" ", ui.MainLeftIndent)
-		helpText = ui.SubtleStyle.Render(fmt.Sprintf("%s%s", helpIndent, defauilt.InputConfirmHint))
+		helpText = ui.SubtleStyle.Render(fmt.Sprintf("%s%s", helpIndent, defaults.InputConfirmHint))
 	}
 
 	// Подсказка о типе ввода
@@ -90,7 +90,7 @@ func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, val
 		description := validator.Description()
 		if description != "" {
 			hintIndent := performance.RepeatEfficient(" ", ui.MainLeftIndent)
-			typeHint = ui.SubtleStyle.Render(fmt.Sprintf("%s%s %s", hintIndent, defauilt.InputFormatLabel, description))
+			typeHint = ui.SubtleStyle.Render(fmt.Sprintf("%s%s %s", hintIndent, defaults.InputFormatLabel, description))
 		}
 	}
 
@@ -141,8 +141,8 @@ func (r *InputRenderer) RenderFinal(title string, value string, hasError bool, e
 		statusStyle = ui.GetErrorStatusStyle()
 		valueToShow = err.Error()
 	} else {
-		statusStyle = ui.SuccessLabelStyle
-		valueToShow = strings.ToUpper(defauilt.DefaultSuccessLabel)
+		statusStyle = ui.TaskStatusSuccessStyle
+		valueToShow = strings.ToUpper(defaults.DefaultSuccessLabel)
 
 		// Для паролей показываем звездочки вместо реального значения
 		if r.looksLikePassword(title, value) {
@@ -154,7 +154,7 @@ func (r *InputRenderer) RenderFinal(title string, value string, hasError bool, e
 	if strings.TrimSpace(prefix) == "" {
 		prefix = ui.GetCompletedInputTaskPrefix(!hasError)
 	}
-	leftPart := fmt.Sprintf("%s %s", prefix, title)
+	leftPart := fmt.Sprintf("%s  %s", prefix, title)
 	rightPart := statusStyle.Render(valueToShow)
 
 	result := ui.AlignTextToRight(leftPart, rightPart, width)
@@ -178,11 +178,11 @@ func (r *InputRenderer) looksLikePassword(title, value string) bool {
 // InputTypeHints предоставляет подсказки для различных типов ввода
 var InputTypeHints = map[InputType]string{
 	InputTypeText:     "",
-	InputTypePassword: defauilt.InputHintPassword,
-	InputTypeEmail:    defauilt.InputHintEmail,
-	InputTypeNumber:   defauilt.InputHintNumber,
-	InputTypeIP:       defauilt.InputHintIP,
-	InputTypeDomain:   defauilt.InputHintDomain,
+	InputTypePassword: defaults.InputHintPassword,
+	InputTypeEmail:    defaults.InputHintEmail,
+	InputTypeNumber:   defaults.InputHintNumber,
+	InputTypeIP:       defaults.InputHintIP,
+	InputTypeDomain:   defaults.InputHintDomain,
 }
 
 // GetTypeHint возвращает подсказку для типа ввода

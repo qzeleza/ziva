@@ -7,7 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/qzeleza/termos/internal/defauilt"
+	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/ui"
 )
@@ -118,7 +118,7 @@ func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
 		cursor:          0, // Начинаем с первого элемента списка
 		activeStyle:     ui.ActiveStyle,
 		hasSelectAll:    false,
-		selectAllText:   defauilt.SelectAllDefaultText,
+		selectAllText:   defaults.SelectAllDefaultText,
 		showHelpMessage: false,
 		helpMessage:     "",
 		// Viewport по умолчанию отключен (показываем все элементы)
@@ -486,7 +486,7 @@ func (t *MultiSelectTask) WithSelectAll(text ...string) *MultiSelectTask {
 	if len(text) > 0 && strings.TrimSpace(text[0]) != "" {
 		t.selectAllText = text[0]
 	} else {
-		t.selectAllText = defauilt.SelectAllDefaultText
+		t.selectAllText = defaults.SelectAllDefaultText
 	}
 	t.ensureCursorSelectable()
 	t.updateViewport()
@@ -495,8 +495,8 @@ func (t *MultiSelectTask) WithSelectAll(text ...string) *MultiSelectTask {
 
 // WithDefaultItems позволяет заранее отметить элементы списка выбранными при открытии задачи.
 // Поддерживает выбор одного индекса/строки или списков значений ([]int, []string).
-func (t *MultiSelectTask) WithDefaultItems(defaultSelection interface{}) *MultiSelectTask {
-	if defaultSelection == nil || len(t.choices) == 0 {
+func (t *MultiSelectTask) WithDefaultItems(defauiltSelection interface{}) *MultiSelectTask {
+	if defauiltSelection == nil || len(t.choices) == 0 {
 		return t
 	}
 
@@ -531,7 +531,7 @@ func (t *MultiSelectTask) WithDefaultItems(defaultSelection interface{}) *MultiS
 
 	anyApplied := false
 
-	switch v := defaultSelection.(type) {
+	switch v := defauiltSelection.(type) {
 	case int:
 		anyApplied = setSelected(v) || anyApplied
 	case string:
@@ -705,7 +705,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			}
 		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C", "left", "Left":
 			// Отмена пользователем
-			cancelErr := fmt.Errorf(defauilt.ErrorMsgCanceled)
+			cancelErr := fmt.Errorf(defaults.ErrorMsgCanceled)
 			t.done = true
 			t.err = cancelErr
 			t.icon = ui.IconCancelled
@@ -726,13 +726,13 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 				// Если ничего не выбрано, показываем сообщение-подсказку
 				// но НЕ устанавливаем ошибку и НЕ завершаем задачу
 				t.showHelpMessage = true
-				t.helpMessage = defauilt.NeedSelectAtLeastOne
+				t.helpMessage = defaults.NeedSelectAtLeastOne
 				return t, nil
 			}
 			// Если есть выбранные элементы, завершаем задачу успешно
 			t.done = true
 			t.icon = ui.IconDone
-			t.finalValue = strings.Join(selectedChoices, defauilt.DefaultSeparator)
+			t.finalValue = strings.Join(selectedChoices, defaults.DefaultSeparator)
 			// Убеждаемся, что ошибка очищена
 			t.SetError(nil)
 			t.showHelpMessage = false
@@ -765,8 +765,8 @@ func (t *MultiSelectTask) Run() tea.Cmd {
 // applyDefaultValue применяет значение по умолчанию при истечении таймера
 func (t *MultiSelectTask) applyDefaultValue() {
 	// Если есть значение по умолчанию
-	if t.defaultValue != nil {
-		switch val := t.defaultValue.(type) {
+	if t.defauiltValue != nil {
+		switch val := t.defauiltValue.(type) {
 		case []int:
 			// Если это список индексов для выбора
 			for _, index := range val {
@@ -813,7 +813,7 @@ func (t *MultiSelectTask) applyDefaultValue() {
 			// Завершаем задачу
 			t.done = true
 			t.icon = ui.IconDone
-			t.finalValue = strings.Join(selectedChoices, defauilt.DefaultSeparator)
+			t.finalValue = strings.Join(selectedChoices, defaults.DefaultSeparator)
 			t.SetError(nil)
 		}
 	}
@@ -891,7 +891,7 @@ func (t *MultiSelectTask) View(width int) string {
 		var indicator string
 		if t.showCounters {
 			arrow := ui.UpArrowSymbol + " "
-			indicator = fmt.Sprintf(defauilt.ScrollAboveFormat, indentPrefix, arrow, itemsAbove)
+			indicator = fmt.Sprintf(defaults.ScrollAboveFormat, indentPrefix, arrow, itemsAbove)
 		} else {
 			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.UpArrowSymbol)
 		}
@@ -968,7 +968,7 @@ func (t *MultiSelectTask) View(width int) string {
 		var indicator string
 		if t.showCounters {
 			arrow := ui.DownArrowSymbol + " "
-			indicator = fmt.Sprintf(defauilt.ScrollBelowFormat, indentPrefix, arrow, remaining)
+			indicator = fmt.Sprintf(defaults.ScrollBelowFormat, indentPrefix, arrow, remaining)
 		} else {
 			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.DownArrowSymbol)
 		}
@@ -995,9 +995,9 @@ func (t *MultiSelectTask) View(width int) string {
 	}
 
 	// Если есть опция "Выбрать все", добавляем её в подсказку
-	helpText := defauilt.MultiSelectHelp
+	helpText := defaults.MultiSelectHelp
 	if t.hasSelectAll {
-		helpText = defauilt.MultiSelectHelpSelectAll
+		helpText = defaults.MultiSelectHelpSelectAll
 	}
 	// Добавляем разделительную линию
 	sb.WriteString("\n" + ui.DrawLine(width))
@@ -1035,20 +1035,20 @@ func (t *MultiSelectTask) FinalView(width int) string {
 }
 
 // WithDefaultOptions устанавливает варианты по умолчанию, которые будут выбраны при тайм-ауте.
-// @param defaultOptions Варианты по умолчанию (список индексов или строк)
+// @param defauiltOptions Варианты по умолчанию (список индексов или строк)
 // @param timeout Длительность тайм-аута
 // @return Указатель на задачу для цепочки вызовов
-func (t *MultiSelectTask) WithDefaultOptions(defaultOptions interface{}, timeout time.Duration) *MultiSelectTask {
-	t.WithTimeout(timeout, defaultOptions)
+func (t *MultiSelectTask) WithDefaultOptions(defauiltOptions interface{}, timeout time.Duration) *MultiSelectTask {
+	t.WithTimeout(timeout, defauiltOptions)
 	return t
 }
 
 // WithTimeout устанавливает тайм-аут для задачи множественного выбора
 // @param duration Длительность тайм-аута
-// @param defaultValue Значение по умолчанию (список индексов или строк)
+// @param defauiltValue Значение по умолчанию (список индексов или строк)
 // @return Указатель на задачу для цепочки вызовов
-func (t *MultiSelectTask) WithTimeout(duration time.Duration, defaultValue interface{}) *MultiSelectTask {
-	t.BaseTask.WithTimeout(duration, defaultValue)
+func (t *MultiSelectTask) WithTimeout(duration time.Duration, defauiltValue interface{}) *MultiSelectTask {
+	t.BaseTask.WithTimeout(duration, defauiltValue)
 	return t
 }
 
@@ -1059,7 +1059,7 @@ func (t *MultiSelectTask) GetSelected() []string {
 	// Если задача завершена и есть финальное значение, разбираем его на список
 	if t.done && t.finalValue != "" {
 		// Разбиваем строку по запятой и пробелу
-		parts := strings.Split(t.finalValue, defauilt.DefaultSeparator)
+		parts := strings.Split(t.finalValue, defaults.DefaultSeparator)
 		// Удаляем пустые элементы
 		var result []string
 		for _, part := range parts {
