@@ -192,3 +192,25 @@ func TestSingleSelectTaskBoundaries(t *testing.T) {
 	finalView = selectTaskDone.FinalView(80)
 	assert.Contains(t, finalView, options[0], "Значение задачи должно содержать первую опцию")
 }
+
+func TestSingleSelectTaskDisabledItems(t *testing.T) {
+	title := "Выберите опцию"
+	options := []string{"Опция 1", "Опция 2", "Опция 3"}
+
+	task := NewSingleSelectTask(title, options)
+	task = task.WithItemsDisabled([]int{1})
+
+	assert.Equal(t, 0, task.GetSelectedIndex(), "Курсор должен оставаться на первом доступном элементе")
+
+	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
+	task, _ = updated.(*SingleSelectTask)
+	assert.Equal(t, 2, task.GetSelectedIndex(), "Курсор должен перепрыгивать через отключённый элемент")
+
+	task.WithDefaultItem(1)
+	assert.Equal(t, 2, task.GetSelectedIndex(), "Значение по умолчанию не должно указывать на выключенный элемент")
+
+	task = task.WithItemsDisabled(nil)
+	updated, _ = task.Update(tea.KeyMsg{Type: tea.KeyUp})
+	task, _ = updated.(*SingleSelectTask)
+	assert.Equal(t, 1, task.GetSelectedIndex(), "После включения элемента курсор должен уметь на него переходить")
+}

@@ -31,6 +31,12 @@ func main() {
 	// Заголовок и краткое описание для TUI
 	header := "Демонстрация всех типов задач Termos"
 
+	// Создаем очередь и добавляем задачи
+	queue := termos.NewQueue(header).
+		WithAppName("Термос").
+		WithSummary(true).
+		WithTasksNumbered(true, true, "[%d]")
+
 	// Формируем очередь задач
 	var msel = []string{
 		"CLI",
@@ -46,18 +52,21 @@ func main() {
 		"Одиночный выбор",
 		"Проверка ввода"}
 
-	var ssel = []string{"development", "staging", "production"}
+	var ssel = []string{"development", "staging", "production", "другое", "отмена", "выход"}
 	// 1) Задачи мультивыбора (без и с пунктом "Выбрать все")
 	//    Пример без "Выбрать все"
-	ms1 := termos.NewMultiSelectTask(
-		"Выберите компоненты установки",
-		msel,
-	).WithViewport(5).WithTimeout(3*time.Second, []string{msel[0], msel[1]})
+	ms1 := termos.NewMultiSelectTask("Выберите компоненты установки", msel).
+		WithViewport(5).
+		WithTimeout(3*time.Second, []string{msel[0], msel[1]}).
+		WithItemsDisabled([]string{msel[2], msel[3]})
+
 	//    Пример с пунктом "Выбрать все"
-	ms2 := termos.NewMultiSelectTask(
-		"Выберите модули для сборки",
-		ssel,
-	).WithViewport(3).WithSelectAll("Выбрать все").WithTimeout(10*time.Second, []string{ssel[0], ssel[1]}).WithDefaultItems([]string{ssel[0], ssel[1]})
+	ms2 := termos.NewMultiSelectTask("Выберите модули для сборки", ssel).
+		WithViewport(3).
+		WithSelectAll("Выбрать все").
+		WithTimeout(10*time.Second, []string{ssel[0], ssel[1]}).
+		WithDefaultItems([]string{ssel[0], ssel[1]}).
+		WithItemsDisabled([]string{ssel[2], ssel[3]})
 
 	// 2) Одиночный выбор
 	ss := termos.NewSingleSelectTask(
@@ -150,8 +159,6 @@ func main() {
 	// 5) Подтверждение Да/Нет (например, для сохранения настроек)
 	ys := termos.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeout(5*time.Second, "Нет")
 
-	// Создаем очередь и добавляем задачи
-	queue := termos.NewQueue(header).WithAppName("Термос").WithSummary(true).WithTasksNumbered(true, true, "[%d]")
 	queue.AddTasks(
 		ss,
 		// inUsername,

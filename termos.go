@@ -58,6 +58,10 @@ type Queue struct {
 	model *query.Model
 }
 
+// ----------------------------------------------------------------------------
+// Queue
+// ----------------------------------------------------------------------------
+
 // NewQueue создает новую очередь задач с заданным заголовком
 func NewQueue(title string) *Queue {
 	return &Queue{
@@ -118,6 +122,10 @@ func (q *Queue) Run() error {
 	return q.model.Run()
 }
 
+// ----------------------------------------------------------------------------
+// YesNoTask
+// ----------------------------------------------------------------------------
+
 // NewYesNoTask создает новую задачу выбора Да/Нет
 func NewYesNoTask(title, question string) *YesNoTask {
 	return &YesNoTask{task.NewYesNoTask(title, question)}
@@ -161,6 +169,10 @@ func (t *YesNoTask) IsNo() bool {
 	return t.YesNoTask.IsNo()
 }
 
+// ----------------------------------------------------------------------------
+// SingleSelectTask
+// ----------------------------------------------------------------------------
+
 // NewSingleSelectTask создает новую задачу выбора одного варианта из списка
 func NewSingleSelectTask(title string, choices []string) *SingleSelectTask {
 	return &SingleSelectTask{task.NewSingleSelectTask(title, choices)}
@@ -174,6 +186,13 @@ type SingleSelectTask struct {
 // WithTimeout устанавливает тайм-аут для задачи с значением по умолчанию
 func (t *SingleSelectTask) WithTimeout(duration time.Duration, defaultValue interface{}) *SingleSelectTask {
 	t.SingleSelectTask.WithTimeout(duration, defaultValue)
+	return t
+}
+
+// WithItemsDisabled помечает элементы меню как недоступные для выбора.
+// Поддерживаются типы: int, []int, string, []string. Nil очищает список отключённых элементов.
+func (t *SingleSelectTask) WithItemsDisabled(disabled interface{}) *SingleSelectTask {
+	t.SingleSelectTask.WithItemsDisabled(disabled)
 	return t
 }
 
@@ -193,6 +212,10 @@ func (t *SingleSelectTask) GetSelectedIndex() int {
 	return t.SingleSelectTask.GetSelectedIndex()
 }
 
+// ----------------------------------------------------------------------------
+// MultiSelectTask
+// ----------------------------------------------------------------------------
+
 // NewMultiSelectTask создает новую задачу множественного выбора
 func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
 	return &MultiSelectTask{task.NewMultiSelectTask(title, choices)}
@@ -206,6 +229,13 @@ type MultiSelectTask struct {
 // WithTimeout устанавливает тайм-аут для задачи с значениями по умолчанию
 func (t *MultiSelectTask) WithTimeout(duration time.Duration, defaultValues interface{}) *MultiSelectTask {
 	t.MultiSelectTask.WithTimeout(duration, defaultValues)
+	return t
+}
+
+// WithItemsDisabled помечает элементы меню как недоступные для выбора.
+// Поддерживаются типы: int, []int, string, []string. Nil очищает список отключённых элементов.
+func (t *MultiSelectTask) WithItemsDisabled(disabled interface{}) *MultiSelectTask {
+	t.MultiSelectTask.WithItemsDisabled(disabled)
 	return t
 }
 

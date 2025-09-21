@@ -86,6 +86,7 @@ func (s *SelectionBitset) SetAll(n int) {
 type MultiSelectTask struct {
 	BaseTask
 	choices         []string         // Список вариантов выбора
+	disabled        map[int]struct{} // Набор отключённых пунктов
 	selected        SelectionBitset  // Битовый набор выбранных элементов (оптимизировано для embedded)
 	fallbackMap     map[int]struct{} // Резервная карта для списков > 64 элементов
 	cursor          int              // Текущая позиция курсора
@@ -108,6 +109,7 @@ func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
 	task := &MultiSelectTask{
 		BaseTask:        NewBaseTask(title),
 		choices:         choices,
+		disabled:        make(map[int]struct{}),
 		cursor:          0, // Начинаем с первого элемента списка
 		activeStyle:     ui.ActiveStyle,
 		hasSelectAll:    false,
@@ -125,7 +127,234 @@ func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
 		task.fallbackMap = make(map[int]struct{})
 	}
 
+	task.ensureCursorSelectable()
 	return task
+}
+
+// isDisabled проверяет, помечен ли элемент как недоступный
+func (t *MultiSelectTask) isDisabled(index int) bool {
+	if index < 0 || index >= len(t.choices) {
+		return true
+	}
+	_, exists := t.disabled[index]
+	return exists
+}
+
+// ensureCursorSelectable пытается разместить курсор на ближайшем доступном элементе
+func (t *MultiSelectTask) ensureCursorSelectable() bool {
+	if len(t.choices) == 0 {
+		if t.hasSelectAll {
+			t.cursor = -1
+		} else {
+			t.cursor = -1
+		}
+		return false
+	}
+
+	if t.hasSelectAll && t.cursor == -1 {
+		return true
+	}
+
+	if t.cursor >= 0 && t.cursor < len(t.choices) && !t.isDisabled(t.cursor) {
+		return true
+	}
+
+	start := t.cursor
+	if start < 0 {
+		start = 0
+	}
+
+	if idx, ok := t.findEnabledForward(start); ok {
+		t.cursor = idx
+		return true
+	}
+
+	if idx, ok := t.findEnabledBackward(start - 1); ok {
+		t.cursor = idx
+		return true
+	}
+
+	if t.hasSelectAll {
+		t.cursor = -1
+		return true
+	}
+
+	t.cursor = -1
+	return false
+}
+
+// findEnabledForward возвращает индекс первого доступного элемента начиная с from (включительно)
+func (t *MultiSelectTask) findEnabledForward(from int) (int, bool) {
+	if from < 0 {
+		from = 0
+	}
+	for i := from; i < len(t.choices); i++ {
+		if !t.isDisabled(i) {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+// findEnabledBackward возвращает индекс предыдущего доступного элемента
+func (t *MultiSelectTask) findEnabledBackward(from int) (int, bool) {
+	if from >= len(t.choices) {
+		from = len(t.choices) - 1
+	}
+	for i := from; i >= 0; i-- {
+		if !t.isDisabled(i) {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+// moveCursorForward перемещает курсор на следующий доступный элемент
+func (t *MultiSelectTask) moveCursorForward() bool {
+	if t.cursor == -1 {
+		if idx, ok := t.findEnabledForward(0); ok {
+			t.cursor = idx
+			return true
+		}
+		return false
+	}
+
+	start := t.cursor + 1
+	if idx, ok := t.findEnabledForward(start); ok {
+		t.cursor = idx
+		return true
+	}
+	return false
+}
+
+// moveCursorBackward перемещает курсор на предыдущий доступный элемент
+func (t *MultiSelectTask) moveCursorBackward() bool {
+	if t.cursor == -1 {
+		return false
+	}
+	if idx, ok := t.findEnabledBackward(t.cursor - 1); ok {
+		t.cursor = idx
+		return true
+	}
+	if t.hasSelectAll {
+		t.cursor = -1
+		return true
+	}
+	return false
+}
+
+// resolveDisabledIndices конвертирует произвольный ввод в индексы элементов списка
+func (t *MultiSelectTask) resolveDisabledIndices(input interface{}) []int {
+	var result []int
+	if input == nil {
+		return result
+	}
+
+	addIndex := func(idx int) {
+		if idx < 0 || idx >= len(t.choices) {
+			return
+		}
+		for _, existing := range result {
+			if existing == idx {
+				return
+			}
+		}
+		result = append(result, idx)
+	}
+
+	switch v := input.(type) {
+	case int:
+		addIndex(v)
+	case []int:
+		for _, idx := range v {
+			addIndex(idx)
+		}
+	case string:
+		if idx := t.choiceIndex(v); idx != -1 {
+			addIndex(idx)
+		}
+	case []string:
+		for _, val := range v {
+			if idx := t.choiceIndex(val); idx != -1 {
+				addIndex(idx)
+			}
+		}
+	case []interface{}:
+		for _, item := range v {
+			for _, idx := range t.resolveDisabledIndices(item) {
+				addIndex(idx)
+			}
+		}
+	}
+
+	return result
+}
+
+// choiceIndex возвращает индекс элемента по значению или -1, если элемент не найден
+func (t *MultiSelectTask) choiceIndex(value string) int {
+	for i, choice := range t.choices {
+		if choice == value {
+			return i
+		}
+	}
+	return -1
+}
+
+// clearDisabledSelections снимает выбор с отключённых элементов
+func (t *MultiSelectTask) clearDisabledSelections() {
+	if len(t.choices) > 32 {
+		if t.fallbackMap == nil {
+			return
+		}
+		for idx := range t.disabled {
+			delete(t.fallbackMap, idx)
+		}
+		return
+	}
+
+	for idx := range t.disabled {
+		t.selected.Clear(idx)
+	}
+}
+
+// clearAllSelections снимает выбор со всех элементов
+func (t *MultiSelectTask) clearAllSelections() {
+	if len(t.choices) > 32 {
+		if t.fallbackMap == nil {
+			return
+		}
+		for idx := range t.fallbackMap {
+			delete(t.fallbackMap, idx)
+		}
+		return
+	}
+
+	t.selected.ClearAll()
+}
+
+// selectAllEnabled отмечает все доступные элементы выбранными
+func (t *MultiSelectTask) selectAllEnabled() {
+	if len(t.choices) > 32 {
+		if t.fallbackMap == nil {
+			t.fallbackMap = make(map[int]struct{})
+		}
+		for i := range t.choices {
+			if t.isDisabled(i) {
+				delete(t.fallbackMap, i)
+				continue
+			}
+			t.fallbackMap[i] = struct{}{}
+		}
+		return
+	}
+
+	t.selected.ClearAll()
+	for i := range t.choices {
+		if t.isDisabled(i) {
+			continue
+		}
+		t.selected.Set(i)
+	}
 }
 
 // WithViewport устанавливает размер viewport (окна просмотра) для ограничения количества отображаемых элементов.
@@ -138,6 +367,26 @@ func (t *MultiSelectTask) WithViewport(size int) *MultiSelectTask {
 		size = 0
 	}
 	t.viewportSize = size
+	return t
+}
+
+// WithItemsDisabled помечает элементы меню как недоступные для выбора.
+// Поддерживаются типы: int, []int, string, []string. Nil очищает список отключённых элементов.
+func (t *MultiSelectTask) WithItemsDisabled(disabled interface{}) *MultiSelectTask {
+	for idx := range t.disabled {
+		delete(t.disabled, idx)
+	}
+
+	indices := t.resolveDisabledIndices(disabled)
+	for _, idx := range indices {
+		if idx >= 0 && idx < len(t.choices) {
+			t.disabled[idx] = struct{}{}
+		}
+	}
+
+	t.clearDisabledSelections()
+	t.ensureCursorSelectable()
+	t.updateViewport()
 	return t
 }
 
@@ -227,6 +476,8 @@ func (t *MultiSelectTask) WithSelectAll(text ...string) *MultiSelectTask {
 	} else {
 		t.selectAllText = defauilt.SelectAllDefaultText
 	}
+	t.ensureCursorSelectable()
+	t.updateViewport()
 	return t
 }
 
@@ -253,6 +504,9 @@ func (t *MultiSelectTask) WithDefaultItems(defaultSelection interface{}) *MultiS
 
 	setSelected := func(index int) bool {
 		if index < 0 || index >= len(t.choices) {
+			return false
+		}
+		if t.isDisabled(index) {
 			return false
 		}
 		if len(t.choices) > 32 && t.fallbackMap != nil {
@@ -317,42 +571,45 @@ func (t *MultiSelectTask) WithDefaultItems(defaultSelection interface{}) *MultiS
 // Если все элементы выбраны - снимает выбор со всех.
 // Если хотя бы один элемент не выбран - выбирает все.
 func (t *MultiSelectTask) toggleSelectAll() {
-	if len(t.choices) > 32 && t.fallbackMap != nil {
-		// Используем fallback карту для больших списков
-		allSelected := len(t.fallbackMap) == len(t.choices)
-		if allSelected {
-			t.fallbackMap = make(map[int]struct{})
-		} else {
-			for i := range t.choices {
-				t.fallbackMap[i] = struct{}{}
-			}
-		}
-	} else {
-		// Используем битсет для оптимизации
-		allSelected := t.selected.Count() == len(t.choices)
-		if allSelected {
-			t.selected.ClearAll()
-		} else {
-			t.selected.SetAll(len(t.choices))
-		}
+	if len(t.choices) == 0 {
+		return
 	}
+
+	if t.isAllSelected() {
+		t.clearAllSelections()
+		return
+	}
+
+	t.selectAllEnabled()
 }
 
 // isAllSelected проверяет, выбраны ли все элементы списка
 func (t *MultiSelectTask) isAllSelected() bool {
-	if len(t.choices) == 0 {
+	enabledCount := 0
+	selectedCount := 0
+	for i := range t.choices {
+		if t.isDisabled(i) {
+			continue
+		}
+		enabledCount++
+		if t.isSelected(i) {
+			selectedCount++
+		}
+	}
+
+	if enabledCount == 0 {
 		return false
 	}
 
-	if len(t.choices) > 32 && t.fallbackMap != nil {
-		return len(t.fallbackMap) == len(t.choices)
-	}
-
-	return t.selected.Count() == len(t.choices)
+	return enabledCount == selectedCount
 }
 
 // toggleSelection переключает состояние выбора элемента по индексу (оптимизировано для embedded)
 func (t *MultiSelectTask) toggleSelection(index int) {
+	if t.isDisabled(index) {
+		return
+	}
+
 	if len(t.choices) > 32 && t.fallbackMap != nil {
 		// Используем fallback карту для больших списков
 		if _, exists := t.fallbackMap[index]; exists {
@@ -368,6 +625,9 @@ func (t *MultiSelectTask) toggleSelection(index int) {
 
 // isSelected проверяет, выбран ли элемент по индексу (оптимизировано для embedded)
 func (t *MultiSelectTask) isSelected(index int) bool {
+	if t.isDisabled(index) {
+		return false
+	}
 	if len(t.choices) > 32 && t.fallbackMap != nil {
 		_, exists := t.fallbackMap[index]
 		return exists
@@ -413,26 +673,17 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		switch msg.String() {
 		case "up", "k":
 			t.stopTimeout()
-			if t.cursor > 0 {
-				t.cursor--
-			} else if t.hasSelectAll {
-				// Если включена опция "Выбрать все" и курсор на первом элементе,
-				// переходим к опции "Выбрать все" (позиция -1)
-				t.cursor = -1
+			if t.moveCursorBackward() {
+				// Обновляем viewport после изменения позиции курсора
+				t.updateViewport()
 			}
-			// Обновляем viewport после изменения позиции курсора
-			t.updateViewport()
 			return t, nil
 		case "down", "j":
 			t.stopTimeout()
-			if t.hasSelectAll && t.cursor == -1 {
-				// С опции "Выбрать все" переходим к первому элементу списка
-				t.cursor = 0
-			} else if t.cursor < len(t.choices)-1 {
-				t.cursor++
+			if t.moveCursorForward() {
+				// Обновляем viewport после изменения позиции курсора
+				t.updateViewport()
 			}
-			// Обновляем viewport после изменения позиции курсора
-			t.updateViewport()
 			return t, nil
 		case " ", "right", "Right":
 			// При выборе останавливаем таймер
@@ -442,7 +693,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			if t.hasSelectAll && t.cursor == -1 {
 				// Нажатие пробела на опции "Выбрать все"
 				t.toggleSelectAll()
-			} else if t.cursor >= 0 {
+			} else if t.cursor >= 0 && !t.isDisabled(t.cursor) {
 				// Обычная логика выбора для элементов списка
 				t.toggleSelection(t.cursor)
 			}
@@ -514,7 +765,7 @@ func (t *MultiSelectTask) applyDefaultValue() {
 			// Если это список индексов для выбора
 			for _, index := range val {
 				// Выбираем только корректные индексы
-				if index >= 0 && index < len(t.choices) {
+				if index >= 0 && index < len(t.choices) && !t.isDisabled(index) {
 					// Устанавливаем выбор для этого элемента
 					if len(t.choices) > 32 && t.fallbackMap != nil {
 						t.fallbackMap[index] = struct{}{}
@@ -528,7 +779,7 @@ func (t *MultiSelectTask) applyDefaultValue() {
 			for _, strVal := range val {
 				// Ищем строку в списке вариантов
 				for i, choice := range t.choices {
-					if choice == strVal {
+					if choice == strVal && !t.isDisabled(i) {
 						// Устанавливаем выбор для этого элемента
 						if len(t.choices) > 32 && t.fallbackMap != nil {
 							t.fallbackMap[i] = struct{}{}
@@ -651,10 +902,16 @@ func (t *MultiSelectTask) View(width int) string {
 		choice := t.choices[i]
 		checked := " "
 		var itemPrefix string
+		itemDisabled := t.isDisabled(i)
 
 		// Проверяем, выбран ли этот элемент
 		if t.isSelected(i) {
 			checked = ui.IconSelected
+		}
+
+		if itemDisabled {
+			choice = ui.DisabledStyle.Render(choice)
+			checked = ui.DisabledStyle.Render(checked)
 		}
 
 		// Определяем тип элемента для получения правильного префикса
@@ -675,7 +932,13 @@ func (t *MultiSelectTask) View(width int) string {
 		}
 
 		// Формируем строку для отображения варианта выбора с новым префиксом
-		sb.WriteString(fmt.Sprintf("%s[%s] %s\n", itemPrefix, checked, choice))
+		openBracket := "["
+		closeBracket := "]"
+		if itemDisabled {
+			openBracket = ui.DisabledStyle.Render(openBracket)
+			closeBracket = ui.DisabledStyle.Render(closeBracket)
+		}
+		sb.WriteString(fmt.Sprintf("%s%s%s%s %s\n", itemPrefix, openBracket, checked, closeBracket, choice))
 	}
 
 	// Добавляем индикатор прокрутки вниз, если есть скрытые элементы ниже

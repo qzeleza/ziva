@@ -200,6 +200,48 @@ func TestMultiSelectTaskWithSelectAll(t *testing.T) {
 	assert.Equal(t, 0, multiSelectTaskAfterUnselectAll.selected.Count(), "Количество выбранных элементов должно быть равно 0")
 }
 
+func TestMultiSelectTaskDisabledItems(t *testing.T) {
+	title := "Выберите опции"
+	options := []string{"Опция 1", "Опция 2", "Опция 3"}
+
+	task := NewMultiSelectTask(title, options)
+	task = task.WithItemsDisabled([]int{1})
+	assert.Equal(t, 0, task.cursor, "Курсор должен начинаться на первом доступном элементе")
+
+	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
+	task, _ = updated.(*MultiSelectTask)
+	assert.Equal(t, 2, task.cursor, "Курсор должен перепрыгивать через отключённые элементы")
+
+	selectedBefore := task.isSelected(1)
+	task.toggleSelection(1)
+	assert.Equal(t, selectedBefore, task.isSelected(1), "Отключённый элемент не должен переключать состояние выбора")
+
+	task = task.WithItemsDisabled(nil)
+	updated, _ = task.Update(tea.KeyMsg{Type: tea.KeyUp})
+	task, _ = updated.(*MultiSelectTask)
+	assert.Equal(t, 1, task.cursor, "После включения элемента курсор должен уметь на него переходить")
+}
+
+func TestMultiSelectTaskDisabledItemsWithSelectAll(t *testing.T) {
+	title := "Выберите опции"
+	options := []string{"Опция 1", "Опция 2", "Опция 3"}
+
+	task := NewMultiSelectTask(title, options).WithItemsDisabled([]int{1}).WithSelectAll()
+	assert.Equal(t, -1, task.cursor, "Курсор должен быть на опции 'Выбрать все'")
+
+	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeySpace})
+	task, _ = updated.(*MultiSelectTask)
+	assert.True(t, task.isSelected(0), "Должен быть выбран первый доступный элемент")
+	assert.False(t, task.isSelected(1), "Отключённый элемент не должен выбираться")
+	assert.True(t, task.isSelected(2), "Последний элемент должен быть выбран")
+	assert.True(t, task.isAllSelected(), "Все доступные элементы должны считаться выбранными")
+
+	updated, _ = task.Update(tea.KeyMsg{Type: tea.KeySpace})
+	task, _ = updated.(*MultiSelectTask)
+	assert.False(t, task.isSelected(0), "После повторного выбора все элементы должны быть сняты")
+	assert.False(t, task.isSelected(2), "После повторного выбора все элементы должны быть сняты")
+}
+
 func TestMultiSelectTaskWithDefaultItems(t *testing.T) {
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
