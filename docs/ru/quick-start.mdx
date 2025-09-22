@@ -9,12 +9,12 @@ description: "Создайте ваше первое TUI приложение с
 
 ## Шаг 1: Создание проекта
 
-Создайте новый Go проект:
+Создайте свой новый Go проект:
 
 ```bash
-mkdir termos-demo
-cd termos-demo
-go mod init termos-demo
+mkdir my-termos-demo
+cd my-termos-demo
+go mod init my-termos-demo
 go get github.com/qzeleza/termos
 ```
 
@@ -38,6 +38,7 @@ func main() {
 
     // Настраиваем внешний вид
     queue.WithAppName("MyApp")
+	// Добавляем нумерацию задач в очереди
     queue.WithTasksNumbered(false, "[%d]")
 
     // Создаем задачи
@@ -52,17 +53,21 @@ func main() {
     printResults()
 }
 
+// Создание задачи
 func createTasks(queue *termos.Queue) {
+
     // 1. Задача подтверждения с таймаутом
     confirm := termos.NewYesNoTask("Подтверждение", "Начать настройку?").
         WithTimeout(5*time.Second, "Да")
 
-    // 2. Выбор среды
+    // 2. Выбор среды 
+	// в виде: имя_пункта_меню||справка_к_пункту_меню
     environments := []string{
         "development||Среда разработки",
         "staging||Тестовая среда",
         "production||Боевая среда",
     }
+	// По умолчанию маркер будет указывать на "staging"
     env := termos.NewSingleSelectTask("Выбор среды", environments).
         WithDefaultItem("staging")
 
@@ -73,6 +78,7 @@ func createTasks(queue *termos.Queue) {
         "cli||Командная строка",
         "docs||Документация",
     }
+	// Добавляем пункт "Выбрать все"
     comp := termos.NewMultiSelectTask("Компоненты", components).
         WithSelectAll("Выбрать все").
         WithDefaultItems([]string{"api", "cli"})

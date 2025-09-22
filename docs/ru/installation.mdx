@@ -3,7 +3,7 @@ title: "Установка"
 description: "Как установить и настроить Termos в вашем Go проекте"
 ---
 
-# Установка Termos
+# Установка Термоса
 
 ## Требования
 
@@ -81,6 +81,7 @@ go run main.go
 Для корректного отображения русского текста настройте локаль:
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo locale-gen ru_RU.UTF-8
 sudo update-locale LANG=ru_RU.UTF-8
@@ -89,6 +90,7 @@ export LC_ALL=ru_RU.UTF-8
 ```
 
 **Entware/BusyBox:**
+
 ```bash
 opkg install locale-full glibc-binary-locales
 export LANG=ru_RU.UTF-8
@@ -126,7 +128,7 @@ export TERM=xterm-256color
 
 Рекомендуемая структура Go проекта с Termos:
 
-```
+```go
 myapp/
 ├── go.mod
 ├── go.sum
@@ -148,7 +150,7 @@ Termos использует следующие основные зависимо
 
 - **Bubble Tea** - основа для TUI
 - **Lip Gloss** - стилизация и цвета
-- **Cobra** - CLI (опционально)
+- **Testify **- тестирование пакета
 
 Все зависимости устанавливаются автоматически при `go get`.
 
