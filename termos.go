@@ -32,7 +32,9 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/qzeleza/termos/internal/autoconfig"
 	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/termos/internal/performance"
 	"github.com/qzeleza/termos/internal/query"
 	"github.com/qzeleza/termos/internal/task"
 	"github.com/qzeleza/termos/internal/ui"
@@ -184,13 +186,21 @@ type YesNoTask struct {
 	*task.YesNoTask
 }
 
-// WithTimeout устанавливает тайм-аут для задачи с значением по умолчанию
+// WithTimeoutYes устанавливает тайм-аут с выбором "Да" по умолчанию (языко-независимый)
 //
-// @param duration Тайм-аут
-// @param defaultValue Значение по умолчанию
+// @param duration Длительность тайм-аута
 // @return Указатель на задачу для цепочки вызовов
-func (t *YesNoTask) WithTimeout(duration time.Duration, defaultValue interface{}) *YesNoTask {
-	t.WithDefaultOption(defaultValue, duration)
+func (t *YesNoTask) WithTimeoutYes(duration time.Duration) *YesNoTask {
+	t.YesNoTask.WithTimeoutYes(duration)
+	return t
+}
+
+// WithTimeoutNo устанавливает тайм-аут с выбором "Нет" по умолчанию (языко-независимый)
+//
+// @param duration Длительность тайм-аута
+// @return Указатель на задачу для цепочки вызовов
+func (t *YesNoTask) WithTimeoutNo(duration time.Duration) *YesNoTask {
+	t.YesNoTask.WithTimeoutNo(duration)
 	return t
 }
 
@@ -200,6 +210,42 @@ func (t *YesNoTask) WithTimeout(duration time.Duration, defaultValue interface{}
 // @return Указатель на задачу для цепочки вызовов
 func (t *YesNoTask) WithDefaultItem(option interface{}) *YesNoTask {
 	t.YesNoTask.WithDefaultItem(option)
+	return t
+}
+
+// WithDefaultYes устанавливает "Да" как вариант по умолчанию (языко-независимый)
+//
+// @return Указатель на задачу для цепочки вызовов
+func (t *YesNoTask) WithDefaultYes() *YesNoTask {
+	t.YesNoTask.WithDefaultYes()
+	return t
+}
+
+// WithDefaultNo устанавливает "Нет" как вариант по умолчанию (языко-независимый)
+//
+// @return Указатель на задачу для цепочки вызовов
+func (t *YesNoTask) WithDefaultNo() *YesNoTask {
+	t.YesNoTask.WithDefaultNo()
+	return t
+}
+
+// WithDefaultYesAndTimeout комбинированный метод: устанавливает "Да" по умолчанию и тайм-аут
+//
+// @param duration Длительность тайм-аута
+// @return Указатель на задачу для цепочки вызовов
+func (t *YesNoTask) WithDefaultYesAndTimeout(duration time.Duration) *YesNoTask {
+	t.YesNoTask.WithDefaultYes()
+	t.YesNoTask.WithTimeoutYes(duration)
+	return t
+}
+
+// WithDefaultNoAndTimeout комбинированный метод: устанавливает "Нет" по умолчанию и тайм-аут
+//
+// @param duration Длительность тайм-аута
+// @return Указатель на задачу для цепочки вызовов
+func (t *YesNoTask) WithDefaultNoAndTimeout(duration time.Duration) *YesNoTask {
+	t.YesNoTask.WithDefaultNo()
+	t.YesNoTask.WithTimeoutNo(duration)
 	return t
 }
 
@@ -529,3 +575,205 @@ var (
 	Black         = ui.ColorBlack
 	DarkGreen     = ui.ColorDarkGreen
 )
+
+// ----------------------------------------------------------------------------
+// Автоконфигурация для встроенных систем
+// ----------------------------------------------------------------------------
+
+// AutoConfigure автоматически настраивает Termos для оптимальной работы
+// на текущей системе. Анализирует доступную память, архитектуру процессора
+// и характеристики терминала для выбора наилучших настроек производительности.
+//
+// Рекомендуется вызывать в начале программы для встроенных систем и
+// устройств с ограниченными ресурсами.
+func AutoConfigure() {
+	autoconfig.AutoConfigure()
+}
+
+// Is64Bit возвращает true, если приложение скомпилировано для 64-битной архитектуры.
+// Полезно для определения доступного адресного пространства и выбора алгоритмов
+// оптимизации памяти.
+//
+// @return true для 64-битных систем, false для 32-битных
+func Is64Bit() bool {
+	return autoconfig.Is64Bit()
+}
+
+// ----------------------------------------------------------------------------
+// Утилиты производительности
+// ----------------------------------------------------------------------------
+
+// RepeatEfficient создает строку путем повторения заданной строки указанное количество раз.
+// Использует оптимизированный алгоритм для минимизации аллокаций памяти.
+//
+// @param s Строка для повторения
+// @param count Количество повторений
+// @return Результирующая строка
+func RepeatEfficient(s string, count int) string {
+	return performance.RepeatEfficient(s, count)
+}
+
+// JoinEfficient объединяет срез строк с указанным разделителем.
+// Оптимизирован для минимизации аллокаций памяти при работе с большими объемами данных.
+//
+// @param parts Срез строк для объединения
+// @param separator Разделитель между строками
+// @return Объединенная строка
+func JoinEfficient(parts []string, separator string) string {
+	return performance.JoinEfficient(parts, separator)
+}
+
+// FastConcat выполняет быстрое объединение произвольного количества строк.
+// Предварительно вычисляет общую длину для минимизации перевыделения памяти.
+//
+// @param parts Строки для объединения
+// @return Объединенная строка
+func FastConcat(parts ...string) string {
+	return performance.FastConcat(parts...)
+}
+
+// CleanWhitespaceEfficient удаляет лишние пробельные символы из строки.
+// Заменяет последовательности пробелов, табуляций и переносов строк одним пробелом.
+//
+// @param s Исходная строка
+// @return Очищенная строка
+func CleanWhitespaceEfficient(s string) string {
+	return performance.CleanWhitespaceEfficient(s)
+}
+
+// ----------------------------------------------------------------------------
+// Управление цветами и стилями
+// ----------------------------------------------------------------------------
+
+// SetErrorColor устанавливает пользовательские цвета для отображения ошибок.
+// Позволяет настроить цветовую схему для сообщений об ошибках и статусов.
+//
+// @param errorsColor Цвет для текста сообщений об ошибках
+// @param statusColor Цвет для статусных меток (например, "ОШИБКА", "ОТКАЗ")
+func SetErrorColor(errorsColor lipgloss.TerminalColor, statusColor lipgloss.TerminalColor) {
+	ui.SetErrorColor(errorsColor, statusColor)
+}
+
+// ResetErrorColors сбрасывает цвета ошибок к значениям по умолчанию.
+// Полезно для возврата к стандартной цветовой схеме после экспериментов.
+func ResetErrorColors() {
+	ui.ResetErrorColors()
+}
+
+// EnableEmbeddedMode включает режим встроенной системы с упрощенной цветовой палитрой.
+// Рекомендуется для маршрутизаторов, IoT устройств и систем с ограниченными
+// возможностями терминала.
+func EnableEmbeddedMode() {
+	ui.EnableEmbeddedMode()
+}
+
+// EnableASCIIMode включает ASCII-режим для терминалов без поддержки Unicode.
+// Заменяет специальные символы на ASCII-эквиваленты.
+func EnableASCIIMode() {
+	ui.EnableASCIIMode()
+}
+
+// IsEmbeddedColorMode возвращает true, если включен режим встроенной системы.
+//
+// @return true, если активен режим встроенной системы
+func IsEmbeddedColorMode() bool {
+	return ui.IsEmbeddedColorMode()
+}
+
+// ----------------------------------------------------------------------------
+// Расширенные валидаторы
+// ----------------------------------------------------------------------------
+
+// NewPasswordValidator создает валидатор паролей с указанной минимальной длиной.
+// Проверяет сложность пароля, наличие различных типов символов.
+//
+// @param minLength Минимальная длина пароля
+// @return Настроенный валидатор паролей
+func NewPasswordValidator(minLength int) validation.Validator {
+	return validation.NewPasswordValidator(minLength)
+}
+
+// NewEmailValidator создает валидатор email адресов.
+// Проверяет корректность формата email согласно RFC стандартам.
+//
+// @return Валидатор email адресов
+func NewEmailValidator() validation.Validator {
+	return validation.NewEmailValidator()
+}
+
+// NewIPValidator создает валидатор IP адресов с настраиваемой поддержкой IPv4/IPv6.
+//
+// @param allowIPv4 Разрешить IPv4 адреса
+// @param allowIPv6 Разрешить IPv6 адреса
+// @return Настроенный валидатор IP адресов
+func NewIPValidator(allowIPv4, allowIPv6 bool) validation.Validator {
+	return validation.NewIPValidator(allowIPv4, allowIPv6)
+}
+
+// NewIPv4Validator создает валидатор только для IPv4 адресов.
+//
+// @return Валидатор IPv4 адресов
+func NewIPv4Validator() validation.Validator {
+	return validation.NewIPv4Validator()
+}
+
+// NewIPv6Validator создает валидатор только для IPv6 адресов.
+//
+// @return Валидатор IPv6 адресов
+func NewIPv6Validator() validation.Validator {
+	return validation.NewIPv6Validator()
+}
+
+// NewDomainValidator создает валидатор доменных имен.
+// Проверяет корректность формата доменного имени согласно RFC стандартам.
+//
+// @return Валидатор доменных имен
+func NewDomainValidator() validation.Validator {
+	return validation.NewDomainValidator()
+}
+
+// NewTextValidator создает валидатор текста с ограничениями по длине.
+//
+// @param minLen Минимальная длина текста (0 = без ограничений)
+// @param maxLen Максимальная длина текста (0 = без ограничений)
+// @return Настроенный валидатор текста
+func NewTextValidator(minLen, maxLen int) validation.Validator {
+	return validation.NewTextValidator(minLen, maxLen)
+}
+
+// ----------------------------------------------------------------------------
+// Утилиты для работы со строками и интернированием
+// ----------------------------------------------------------------------------
+
+// InternString выполняет интернирование строки для экономии памяти.
+// Повторные вызовы с одинаковыми строками возвращают ссылку на один объект в памяти.
+// Особенно эффективно для часто повторяющихся строк в UI.
+//
+// @param s Строка для интернирования
+// @return Интернированная строка
+func InternString(s string) string {
+	return ui.InternString(s)
+}
+
+// GetCacheStats возвращает статистику кэша интернированных строк.
+// Полезно для мониторинга использования памяти и оптимизации производительности.
+//
+// @return size - текущий размер кэша, capacity - максимальная емкость
+func GetCacheStats() (size int, capacity int) {
+	return ui.GetCacheStats()
+}
+
+// ClearInternCache очищает кэш интернированных строк.
+// Рекомендуется вызывать периодически в долгоработающих приложениях.
+func ClearInternCache() {
+	ui.ClearInternCache()
+}
+
+// CalculateLayoutWidth вычисляет оптимальную ширину макета на основе ширины экрана.
+// Учитывает отступы и ограничения для обеспечения читаемости на разных устройствах.
+//
+// @param screenWidth Ширина экрана в символах
+// @return Рекомендуемая ширина макета
+func CalculateLayoutWidth(screenWidth int) int {
+	return common.CalculateLayoutWidth(screenWidth)
+}

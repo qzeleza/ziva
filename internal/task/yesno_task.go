@@ -250,20 +250,6 @@ func (t *YesNoTask) WithCustomLabels(yesLabel, noLabel string) *YesNoTask {
 	return t
 }
 
-// WithCustomLabelsAll позволяет изменить все три опции
-// Возвращает *YesNoTask для возможности цепочки вызовов
-func (t *YesNoTask) WithCustomLabelsAll(yesLabel, noLabel string) *YesNoTask {
-	if strings.TrimSpace(yesLabel) != "" {
-		t.yesLabel = yesLabel
-		t.choices[0] = yesLabel
-	}
-	if strings.TrimSpace(noLabel) != "" {
-		t.noLabel = noLabel
-		t.choices[1] = noLabel
-	}
-	return t
-}
-
 // WithDefaultItem позволяет задать опцию, которая будет выбрана по умолчанию при открытии задачи.
 // Поддерживает YesNoOption, bool, индекс (int) и строку (string).
 func (t *YesNoTask) WithDefaultItem(option interface{}) *YesNoTask {
@@ -376,8 +362,8 @@ func (t *YesNoTask) WithTimeout(duration time.Duration, defaultValue interface{}
 		case int:
 			normalized = v
 		case string:
-			// Оставляем как есть (должно совпадать с одним из labels в t.choices)
-			normalized = v
+			// Нормализуем строковое значение к индексу для языко-независимого сравнения
+			normalized = t.normalizeStringToIndex(v)
 		default:
 			// Неизвестный тип — не задаем значение по умолчанию
 			normalized = nil
@@ -386,6 +372,72 @@ func (t *YesNoTask) WithTimeout(duration time.Duration, defaultValue interface{}
 
 	// Проксируем в SingleSelectTask с нормализованным значением
 	t.SingleSelectTask.WithTimeout(duration, normalized)
+	return t
+}
+
+// normalizeStringToIndex конвертирует строковое значение по умолчанию в соответствующий индекс
+// Поддерживает языко-независимое сравнение для "Да"/"Нет" на разных языках
+func (t *YesNoTask) normalizeStringToIndex(value string) interface{} {
+	// Список известных вариантов для "Да" на разных языках
+	yesVariants := []string{"да", "yes", "evet", "так", "так"}
+	// Список известных вариантов для "Нет" на разных языках
+	noVariants := []string{"нет", "no", "hayır", "не", "ні"}
+
+	valueLower := strings.ToLower(strings.TrimSpace(value))
+
+	// Проверяем среди вариантов "Да"
+	for _, variant := range yesVariants {
+		if strings.EqualFold(valueLower, variant) {
+			return 0 // индекс "Да"
+		}
+	}
+
+	// Проверяем среди вариантов "Нет"
+	for _, variant := range noVariants {
+		if strings.EqualFold(valueLower, variant) {
+			return 1 // индекс "Нет"
+		}
+	}
+
+	// Если не найдено соответствие в известных вариантах,
+	// пытаемся найти прямое соответствие в текущих choices
+	for i, choice := range t.choices {
+		if strings.EqualFold(choice, value) {
+			return i
+		}
+	}
+
+	// Если ничего не найдено, возвращаем исходную строку
+	return value
+}
+
+// WithTimeoutYes устанавливает тайм-аут с выбором "Да" по умолчанию (языко-независимый)
+// @param duration Длительность тайм-аута
+// @return Указатель на задачу для цепочки вызовов
+func (t *YesNoTask) WithTimeoutYes(duration time.Duration) *YesNoTask {
+	t.WithTimeout(duration, YesOption)
+	return t
+}
+
+// WithTimeoutNo устанавливает тайм-аут с выбором "Нет" по умолчанию (языко-независимый)
+// @param duration Длительность тайм-аута
+// @return Указатель на задачу для цепочки вызовов
+func (t *YesNoTask) WithTimeoutNo(duration time.Duration) *YesNoTask {
+	t.WithTimeout(duration, NoOption)
+	return t
+}
+
+// WithDefaultYes устанавливает "Да" как вариант по умолчанию (языко-независимый)
+// @return Указатель на задачу для цепочки вызовов
+func (t *YesNoTask) WithDefaultYes() *YesNoTask {
+	t.WithDefaultItem(YesOption)
+	return t
+}
+
+// WithDefaultNo устанавливает "Нет" как вариант по умолчанию (языко-независимый)
+// @return Указатель на задачу для цепочки вызовов
+func (t *YesNoTask) WithDefaultNo() *YesNoTask {
+	t.WithDefaultItem(NoOption)
 	return t
 }
 

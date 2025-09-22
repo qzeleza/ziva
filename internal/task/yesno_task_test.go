@@ -43,21 +43,6 @@ func TestYesNoTaskWithCustomLabels(t *testing.T) {
 	assert.Equal(t, customNoLabel, yesNoTask.noLabel, "Метка 'Нет' должна соответствовать пользовательской")
 }
 
-// TestYesNoTaskWithCustomLabelsAll проверяет метод WithCustomLabelsAll
-func TestYesNoTaskWithCustomLabelsAll(t *testing.T) {
-	// Создаем задачу YesNoTask
-	yesNoTask := NewYesNoTask("Лицензия", "Принять лицензионное соглашение?")
-
-	// Устанавливаем все пользовательские метки
-	customYesLabel := "Принять"
-	customNoLabel := "Отклонить"
-	yesNoTask = yesNoTask.WithCustomLabelsAll(customYesLabel, customNoLabel)
-
-	// Проверяем, что все метки установлены корректно
-	assert.Equal(t, customYesLabel, yesNoTask.yesLabel, "Метка 'Да' должна соответствовать пользовательской")
-	assert.Equal(t, customNoLabel, yesNoTask.noLabel, "Метка 'Нет' должна соответствовать пользовательской")
-}
-
 // TestYesNoTaskSelectionAndNavigation проверяет навигацию и выбор
 func TestYesNoTaskSelectionAndNavigation(t *testing.T) {
 	// Создаем задачу YesNoTask
