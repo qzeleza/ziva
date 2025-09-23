@@ -1,0 +1,191 @@
+---
+title: "Демонстрация валидации"
+description: "Комплексные формы ввода с встроенными и кастомными валидаторами"
+---
+
+# Демонстрация валидации
+
+Разберём очереди, которые показывают всё богатство системы валидации Termos: от встроенных правил до комбинированных цепочек и собственных проверок.
+
+## Очередь со всеми стандартными валидаторами
+
+```go
+func ShowBuiltInValidators() {
+    v := termos.DefaultValidators
+
+    tasks := []termos.Task{
+        termos.NewInputTask("Имя", "Обязательное поле:").
+            WithValidator(v.Required()),
+
+        termos.NewInputTask("Логин", "3-20 символов, латиница/цифры:").
+            WithValidator(v.Username()),
+
+        termos.NewInputTask("Краткое описание", "Не более 40 символов:").
+            WithValidator(v.MaxLength(40)),
+
+        termos.NewInputTask("Комментарий", "Минимум 5 символов:").
+            WithValidator(v.MinLength(5)),
+
+        termos.NewInputTask("Код", "Ровно 8 символов:").
+            WithValidator(v.Length(8)),
+
+        termos.NewInputTask("Email", "Адрес электронной почты:").
+            WithInputType(termos.InputTypeEmail).
+            WithValidator(v.Email()),
+
+        termos.NewInputTask("Сайт", "URL (опционально):").
+            WithValidator(v.OptionalURL()),
+
+        termos.NewInputTask("IP", "IPv4 или IPv6:").
+            WithInputType(termos.InputTypeIP).
+            WithValidator(v.IP()),
+
+        termos.NewInputTask("Домен", "Имя домена:").
+            WithInputType(termos.InputTypeDomain).
+            WithValidator(v.Domain()),
+
+        termos.NewInputTask("Порт", "Диапазон 1-65535:").
+            WithInputType(termos.InputTypeNumber).
+            WithValidator(v.Port()),
+
+        termos.NewInputTask("Число", "Диапазон 1-100:").
+            WithInputType(termos.InputTypeNumber).
+            WithValidator(v.Range(1, 100)),
+
+        termos.NewInputTask("Только буквы и цифры", "Введите значение:").
+            WithValidator(v.AlphaNumeric()),
+
+        termos.NewInputTask("Пароль", "Минимум 8 символов:").
+            WithInputType(termos.InputTypePassword).
+            WithValidator(v.StandardPassword()),
+
+        termos.NewInputTask("Сильный пароль", "Минимум 12 символов, разные символы:").
+            WithInputType(termos.InputTypePassword).
+            WithValidator(v.StrongPassword()),
+    }
+
+    queue := termos.NewQueue("Проверка валидаторов").
+        WithTasksNumbered(true, "[%02d]")
+    queue.AddTasks(tasks...)
+    _ = queue.Run()
+}
+```
+
+<Info>
+Каждая задача вызывает валидатор после нажатия <kbd>Enter</kbd>. При ошибке пользователь увидит сообщение и сможет вводить данные повторно, пока не выполнит условия.
+</Info>
+
+## Кастомная цепочка проверок
+
+```go
+type Chain struct {
+    validators []termos.Validator
+}
+
+func (c Chain) Validate(input string) error {
+    for _, validator := range c.validators {
+        if err := validator.Validate(input); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+func (c Chain) Description() string {
+    parts := make([]string, len(c.validators))
+    for i, validator := range c.validators {
+        parts[i] = validator.Description()
+    }
+    return strings.Join(parts, "; ")
+}
+
+func AskSecureToken() {
+    v := termos.DefaultValidators
+
+    token := termos.NewInputTask(
+        "API токен",
+        "Обязательный, 16-64 символа, буквы/цифры",
+    ).WithValidator(Chain{
+        validators: []termos.Validator{
+            v.Required(),
+            v.MinLength(16),
+            v.MaxLength(64),
+            v.AlphaNumeric(),
+        },
+    })
+
+    queue := termos.NewQueue("Проверка токена")
+    queue.AddTasks(token)
+    _ = queue.Run()
+
+    fmt.Println("Токен принят:", token.GetValue())
+}
+```
+
+## Валидатор со сторонней проверкой
+
+```go
+func emailNotInCRM(email string) bool {
+    // Здесь могла бы быть реальная проверка API.
+    return !strings.HasSuffix(email, "@banned.example")
+}
+
+type UniqueEmail struct{}
+
+func (UniqueEmail) Validate(input string) error {
+    if !emailNotInCRM(input) {
+        return errors.New("email уже зарегистрирован")
+    }
+    return nil
+}
+
+func (UniqueEmail) Description() string {
+    return "Email должен быть уникальным в CRM"
+}
+
+func SignUpForm() error {
+    v := termos.DefaultValidators
+
+    email := termos.NewInputTask("Email", "Введите рабочий адрес:").
+        WithInputType(termos.InputTypeEmail).
+        WithValidator(v.Email())
+
+    password := termos.NewInputTask(
+        "Пароль",
+        "Минимум 12 символов, буквы/цифры/символы",
+    ).WithInputType(termos.InputTypePassword).
+        WithValidator(v.StrongPassword())
+
+    confirm := termos.NewYesNoTask(
+        "Подтверждение",
+        "Отправить данные в CRM?",
+    ).WithDefaultYes()
+
+    queue := termos.NewQueue("Регистрация пользователя")
+    queue.AddTasks(email, password, confirm)
+    if err := queue.Run(); err != nil {
+        return err
+    }
+
+    unique := termos.NewInputTask("Проверка уникальности", "Email не должен быть в CRM:").
+        WithInputType(termos.InputTypeEmail).
+        WithValidator(UniqueEmail{})
+
+    checkQueue := termos.NewQueue("Проверка CRM")
+    checkQueue.AddTasks(unique)
+    return checkQueue.Run()
+}
+```
+
+<Note>
+Используйте `FuncTask` после ввода, если нужно выполнить длительную или сетевую проверку и показать итог пользователю.
+</Note>
+
+## Полезные советы
+
+- Сохраняйте `Description()` на понятном пользователю языке — Termos выводит его рядом с полем.
+- Комбинируйте `WithAllowEmpty(true)` с валидаторами, которые корректно обрабатывают пустой ввод.
+- Для групповых форм разбивайте очередь на несколько смысловых блоков — так легче возвращаться к неправильному полю.
+- Покрывайте сложные валидаторы модульными тестами: они — обычные функции Go.
+
+Следующая страница содержит совокупные рекомендации по использованию библиотеки Termos в проектах.

@@ -1,48 +1,80 @@
 ---
 title: "MultiSelectTask"
-description: "Задача выбора нескольких вариантов из списка"
+description: "Множественный выбор с предзаполнением и пунктом «Выбрать все»"
 ---
 
 # MultiSelectTask
 
-`MultiSelectTask` позволяет пользователю выбрать один или несколько элементов из списка.
+`MultiSelectTask` позволяет отметить сразу несколько пунктов. Подходит для выбора компонентов установки, фич, ролей и других списков, где безопасно выбрать несколько значений.
 
-## Создание
-
-```go
-options := []string{"item1", "item2", "item3"}
-task := termos.NewMultiSelectTask("Выберите компоненты", options)
-```
-
-## Основные методы
+## Базовый пример
 
 ```go
-// Настройки
-task.WithSelectAll("Выбрать все")          // добавить опцию "выбрать все"
-task.WithDefaultItems([]string{"item1", "item2"}) // выбранные по умолчанию
-task.WithViewport(5, true)                      // окно просмотра
-task.WithItemsDisabled([]string{"item3"})        // отключенные элементы
-
-// Получение результатов
-selected := task.GetSelected() // []string
-```
-
-## Пример использования
-
-```go
-components := []string{
-    "web::Веб-сервер",
+features := []string{
     "api::REST API",
-    "db::База данных",
+    "web::Веб-интерфейс",
+    "cli::CLI утилита",
+    "docs::Документация",
 }
 
-task := termos.NewMultiSelectTask("Компоненты", components).
-    WithSelectAll("Установить все").
-    WithDefaultItems([]string{"web", "api"})
-
-queue := termos.NewQueue("Setup")
-queue.AddTasks(task)
-queue.Run()
-
-fmt.Printf("Выбрано: %v\n", task.GetSelected())
+multi := termos.NewMultiSelectTask("Компоненты", features)
 ```
+
+![Скриншот: задача множественного выбора](/images/pic_3.png)
+
+## Настройки
+
+### Пункт «Выбрать все»
+
+```go
+multi.WithSelectAll("Установить всё")
+```
+
+Пункт добавляется в начало списка и управляет остальными позициями.
+
+### Значения по умолчанию
+
+```go
+multi.WithDefaultItems([]string{"api", "cli"})
+multi.WithDefaultItems([]int{0, 2})
+```
+
+### Viewport
+
+```go
+multi.WithViewport(6, true) // 6 отображаемых элементов и счётчик
+```
+
+### Отключение элементов
+
+```go
+multi.WithItemsDisabled([]string{"legacy"})
+```
+
+Полезно, если некоторые компоненты временно недоступны.
+
+### Таймаут
+
+```go
+multi.WithTimeout(20*time.Second, []string{"web", "docs"})
+```
+
+По истечении времени задача завершится указанным набором значений.
+
+## Получение результата
+
+```go
+selected := multi.GetSelected() // []string с выбранными значениями
+```
+
+## Советы
+
+- Используйте `WithSelectAll`, если большинство пользователей выбирают все элементы.
+- Храните идентификаторы в самих строках (`id::подсказка`), чтобы легко сопоставлять выбор с конфигурацией.
+- Если нужно ограничить максимальное количество пунктов, добавьте проверку после `queue.Run()` и попросите пользователя повторить выбор.
+- Комбинируйте `MultiSelectTask` с `FuncTask`, чтобы после выбора сразу выполнять сопутствующие операции (например, устанавливать выбранные модули).
+
+## Связанные материалы
+
+- [SingleSelectTask](/ru/components/singleselect-task)
+- [InputTask](/ru/components/input-task) — удобно запрашивать дополнительные параметры для выбранных пунктов

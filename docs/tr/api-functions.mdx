@@ -1,0 +1,418 @@
+---
+title: "API Fonksiyonları"
+description: "Termos kütüphanesinin yapılandırma, optimizasyon ve gelişmiş kullanım için global API fonksiyonlarının tam referansı"
+---
+
+# API Fonksiyonları
+
+Termos, kütüphane davranışını yapılandırmak, performansı optimize etmek ve gelişmiş kullanım için zengin bir global fonksiyon seti sağlar.
+
+<Info>
+Bu fonksiyonlar ana kütüphane bileşenlerini tamamlar ve Termos davranışını özel uygulama gereksinimlerinize göre ince ayar yapmanıza olanak tanır.
+</Info>
+
+## Otomatik Yapılandırma
+
+### AutoConfigure()
+
+Mevcut sistemde optimal performans için Termos'u otomatik olarak yapılandırır.
+
+```go
+func main() {
+    // Program başlatımında çağrılması önerilir
+    termos.AutoConfigure()
+
+    // Uygulama kodunuz
+    queue := termos.NewQueue("Başlık")
+}
+```
+
+<Tip>
+Sistem için otomatik optimizasyon sağlamak üzere program başlatımında `AutoConfigure()` çağırın.
+</Tip>
+
+**Bu fonksiyonun yaptıkları:**
+- Mevcut sistem belleğini analiz eder
+- İşlemci mimarisini belirler
+- Gömülü sistemler için ayarları optimize eder
+- Önbellekleme ve tamponlamayı yapılandırır
+
+### Is64Bit() bool
+
+Optimal algoritmaları seçmek için sistem mimarisini belirler.
+
+```go
+if termos.Is64Bit() {
+    // 64-bit sistemler için algoritmaları kullan
+    fmt.Println("64-bit mimari")
+} else {
+    // 32-bit sistemler için optimizasyonlar
+    fmt.Println("32-bit mimari")
+}
+```
+
+**Döndürür:** 64-bit sistemler için `true`, 32-bit sistemler için `false`
+
+## Performans Araçları
+
+### RepeatEfficient(s string, count int) string
+
+Temel dizeyi verimli şekilde tekrarlayarak dize oluşturur.
+
+```go
+// Tekrarlardan verimli dize oluşturma
+separator := termos.RepeatEfficient("-", 50)
+fmt.Println(separator) // "------------------------------------------------"
+```
+
+**Parametreler:**
+- `s` - tekrarlanacak dize
+- `count` - tekrar sayısı
+
+**Döndürür:** sonuç dizeyi
+
+### JoinEfficient(parts []string, separator string) string
+
+Performans için optimize edilmiş ayırıcı ile dize dizisini birleştirir.
+
+```go
+parts := []string{"bir", "iki", "üç"}
+result := termos.JoinEfficient(parts, " | ")
+fmt.Println(result) // "bir | iki | üç"
+```
+
+**Parametreler:**
+- `parts` - birleştirilecek dize dizisi
+- `separator` - öğeler arası ayırıcı
+
+**Döndürür:** birleştirilmiş dize
+
+### FastConcat(parts ...string) string
+
+Ayırıcı olmadan birden fazla dizenin hızlı birleştirilmesi.
+
+```go
+result := termos.FastConcat("Merhaba", " ", "dünya", "!")
+fmt.Println(result) // "Merhaba dünya!"
+```
+
+**Parametreler:**
+- `parts` - birleştirilecek değişken sayıda dize
+
+**Döndürür:** birleştirilmiş dize
+
+### CleanWhitespaceEfficient(s string) string
+
+Fazla boşlukları ve satır başlarını verimli şekilde kaldırır.
+
+```go
+cleaned := termos.CleanWhitespaceEfficient("  çok   boşluk  \n\t")
+fmt.Println(cleaned) // "çok boşluk"
+```
+
+**Parametreler:**
+- `s` - temizlenecek dize
+
+**Döndürür:** temizlenmiş dize
+
+## Renk Yönetimi
+
+### SetErrorColor(errorsColor, statusColor lipgloss.TerminalColor)
+
+Arayüzde hataları ve durumları görüntülemek için renkleri yapılandırır.
+
+```go
+import "github.com/charmbracelet/lipgloss"
+
+// Hatalar için kırmızı, durum için sarı renk ayarla
+termos.SetErrorColor(lipgloss.Color("#FF0000"), lipgloss.Color("#FFFF00"))
+```
+
+**Parametreler:**
+- `errorsColor` - hataları görüntülemek için renk
+- `statusColor` - durum bilgisini görüntülemek için renk
+
+### ResetErrorColors()
+
+Hata ve durum renklerini varsayılan değerlere sıfırlar.
+
+```go
+// Varsayılan renkleri geri yükle
+termos.ResetErrorColors()
+```
+
+### EnableEmbeddedMode()
+
+Optimize edilmiş renk şeması ile gömülü sistem modunu etkinleştirir.
+
+```go
+// Yönlendiriciler, IoT cihazları için
+termos.EnableEmbeddedMode()
+```
+
+<Note>
+Bu mod, sınırlı sistem kaynakları tespit edildiğinde otomatik olarak etkinleştirilir.
+</Note>
+
+### EnableASCIIMode()
+
+Sınırlı karakter desteği olan terminaller için ASCII modunu etkinleştirir.
+
+```go
+// Eski terminaller veya sınırlı ortamlar için
+termos.EnableASCIIMode()
+```
+
+### IsEmbeddedColorMode() bool
+
+Gömülü sistem modunun etkin olup olmadığını kontrol eder.
+
+```go
+if termos.IsEmbeddedColorMode() {
+    fmt.Println("Gömülü sistem modunda çalışıyor")
+}
+```
+
+**Döndürür:** gömülü sistem modu etkinse `true`
+
+## Doğrulayıcılar
+
+<Info>
+Termos, çeşitli veri türlerini kontrol etmek için hazır doğrulayıcılar sağlar. Tüm doğrulayıcılar `InputTask` ile kullanılabilir.
+</Info>
+
+### NewPasswordValidator(minLength int) Validator
+
+Minimum uzunlukta şifreleri kontrol etmek için doğrulayıcı oluşturur.
+
+```go
+validator := termos.NewPasswordValidator(8)
+task := termos.NewInputTask("Şifre", "Şifre girin:")
+task.WithValidator(validator)
+```
+
+**Parametreler:**
+- `minLength` - minimum şifre uzunluğu
+
+**Döndürür:** şifre doğrulayıcısı
+
+### NewEmailValidator() Validator
+
+E-posta adreslerini kontrol etmek için doğrulayıcı oluşturur.
+
+```go
+validator := termos.NewEmailValidator()
+task := termos.NewInputTask("E-posta", "E-posta girin:")
+task.WithValidator(validator)
+```
+
+**Döndürür:** e-posta adresi doğrulayıcısı
+
+### NewIPValidator(allowIPv4, allowIPv6 bool) Validator
+
+IPv4 ve/veya IPv6 desteği ile IP adreslerini kontrol etmek için doğrulayıcı oluşturur.
+
+```go
+// Sadece IPv4'e izin ver
+validator := termos.NewIPValidator(true, false)
+
+// Hem IPv4 hem IPv6'ya izin ver
+validatorBoth := termos.NewIPValidator(true, true)
+```
+
+**Parametreler:**
+- `allowIPv4` - IPv4 adreslerine izin ver
+- `allowIPv6` - IPv6 adreslerine izin ver
+
+**Döndürür:** IP adresi doğrulayıcısı
+
+### NewIPv4Validator() Validator
+
+IPv4 adreslerini kontrol etmek için doğrulayıcı oluşturur.
+
+```go
+validator := termos.NewIPv4Validator()
+task := termos.NewInputTask("IP", "IPv4 adresi girin:")
+task.WithValidator(validator)
+```
+
+**Döndürür:** IPv4 adresi doğrulayıcısı
+
+### NewIPv6Validator() Validator
+
+IPv6 adreslerini kontrol etmek için doğrulayıcı oluşturur.
+
+```go
+validator := termos.NewIPv6Validator()
+task := termos.NewInputTask("IPv6", "IPv6 adresi girin:")
+task.WithValidator(validator)
+```
+
+**Döndürür:** IPv6 adresi doğrulayıcısı
+
+### NewDomainValidator() Validator
+
+Alan adlarını kontrol etmek için doğrulayıcı oluşturur.
+
+```go
+validator := termos.NewDomainValidator()
+task := termos.NewInputTask("Alan Adı", "Alan adı girin:")
+task.WithValidator(validator)
+```
+
+**Döndürür:** alan adı doğrulayıcısı
+
+### NewTextValidator(minLen, maxLen int) Validator
+
+Metin uzunluğunu kontrol etmek için doğrulayıcı oluşturur.
+
+```go
+// 5 ila 100 karakter arası metin
+validator := termos.NewTextValidator(5, 100)
+task := termos.NewInputTask("Metin", "Açıklama girin:")
+task.WithValidator(validator)
+```
+
+**Parametreler:**
+- `minLen` - minimum metin uzunluğu
+- `maxLen` - maksimum metin uzunluğu
+
+**Döndürür:** metin doğrulayıcısı
+
+## Bellek Optimizasyonu
+
+### InternString(s string) string
+
+Tekrarlanan dizelerle çalışırken bellek tasarrufu için dizeyi intern eder.
+
+```go
+// Aynı dizelerle çalışırken bellek tasarrufu
+title1 := termos.InternString("Başlık")
+title2 := termos.InternString("Başlık") // Aynı belleği kullanır
+```
+
+**Parametreler:**
+- `s` - intern edilecek dize
+
+**Döndürür:** intern edilmiş dize
+
+<Warning>
+Dikkatli kullanın - intern edilmiş dizeler önbellek temizlenene kadar bellekte kalır.
+</Warning>
+
+### GetCacheStats() (size int, capacity int)
+
+İntern edilmiş dize önbelleğinin kullanım istatistiklerini döndürür.
+
+```go
+size, capacity := termos.GetCacheStats()
+fmt.Printf("Kullanılan: %d/%d\n", size, capacity)
+```
+
+**Döndürür:**
+- `size` - mevcut önbellek boyutu
+- `capacity` - maksimum önbellek kapasitesi
+
+### ClearInternCache()
+
+Belleği boşaltmak için intern edilmiş dize önbelleğini temizler.
+
+```go
+// Kapatma sırasında veya bellek düşük olduğunda temizle
+termos.ClearInternCache()
+```
+
+## Düzen Araçları
+
+### CalculateLayoutWidth(screenWidth int) int
+
+Arayüz öğesi düzeni için optimal genişliği hesaplar.
+
+```go
+screenWidth := 120
+layoutWidth := termos.CalculateLayoutWidth(screenWidth)
+fmt.Printf("Önerilen genişlik: %d\n", layoutWidth)
+```
+
+**Parametreler:**
+- `screenWidth` - karakter cinsinden ekran genişliği
+
+**Döndürür:** düzen için optimal genişlik
+
+### SetChoiceHelpDelimiter(delim string)
+
+Seçim listelerinde yardım bilgisini görüntülemek için ayırıcı ayarlar.
+
+```go
+// Ayırıcıyı " - " den " → " ya değiştir
+termos.SetChoiceHelpDelimiter(" → ")
+```
+
+**Parametreler:**
+- `delim` - ayırıcı dize
+
+<Tip>
+Seçim listelerindeki yardım ipuçlarının görünümünü özelleştirmek için bu fonksiyonu kullanın.
+</Tip>
+
+## Kullanım Örnekleri
+
+### Gömülü Sistemler için Kapsamlı Kurulum
+
+```go
+func setupEmbeddedEnvironment() {
+    // Otomatik yapılandırma
+    termos.AutoConfigure()
+
+    // Gömülü sistem modunu etkinleştir
+    termos.EnableEmbeddedMode()
+
+    // Daha iyi görünürlük için renkleri yapılandır
+    termos.SetErrorColor(lipgloss.Color("#FF6B6B"), lipgloss.Color("#FFE66D"))
+
+    // Mimariyi kontrol et
+    if !termos.Is64Bit() {
+        // 32-bit sistemler için ek optimizasyonlar
+        termos.EnableASCIIMode()
+    }
+}
+```
+
+### Dize İşlemleri Optimizasyonu
+
+```go
+func createFormattedOutput(items []string) string {
+    // Verimli ayırıcı oluşturma
+    separator := termos.RepeatEfficient("=", 50)
+
+    // Öğeleri birleştir
+    content := termos.JoinEfficient(items, "\n")
+
+    // Tüm parçaları hızlı birleştirme
+    return termos.FastConcat(
+        separator, "\n",
+        "RAPOR\n",
+        separator, "\n",
+        content, "\n",
+        separator,
+    )
+}
+```
+
+### Doğrulanmış Giriş Oluşturma
+
+```go
+func createValidatedInput() {
+    // Doğrulamalı e-posta
+    emailTask := termos.NewInputTask("E-posta", "E-postanızı girin:")
+    emailTask.WithValidator(termos.NewEmailValidator())
+
+    // Minimum uzunlukta şifre
+    passwordTask := termos.NewInputTask("Şifre", "Şifre oluşturun:")
+    passwordTask.WithValidator(termos.NewPasswordValidator(8))
+
+    // IPv4 ve IPv6 destekli IP adresi
+    ipTask := termos.NewInputTask("IP", "IP adresi girin:")
+    ipTask.WithValidator(termos.NewIPValidator(true, true))
+}
+```

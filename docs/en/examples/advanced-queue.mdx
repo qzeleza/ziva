@@ -1,119 +1,177 @@
 ---
-title: "Advanced Queue Examples"
-description: "Complex scenarios and advanced queue usage patterns"
+title: "Advanced Queue Playbook"
+description: "Conditional flows, dynamic task generation, and resilient retries"
 ---
 
-# Advanced Queue Examples
+# Advanced Queue Playbook
 
-Complex examples demonstrating advanced Termos features and patterns.
+These examples illustrate how to orchestrate non-trivial workflows with Termos:
+- split a process into multiple stages and append tasks dynamically;
+- react to user choices and task outcomes;
+- recover from errors without leaving the TUI.
 
-## Conditional Task Flow
+<Info>
+All snippets rely on the public `termos` API. Keep them in an `examples` package and call the helpers when you need to demonstrate behaviour.
+</Info>
+
+## Multi-stage deployment template
 
 ```go
-func conditionalFlow() {
-    // Main configuration choice
-    setupType := termos.NewSingleSelectTask(
-        "Setup Type",
-        []string{"basic", "advanced", "custom"},
+// DeployCluster orchestrates a sequential setup that gathers user input,
+// displays progress, and stores intermediate results for later stages.
+func DeployCluster() error {
+    summary := termos.NewFuncTask(
+        "Preflight checks",
+        runPreflightChecks,
+        termos.WithSummaryFunction(func() []string {
+            return []string{"DNS: ok", "Network: ok"}
+        }),
+        termos.WithStopOnError(true),
     )
 
-    queue := termos.NewQueue("Conditional Setup")
-    queue.AddTasks(setupType)
-    queue.Run()
+    topology := termos.NewSingleSelectTask(
+        "Topology",
+        []string{
+            "single-node::Single node",
+            "multi-node::Multi node",
+            "ha::High availability",
+        },
+    ).WithDefaultItem("multi-node")
 
-    // Add different tasks based on selection
-    switch setupType.GetSelected() {
-    case "basic":
-        addBasicTasks(queue)
-    case "advanced":
-        addAdvancedTasks(queue)
-    case "custom":
-        addCustomTasks(queue)
+    nodes := termos.NewInputTask(
+        "Node count",
+        "How many worker nodes do we provision?",
+    ).
+        WithInputType(termos.InputTypeNumber).
+        WithValidator(termos.DefaultValidators.Range(1, 20)).
+        WithTimeout(30*time.Second, "3")
+
+    queue := termos.NewQueue("Termos Deployment").
+        WithAppName("Termos CLI").
+        WithTasksNumbered(true, "[%02d]")
+
+    queue.AddTasks(summary, topology, nodes)
+    if err := queue.Run(); err != nil {
+        return err
     }
 
-    queue.Run() // Run additional tasks
+    // Add context-aware tasks based on the selected topology.
+    followUp := termos.NewQueue("Follow-up tasks")
+
+    switch topology.GetSelected() {
+    case "single-node":
+        followUp.AddTasks(planBackupTask(), confirmMetricsTask())
+    case "multi-node":
+        followUp.AddTasks(configureIngressTask(), scaleOutTask(nodes))
+    case "ha":
+        followUp.AddTasks(haPrecheckTask(), configureQuorumTask(nodes))
+    }
+
+    return followUp.Run()
 }
 ```
 
-## Error Recovery Pattern
+### Highlights
+
+- **Two queue runs.** The first queue captures input; the second queue is assembled at runtime.
+- **Summary function.** `WithSummaryFunction` displays a concise recap under the task and improves operator feedback.
+- **Timeouts.** `WithTimeout` prevents headless sessions from hanging indefinitely.
+
+## Retrying with user confirmation
 
 ```go
-func errorRecoveryExample() {
-    var attempt int
-    maxAttempts := 3
+func RunWithRetries(label string, fn func() error, maxAttempts int) error {
+    attempt := 1
 
-    for attempt < maxAttempts {
+    for {
         task := termos.NewFuncTask(
-            fmt.Sprintf("Attempt %d/%d", attempt+1, maxAttempts),
-            func() error {
-                // Simulate work that might fail
-                if rand.Float32() < 0.5 {
-                    return errors.New("operation failed")
-                }
-                return nil
-            },
+            fmt.Sprintf("%s · attempt %d", label, attempt),
+            fn,
+            termos.WithStopOnError(false),
         )
 
-        queue := termos.NewQueue("Retry Logic")
+        queue := termos.NewQueue(label)
         queue.AddTasks(task)
 
         if err := queue.Run(); err == nil {
-            fmt.Println("✅ Operation succeeded")
-            break
+            return nil
+        }
+
+        if attempt >= maxAttempts {
+            return fmt.Errorf("reached max attempts (%d)", maxAttempts)
+        }
+
+        retry := termos.NewYesNoTask(
+            "Retry",
+            fmt.Sprintf("Attempt %d failed. Retry?", attempt),
+        ).WithDefaultYesAndTimeout(10 * time.Second)
+
+        confirmation := termos.NewQueue("Retry decision")
+        confirmation.AddTasks(retry)
+        confirmation.Run()
+
+        if !retry.IsYes() {
+            return fmt.Errorf("operation cancelled at attempt %d", attempt)
         }
 
         attempt++
-        if attempt < maxAttempts {
-            retry := termos.NewYesNoTask(
-                "Retry",
-                fmt.Sprintf("Attempt %d failed. Retry?", attempt),
-            )
-            retryQueue := termos.NewQueue("Retry Decision")
-            retryQueue.AddTasks(retry)
-            retryQueue.Run()
-
-            if !retry.IsYes() {
-                break
-            }
-        }
     }
 }
 ```
 
-## Dynamic Task Generation
+### When to use it
+
+- flaky infrastructure calls;
+- firmware updates over unstable connections;
+- long-running operations that deserve a human-confirmed retry.
+
+## Building tasks on the fly
 
 ```go
-func dynamicTaskGeneration() {
-    // Get number of servers to configure
-    countTask := termos.NewInputTask(
-        "Server Count",
-        "How many servers to configure?",
-    ).WithValidator(termos.DefaultValidators.Range(1, 10))
+func ConfigureServers() error {
+    count := termos.NewInputTask("Server count", "How many servers do we configure?").
+        WithInputType(termos.InputTypeNumber).
+        WithValidator(termos.DefaultValidators.Range(1, 8))
 
-    queue := termos.NewQueue("Dynamic Setup")
-    queue.AddTasks(countTask)
-    queue.Run()
-
-    count, _ := strconv.Atoi(countTask.GetValue())
-
-    // Generate tasks for each server
-    var serverTasks []termos.Task
-    for i := 1; i <= count; i++ {
-        hostTask := termos.NewInputTask(
-            fmt.Sprintf("Server %d Host", i),
-            fmt.Sprintf("Enter hostname for server %d:", i),
-        ).WithValidator(termos.DefaultValidators.Domain())
-
-        portTask := termos.NewInputTask(
-            fmt.Sprintf("Server %d Port", i),
-            fmt.Sprintf("Enter port for server %d:", i),
-        ).WithValidator(termos.DefaultValidators.Port())
-
-        serverTasks = append(serverTasks, hostTask, portTask)
+    baseQueue := termos.NewQueue("Configuration parameters")
+    baseQueue.AddTasks(count)
+    if err := baseQueue.Run(); err != nil {
+        return err
     }
 
-    serverQueue := termos.NewQueue("Server Configuration")
-    serverQueue.AddTasks(serverTasks...)
-    serverQueue.Run()
+    n, _ := strconv.Atoi(count.GetValue())
+
+    var tasks []termos.Task
+    for i := 1; i <= n; i++ {
+        prefix := fmt.Sprintf("Server %d", i)
+
+        host := termos.NewInputTask(prefix+" · host", "Enter FQDN")
+        host.WithValidator(termos.DefaultValidators.Domain())
+
+        port := termos.NewInputTask(prefix+" · port", "Enter port")
+        port.WithInputType(termos.InputTypeNumber).
+            WithValidator(termos.DefaultValidators.Port())
+
+        tasks = append(tasks, host, port)
+    }
+
+    servers := termos.NewQueue("Server configuration").
+        WithTasksNumbered(true, "[%02d]")
+    servers.AddTasks(tasks...)
+    return servers.Run()
 }
 ```
+
+<Note>
+If a workflow can generate hundreds of tasks, split the execution into several queues and run them in batches to keep memory usage predictable.
+</Note>
+
+## Quick checklist for complex flows
+
+- Keep references to tasks whose results you need later.
+- Use separate queues for distinct stages — it simplifies reasoning and module tests.
+- Call `AutoConfigure()` on startup so Termos tunes itself for the target environment.
+- Combine `EnableEmbeddedMode()` with `WithOutResultLine()` on constrained devices to keep the output compact.
+- Remember that the queue is sequential; if you need pseudo-parallel work, launch extra queues from `FuncTask` handlers.
+
+Continue with the validation demo to see how to compose robust forms.

@@ -1,63 +1,112 @@
 ---
 title: "InputTask"
-description: "Задача ввода текста с валидацией"
+description: "Текстовый ввод с типами полей, таймаутами и встроенной валидацией"
 ---
 
 # InputTask
 
-`InputTask` предоставляет интерфейс для ввода текстовых данных с поддержкой валидации.
+`InputTask` отвечает за ввод строковых значений. Он поддерживает разные типы полей (пароль, email, IP и т.д.), таймауты, форматирование и подключение валидаторов.
 
 ## Создание
 
 ```go
-task := termos.NewInputTask("Имя пользователя", "Введите имя:")
+name := termos.NewInputTask("Имя проекта", "Введите название:")
 ```
 
-## Основные методы
+![Скриншот: ввод с валидацией](/images/pic_4.png)
+
+## Настройки
+
+### Тип ввода
 
 ```go
-// Настройки
-task.WithValidator(termos.DefaultValidators.Email())  // валидатор
-task.WithInputType(termos.InputTypePassword)         // тип поля
-task.WithTimeout(30*time.Second, "по умолчанию") // таймаут
-
-// Получение результата
-value := task.GetValue() // string
+name.WithInputType(termos.InputTypeText)
+password := termos.NewInputTask("Пароль", "Введите пароль:").
+    WithInputType(termos.InputTypePassword)
 ```
 
-## Типы полей ввода
+Доступные типы:
 
 ```go
 const (
-    InputTypeText     = termos.InputTypeText     // обычный текст
-    InputTypePassword = termos.InputTypePassword // пароль (скрытые символы)
-    InputTypeEmail    = termos.InputTypeEmail    // email
-    InputTypeNumber   = termos.InputTypeNumber   // число
-    InputTypeIP       = termos.InputTypeIP       // IP адрес
-    InputTypeDomain   = termos.InputTypeDomain   // домен
+    termos.InputTypeText     // обычный текст
+    termos.InputTypePassword // скрытый ввод
+    termos.InputTypeEmail    // email
+    termos.InputTypeNumber   // число
+    termos.InputTypeIP       // IP адрес
+    termos.InputTypeDomain   // доменное имя
 )
 ```
 
-## Пример с валидацией
+При выборе типа автоматически подставляется подходящий валидатор (если его не задали вручную).
+
+### Валидаторы
 
 ```go
 v := termos.DefaultValidators
 
+name.WithValidator(v.Username())
 email := termos.NewInputTask("Email", "Введите email:").
     WithInputType(termos.InputTypeEmail).
     WithValidator(v.Email())
-
-password := termos.NewInputTask("Пароль", "Введите пароль:").
-    WithInputType(termos.InputTypePassword).
-    WithValidator(v.StrongPassword())
-
-queue := termos.NewQueue("Регистрация")
-queue.AddTasks(email, password)
-queue.Run()
-
-fmt.Printf("Email: %s\n", email.GetValue())
 ```
 
-## См. также
+Вы также можете реализовать собственный валидатор — достаточно типа с методами `Validate(string) error` и `Description() string`.
 
-- [Валидация](/ru/validation/overview) - подробно о системе валидации
+### Таймаут и значение по умолчанию
+
+```go
+name.WithTimeout(30*time.Second, "demo-app")
+```
+
+### Плейсхолдер, ширина и пустые значения
+
+```go
+name.
+  WithPlaceholder("например, billing-service").
+  WithWidth(40).                     // минимальные/максимальные ограничения применяются автоматически
+  WithAllowEmpty(false)              // запретить пустой ввод
+```
+
+## Получение результата
+
+```go
+queue := termos.NewQueue("Регистрация")
+queue.AddTasks(name)
+_ = queue.Run()
+
+fmt.Println("Имя проекта:", name.GetValue())
+```
+
+## Пример формы
+
+```go
+func askCredentials() (string, string) {
+    v := termos.DefaultValidators
+
+    login := termos.NewInputTask("Логин", "Имя пользователя:").
+        WithValidator(v.Username())
+
+    password := termos.NewInputTask("Пароль", "Пароль (>=12 символов):").
+        WithInputType(termos.InputTypePassword).
+        WithValidator(v.StrongPassword())
+
+    queue := termos.NewQueue("Авторизация")
+    queue.AddTasks(login, password)
+    _ = queue.Run()
+
+    return login.GetValue(), password.GetValue()
+}
+```
+
+## Советы
+
+- Разрешайте пустой ввод (`WithAllowEmpty(true)`), если поле опциональное. При необходимости отдельно проверяйте значение после очереди.
+- Показывайте примеры в плейсхолдерах — пользователю проще понять формат.
+- Сохраняйте ссылку на задачу, пока нужно значение, поскольку оно хранится внутри `InputTask`.
+- Для комбинированной проверки (например, email + домен) используйте `FuncTask` после `InputTask`, где можете выполнить дополнительные проверки и вывести подсказку.
+
+## Связанные материалы
+
+- [Валидация данных](/ru/validation/overview)
+- [FuncTask](/ru/components/func-task)

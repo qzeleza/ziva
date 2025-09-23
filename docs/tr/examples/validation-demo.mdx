@@ -1,0 +1,191 @@
+---
+title: "Doğrulama Vitirini"
+description: "Yerleşik ve özel doğrulayıcılarla zengin giriş akışları"
+---
+
+# Doğrulama Vitirini
+
+Bu rehber Termos ile güvenilir formlar kurmayı gösterir: tüm yerleşik doğrulayıcıları kapsar, zincirler oluşturur ve harici kontroller ekler.
+
+## Tüm yerleşik doğrulayıcılarla kuyruk
+
+```go
+func ShowBuiltInValidators() {
+    v := termos.DefaultValidators
+
+    tasks := []termos.Task{
+        termos.NewInputTask("Ad", "Zorunlu alan:").
+            WithValidator(v.Required()),
+
+        termos.NewInputTask("Kullanıcı adı", "3-20 karakter, latin/rakam:").
+            WithValidator(v.Username()),
+
+        termos.NewInputTask("Kısa açıklama", "En fazla 40 karakter:").
+            WithValidator(v.MaxLength(40)),
+
+        termos.NewInputTask("Yorum", "En az 5 karakter:").
+            WithValidator(v.MinLength(5)),
+
+        termos.NewInputTask("Kod", "Tam 8 karakter:").
+            WithValidator(v.Length(8)),
+
+        termos.NewInputTask("Email", "E-posta adresi:").
+            WithInputType(termos.InputTypeEmail).
+            WithValidator(v.Email()),
+
+        termos.NewInputTask("Site", "URL (opsiyonel):").
+            WithValidator(v.OptionalURL()),
+
+        termos.NewInputTask("IP", "IPv4 veya IPv6:").
+            WithInputType(termos.InputTypeIP).
+            WithValidator(v.IP()),
+
+        termos.NewInputTask("Alan adı", "Domain:").
+            WithInputType(termos.InputTypeDomain).
+            WithValidator(v.Domain()),
+
+        termos.NewInputTask("Port", "1-65535 arası:").
+            WithInputType(termos.InputTypeNumber).
+            WithValidator(v.Port()),
+
+        termos.NewInputTask("Sayı", "1-100 arası:").
+            WithInputType(termos.InputTypeNumber).
+            WithValidator(v.Range(1, 100)),
+
+        termos.NewInputTask("Alfasayısal", "Sadece harf ve rakam:").
+            WithValidator(v.AlphaNumeric()),
+
+        termos.NewInputTask("Parola", "En az 8 karakter:").
+            WithInputType(termos.InputTypePassword).
+            WithValidator(v.StandardPassword()),
+
+        termos.NewInputTask("Güçlü parola", "En az 12 karakter, karışık set:").
+            WithInputType(termos.InputTypePassword).
+            WithValidator(v.StrongPassword()),
+    }
+
+    queue := termos.NewQueue("Doğrulama turu").
+        WithTasksNumbered(true, "[%02d]")
+    queue.AddTasks(tasks...)
+    _ = queue.Run()
+}
+```
+
+<Info>
+Her görev, kullanıcı <kbd>Enter</kbd>'a bastığında doğrulayıcıyı tetikler. Doğrulama başarısız olursa TUI hatayı gösterir ve değer koşulları sağlayana kadar görev odakta kalır.
+</Info>
+
+## Özel doğrulama zinciri
+
+```go
+type Chain struct {
+    validators []termos.Validator
+}
+
+func (c Chain) Validate(input string) error {
+    for _, validator := range c.validators {
+        if err := validator.Validate(input); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+func (c Chain) Description() string {
+    parts := make([]string, len(c.validators))
+    for i, validator := range c.validators {
+        parts[i] = validator.Description()
+    }
+    return strings.Join(parts, "; ")
+}
+
+func AskSecureToken() {
+    v := termos.DefaultValidators
+
+    token := termos.NewInputTask(
+        "API token",
+        "Zorunlu, 16-64 karakter, alfasayısal",
+    ).WithValidator(Chain{
+        validators: []termos.Validator{
+            v.Required(),
+            v.MinLength(16),
+            v.MaxLength(64),
+            v.AlphaNumeric(),
+        },
+    })
+
+    queue := termos.NewQueue("Token doğrulama")
+    queue.AddTasks(token)
+    _ = queue.Run()
+
+    fmt.Println("Token kabul edildi:", token.GetValue())
+}
+```
+
+## Harici doğrulayıcı örneği
+
+```go
+func emailNotInCRM(email string) bool {
+    // Gerçek API çağrısı ile değiştirin.
+    return !strings.HasSuffix(email, "@banned.example")
+}
+
+type UniqueEmail struct{}
+
+func (UniqueEmail) Validate(input string) error {
+    if !emailNotInCRM(input) {
+        return errors.New("email zaten kayıtlı")
+    }
+    return nil
+}
+
+func (UniqueEmail) Description() string {
+    return "Email CRM'de benzersiz olmalı"
+}
+
+func SignUpForm() error {
+    v := termos.DefaultValidators
+
+    email := termos.NewInputTask("Email", "Çalışma e-postası girin:").
+        WithInputType(termos.InputTypeEmail).
+        WithValidator(v.Email())
+
+    password := termos.NewInputTask(
+        "Parola",
+        "En az 12 karakter, harf/rakam/sembol",
+    ).WithInputType(termos.InputTypePassword).
+        WithValidator(v.StrongPassword())
+
+    confirm := termos.NewYesNoTask(
+        "Onay",
+        "Verileri CRM'e gönder?")
+    confirm.WithDefaultYes()
+
+    queue := termos.NewQueue("Kullanıcı kaydı")
+    queue.AddTasks(email, password, confirm)
+    if err := queue.Run(); err != nil {
+        return err
+    }
+
+    check := termos.NewInputTask("Benzersizlik kontrolü", "Email benzersiz olmalı:").
+        WithInputType(termos.InputTypeEmail).
+        WithValidator(UniqueEmail{})
+
+    followUp := termos.NewQueue("CRM kontrolü")
+    followUp.AddTasks(check)
+    return followUp.Run()
+}
+```
+
+<Note>
+Girdi topladıktan sonra harici bir servisi çağırmanız gerekiyorsa `FuncTask` kullanın ve sonucu (başarı, uyarı, yeniden dene vb.) TUI içinde gösterin.
+</Note>
+
+## Hızlı ipuçları
+
+- `Description()` değerini kullanıcı dostu tutun — Termos bu metni giriş alanının yanında gösterir.
+- Boş değerleri kabul eden doğrulayıcılarla `WithAllowEmpty(true)` kombinasyonunu kullanın.
+- Uzun formları birkaç kuyruğa bölün; yanlış alanlara geri dönmek daha kolay olur.
+- Karmaşık doğrulayıcılar için birim testleri yazın — sonuçta bunlar sıradan Go kodu.
+
+Bu yapı taşlarının projelerde nasıl birleştiğini görmek için en iyi uygulamalar sayfasına göz atın.

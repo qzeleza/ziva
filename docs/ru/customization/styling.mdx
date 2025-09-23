@@ -1,0 +1,74 @@
+---
+title: "Стили и макет"
+description: "Как переопределять стили Termos и интегрировать собственные элементы оформления"
+---
+
+# Стили и макет Termos
+
+Интерфейс формируется с помощью Lip Gloss. Библиотека экспортирует готовые стили, которые можно использовать как есть или модифицировать.
+
+## Готовые стили
+
+```go
+termos.ErrorStatusStyle
+termos.CancelStyle
+termos.SelectionStyle
+termos.ActiveTitleStyle
+termos.SuccessLabelStyle
+```
+
+Каждый — это объект `lipgloss.Style`. Его можно клонировать и изменить под свои нужды:
+
+```go
+customSelection := termos.SelectionStyle.Copy().Foreground(lipgloss.Color("#22D3EE"))
+```
+
+Используйте новые стили в собственных компонентах (например, в кастомных `FuncTask` или дополнительном выводе после очереди).
+
+## Настройка заголовка
+
+```go
+queue := termos.NewQueue("Профили")
+queue.WithAppName("Provisioning CLI")
+queue.WithAppNameColor(termos.CyanBright, true)
+queue.WithTitleColor(lipgloss.Color("#FDE68A"), true)
+```
+
+## Управление шириной
+
+`termos.CalculateLayoutWidth()` помогает подобрать ширину вывода, чтобы контент выглядел аккуратно на разных размерах терминала.
+
+```go
+width := termos.CalculateLayoutWidth(terminalWidth)
+fmt.Println("Рекомендуемая ширина:", width)
+```
+
+<Info>
+Для расчёта `terminalWidth` можно использовать `lipgloss.Width()` или `github.com/muesli/termenv`. Если ширина неизвестна, Termos использует значение по умолчанию.
+</Info>
+
+## Дополнительные подсказки
+
+- **Используйте единый стиль для списков.** Подсказки в `SingleSelectTask` и `MultiSelectTask` проще читать, если продолжать одну цветовую схему.
+- **Учитывайте переносы строк.** Если нужно вывести длинное сообщение об ошибке, используйте `task.WithNewLinesInErrors(true)` на задачах, где доступен этот метод (через базовый интерфейс).
+- **Локализуйте текст.** Подписи берите из собственных словарей, а не меняйте стили ради перевода.
+- **Тестируйте на узких терминалах.** Viewport в списковых задачах помогает избежать «ломающегося» интерфейса.
+
+## Создание собственных элементов
+
+Вы можете добавить дополнительный вывод до или после `queue.Run()` с использованием тех же стилей:
+
+```go
+banner := termos.ActiveTitleStyle.Copy().
+    Margin(1, 0).
+    Padding(0, 2).
+    Render("⚙ Настройка инфраструктуры")
+
+fmt.Println(banner)
+```
+
+## Полезные ссылки
+
+- [Документация Lip Gloss](https://github.com/charmbracelet/lipgloss)
+- [Цветовые схемы](/ru/customization/colors)
+- [Режимы для встроенных систем](/ru/customization/embedded-systems)

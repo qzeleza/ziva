@@ -1,117 +1,122 @@
 ---
 title: "Встроенные валидаторы"
-description: "Полный список встроенных валидаторов Termos"
+description: "Какие проверки доступны из коробки и как их подключать"
 ---
 
 # Встроенные валидаторы
 
-Termos предоставляет широкий набор встроенных валидаторов.
-
-## Базовые валидаторы
-
-### Required
-Проверяет, что поле не пустое:
+Termos поставляется с фабрикой валидаторов `termos.DefaultValidators`. Все методы возвращают готовый объект, который можно передать в `InputTask.WithValidator()`.
 
 ```go
-v.Required()
+v := termos.DefaultValidators
+input := termos.NewInputTask("Email", "Укажите адрес:").
+    WithValidator(v.Email())
 ```
 
-### MinLength / MaxLength
-Проверка минимальной и максимальной длины:
+## Базовые проверки
+
+| Метод | Назначение |
+| --- | --- |
+| `Required()` | Строка не должна быть пустой (учитывает пробелы) |
+| `MinLength(n)` | Минимальная длина строки |
+| `MaxLength(n)` | Максимальная длина строки |
+| `Length(n)` | Ровно `n` символов |
+| `Range(min, max)` | Число в диапазоне `min..max` (целое) |
+
+## Форматные проверки
+
+| Метод | Назначение |
+| --- | --- |
+| `Email()` | Корректный email-адрес |
+| `OptionalEmail()` | Email или пустая строка |
+| `Username()` | 3–32 символа, латиница, цифры, подчёркивания |
+| `AlphaNumeric()` | Только буквы и цифры |
+| `Path()` | Путь без запрещённых символов (`<>:"|?*`) |
+| `URL()` | URL, начинающийся с `http://` или `https://` |
+
+## Сетевые проверки
+
+| Метод | Назначение |
+| --- | --- |
+| `IP()` | IP-адрес (IPv4 или IPv6) |
+| `IPv4()` | Только IPv4 |
+| `IPv6()` | Только IPv6 |
+| `Domain()` | Доменное имя (RFC 1035) |
+| `Port()` | Порт `1..65535` |
+| `HTTPPort()` | То же, что `Port()`, но удобно для читаемости кода |
+
+## Пароли
+
+| Метод | Назначение |
+| --- | --- |
+| `StandardPassword()` | Минимум 8 символов, без кириллицы, с цифрами и спецсимволами |
+| `StrongPassword()` | Минимум 12 символов, требуется смешанный набор символов |
+
+## Примеры
 
 ```go
-v.MinLength(5)    // минимум 5 символов
-v.MaxLength(100)  // максимум 100 символов
-v.Length(8)       // точно 8 символов
+v := termos.DefaultValidators
+
+// Имя пользователя: обязательно, 3-20 символов, допустимые символы — как в `Username`
+login := termos.NewInputTask("Логин", "Введите имя:").
+    WithValidator(v.Username())
+
+// Опциональный email
+supportEmail := termos.NewInputTask("Доп. email", "Можно пропустить")
+   .WithAllowEmpty(true)
+   .WithValidator(v.OptionalEmail())
+
+// Номер порта
+port := termos.NewInputTask("Порт", "1-65535:").
+    WithInputType(termos.InputTypeNumber).
+    WithValidator(v.Port())
 ```
 
-## Сетевые валидаторы
+## Комбинирование
 
-### Email
-Проверка корректности email адреса:
+Если требуется несколько условий, используйте последовательную проверку внутри `FuncTask` или собственного валидатора:
 
 ```go
-v.Email()
-v.OptionalEmail() // необязательный email
+type composite struct{
+    validators []interface{ Validate(string) error; Description() string }
+}
+
+func (c composite) Validate(input string) error {
+    for _, v := range c.validators {
+        if err := v.Validate(input); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+func (c composite) Description() string {
+    parts := make([]string, len(c.validators))
+    for i, v := range c.validators {
+        parts[i] = v.Description()
+    }
+    return strings.Join(parts, "; ")
+}
+
+value := termos.NewInputTask("Сервисный ID", "Введите код:")
+value.WithValidator(composite{validators: []interface{
+    Validate(string) error
+    Description() string
+}{
+    v.Required(),
+    v.AlphaNumeric(),
+    v.Length(10),
+}})
 ```
 
-### URL
-Проверка корректности URL:
+<Warning>
+Следите за сообщениями об ошибках. Если валидаторов много, объединяйте их описание вручную, чтобы не перегружать пользователя.
+</Warning>
 
-```go
-v.URL()
-v.OptionalURL() // необязательный URL
-```
+## Когда использовать кастомные валидаторы
 
-### IP Address
-Проверка IP адресов (v4 и v6):
+- Форма требует специфических правил (например, check-sum, внешних сервисов).
+- Необходимо разное поведение в зависимости от контекста.
+- Нужно переиспользовать одну и ту же проверку в нескольких задачах.
 
-```go
-v.IP()    // любой IP
-v.IPv4()  // только IPv4
-v.IPv6()  // только IPv6
-```
-
-### Domain
-Проверка доменных имен:
-
-```go
-v.Domain()
-```
-
-### Port
-Проверка номера порта (1-65535):
-
-```go
-v.Port()
-```
-
-## Числовые валидаторы
-
-### Range
-Проверка диапазона чисел:
-
-```go
-v.Range(1, 100)    // от 1 до 100
-v.Min(0)           // минимум 0
-v.Max(1000)        // максимум 1000
-```
-
-## Строковые валидаторы
-
-### AlphaNumeric
-Только буквы и цифры:
-
-```go
-v.AlphaNumeric()
-```
-
-### Username
-Проверка имени пользователя:
-
-```go
-v.Username() // буквы, цифры, подчеркивания
-```
-
-## Валидаторы паролей
-
-### StandardPassword
-Стандартный пароль (минимум 8 символов):
-
-```go
-v.StandardPassword()
-```
-
-### StrongPassword
-Сильный пароль (минимум 12 символов, разные типы символов):
-
-```go
-v.StrongPassword()
-```
-
-## Пример использования
-
-```go
-task := termos.NewInputTask("Email", "Введите email:")
-    .WithValidator(v.Email())
-```
+Читайте про создание собственных валидаторов в разделе [Кастомные валидаторы](/ru/validation/custom-validators).

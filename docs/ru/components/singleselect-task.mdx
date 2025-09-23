@@ -1,61 +1,93 @@
 ---
 title: "SingleSelectTask"
-description: "Задача выбора одного варианта из списка"
+description: "Выбор одного варианта со списками, подсказками и таймаутами"
 ---
 
 # SingleSelectTask
 
-`SingleSelectTask` предоставляет интерфейс для выбора одного варианта из предоставленного списка опций. Это один из наиболее часто используемых типов задач в Termos.
+`SingleSelectTask` выводит список вариантов и позволяет выбрать ровно один пункт. Подходит для выбора окружения, профиля конфигурации, режима установки и т.д.
 
-## Создание задачи
-
-```go
-options := []string{"option1", "option2", "option3"}
-task := termos.NewSingleSelectTask("Заголовок", options)
-```
-
-## Основные методы
-
-### Создание с настройками
+## Базовый пример
 
 ```go
-task := termos.NewSingleSelectTask("Выбор среды", environments).
-    WithDefaultItem("staging").                    // значение по умолчанию
-    WithTimeout(10*time.Second, "production").     // таймаут с fallback
-    WithViewport(5, true).                         // ограничение отображения
-    WithItemsDisabled([]string{"maintenance"})     // отключенные элементы
-```
-
-### Получение результатов
-
-```go
-// После выполнения задачи
-selected := task.GetSelected()      // string - выбранное значение
-index := task.GetSelectedIndex()    // int - индекс выбранного элемента
-```
-
-## Подсказки в опциях
-
-Для создания более информативных списков используйте разделитель подсказок:
-
-```go
-// Используя разделитель "::" (по умолчанию)
 options := []string{
-    "dev::Среда разработки",
-    "staging::Тестовая среда", 
-    "prod::Боевая среда",
+    "development::Среда разработки",
+    "staging::Тестовая среда",
+    "production::Боевая среда",
 }
 
-// Или настройте собственный разделитель
-termos.SetChoiceHelpDelimiter("||")
-options = []string{
-    "api||REST API сервер",
-    "web||Веб интерфейс",
-    "cli||Командная строка",
-}
+env := termos.NewSingleSelectTask("Выбор среды", options)
 ```
 
-## См. также
+![Скриншот: задача одиночного выбора](/images/pic_2.png)
 
-- [MultiSelectTask](/ru/components/multiselect-task) - для выбора нескольких вариантов
-- [YesNoTask](/ru/components/yesno-task) - для бинарного выбора
+Добавьте задачу в очередь и прочитайте результат после выполнения:
+
+```go
+queue := termos.NewQueue("Конфигурация")
+queue.AddTasks(env)
+_ = queue.Run()
+
+fmt.Println("Выбрана среда:", env.GetSelected())
+```
+
+## Настройки
+
+### Значение по умолчанию
+
+```go
+env.WithDefaultItem("staging") // по строке
+env.WithDefaultItem(2)          // по индексу (0-based)
+```
+
+### Таймаут
+
+```go
+env.WithTimeout(15*time.Second, "production")
+```
+
+Если пользователь не успеет сделать выбор, задача завершится значением по умолчанию.
+
+### Viewport и счётчики
+
+```go
+env.WithViewport(5, true) // отображать по 5 элементов и счётчик «1/10»
+```
+
+Viewport полезен, если список длинный — пользователь может прокручивать его клавишами `↑`/`↓`/`j`/`k`.
+
+### Отключение элементов
+
+```go
+env.WithItemsDisabled([]string{"maintenance"}) // по значениям
+env.WithItemsDisabled([]int{0, 3})              // по индексам
+```
+
+Отключенные пункты отображаются в списке, но выбрать их нельзя.
+
+### Настройка подсказок
+
+```go
+termos.SetChoiceHelpDelimiter(" → ")
+```
+
+Разделитель применяется ко всем задачам выбора в приложении.
+
+## Работа с результатом
+
+```go
+value := env.GetSelected()      // строка
+index := env.GetSelectedIndex() // индекс выбранного элемента
+```
+
+## Советы
+
+- Поддерживайте список опций в актуальном состоянии до запуска очереди. После создания задачи менять `[]string` напрямую не нужно.
+- Используйте подсказки, чтобы расшифровывать короткие коды (`prod`, `int`, `cli`).
+- Если нужно предложить нестандартный пункт (например, «Другое»), добавьте отдельную `InputTask` после `SingleSelectTask` и показывайте её условно.
+- Для динамических списков генерируйте массив перед созданием задачи; менять его во время работы очереди не получится.
+
+## Связанные материалы
+
+- [MultiSelectTask](/ru/components/multiselect-task)
+- [YesNoTask](/ru/components/yesno-task)

@@ -1,0 +1,348 @@
+---
+title: "API Functions"
+description: "Complete reference for global API functions of the Termos library for configuration, optimization and advanced usage"
+---
+
+# API Functions
+
+Termos provides a rich set of global functions for configuring library behavior, optimizing performance, and advanced usage.
+
+<Info>
+These functions complement the core library components and allow fine-tuning Termos behavior for your specific application requirements.
+</Info>
+
+## Auto-configuration
+
+### AutoConfigure()
+
+Automatically configures Termos for optimal performance on the current system.
+
+```go
+func main() {
+    // Recommended to call at the beginning of the program
+    termos.AutoConfigure()
+
+    // Your application code
+    queue := termos.NewQueue("Application Name")
+}
+```
+
+This function:
+- Analyzes available system memory
+- Detects processor architecture
+- Optimizes settings for embedded systems
+- Configures caching and buffering
+
+### Is64Bit()
+
+Determines system architecture for optimal algorithm selection.
+
+```go
+if termos.Is64Bit() {
+    // Use algorithms for 64-bit systems
+    fmt.Println("64-bit architecture")
+} else {
+    // Optimizations for 32-bit systems
+    fmt.Println("32-bit architecture")
+}
+```
+
+## Performance Utilities
+
+### RepeatEfficient(s string, count int) string
+
+Creates a string by efficiently repeating the base string.
+
+```go
+// Create a separator of 50 "-" characters
+separator := termos.RepeatEfficient("-", 50)
+fmt.Println(separator)
+
+// Indentation for formatting
+indent := termos.RepeatEfficient(" ", 4)
+```
+
+### JoinEfficient(parts []string, separator string) string
+
+Joins strings with minimal memory allocations.
+
+```go
+items := []string{"apple", "banana", "cherry"}
+result := termos.JoinEfficient(items, ", ")
+// Result: "apple, banana, cherry"
+```
+
+### FastConcat(parts ...string) string
+
+Fast concatenation of arbitrary number of strings.
+
+```go
+message := termos.FastConcat(
+    "User ", username,
+    " performed ", action,
+    " at ", timestamp,
+)
+```
+
+### CleanWhitespaceEfficient(s string) string
+
+Cleans string from excessive whitespace characters.
+
+```go
+text := "  Too    many\t\tspaces\n\nand\nlines  "
+clean := termos.CleanWhitespaceEfficient(text)
+// Result: "Too many spaces and lines"
+```
+
+## Color Management
+
+### SetErrorColor(errorsColor, statusColor lipgloss.TerminalColor)
+
+Configures color scheme for error display.
+
+```go
+import "github.com/charmbracelet/lipgloss"
+
+// Red errors with yellow statuses
+termos.SetErrorColor(
+    lipgloss.Color("#FF0000"), // red for error text
+    lipgloss.Color("#FFFF00"), // yellow for statuses
+)
+```
+
+### ResetErrorColors()
+
+Resets error colors to default values.
+
+```go
+// After experimenting with colors
+termos.ResetErrorColors()
+```
+
+### EnableEmbeddedMode()
+
+Enables embedded system mode with simplified color palette.
+
+```go
+// For routers, IoT devices
+termos.EnableEmbeddedMode()
+```
+
+### EnableASCIIMode()
+
+Switches to ASCII mode for legacy terminals.
+
+```go
+// For terminals without Unicode support
+termos.EnableASCIIMode()
+```
+
+### IsEmbeddedColorMode() bool
+
+Checks if embedded system mode is enabled.
+
+```go
+if termos.IsEmbeddedColorMode() {
+    fmt.Println("Running in embedded system mode")
+}
+```
+
+## Advanced Validators
+
+### NewPasswordValidator(minLength int) Validator
+
+Creates validator for password complexity checking.
+
+```go
+// Password minimum 8 characters
+passwordValidator := termos.NewPasswordValidator(8)
+
+input := termos.NewInputTask("Password", "Enter password:").
+    WithInputType(termos.InputTypePassword).
+    WithValidator(passwordValidator)
+```
+
+### NewEmailValidator() Validator
+
+Email address validator according to RFC standards.
+
+```go
+emailValidator := termos.NewEmailValidator()
+
+email := termos.NewInputTask("Email", "Enter email:").
+    WithInputType(termos.InputTypeEmail).
+    WithValidator(emailValidator)
+```
+
+### NewIPValidator(allowIPv4, allowIPv6 bool) Validator
+
+Configurable IP address validator.
+
+```go
+// IPv4 only
+ipv4Validator := termos.NewIPValidator(true, false)
+
+// IPv6 only
+ipv6Validator := termos.NewIPValidator(false, true)
+
+// Any IP
+anyIPValidator := termos.NewIPValidator(true, true)
+```
+
+### NewIPv4Validator() / NewIPv6Validator() Validator
+
+Specialized validators for specific IP versions.
+
+```go
+ipv4 := termos.NewIPv4Validator()
+ipv6 := termos.NewIPv6Validator()
+```
+
+### NewDomainValidator() Validator
+
+Domain name validator.
+
+```go
+domainValidator := termos.NewDomainValidator()
+
+domain := termos.NewInputTask("Domain", "Enter domain:").
+    WithValidator(domainValidator)
+```
+
+### NewTextValidator(minLen, maxLen int) Validator
+
+Text validator with length constraints.
+
+```go
+// 3 to 50 characters
+textValidator := termos.NewTextValidator(3, 50)
+
+// Minimum only (no maximum limit)
+minValidator := termos.NewTextValidator(5, 0)
+
+// Maximum only (no minimum limit)
+maxValidator := termos.NewTextValidator(0, 100)
+```
+
+## Memory Optimization
+
+### InternString(s string) string
+
+String interning for memory efficiency.
+
+```go
+// For frequently repeated strings in UI
+label1 := termos.InternString("Done")
+label2 := termos.InternString("Done") // References same object
+```
+
+### GetCacheStats() (size, capacity int)
+
+Get statistics of interned string cache.
+
+```go
+size, capacity := termos.GetCacheStats()
+fmt.Printf("Cache: %d/%d strings\n", size, capacity)
+```
+
+### ClearInternCache()
+
+Clear interned string cache.
+
+```go
+// Periodic cleanup in long-running applications
+termos.ClearInternCache()
+```
+
+## Layout Utilities
+
+### CalculateLayoutWidth(screenWidth int) int
+
+Calculates optimal layout width.
+
+```go
+screenWidth := 120
+layoutWidth := termos.CalculateLayoutWidth(screenWidth)
+
+// Use in custom UI
+queue := termos.NewQueue("Application")
+// layout will be optimized for calculated width
+```
+
+## Combined Examples
+
+### Embedded System Setup
+
+```go
+func setupForEmbedded() {
+    // Auto-configuration for optimization
+    termos.AutoConfigure()
+
+    // Embedded system mode
+    termos.EnableEmbeddedMode()
+
+    // For very old terminals
+    if needASCII {
+        termos.EnableASCIIMode()
+    }
+
+    // Memory monitoring
+    size, capacity := termos.GetCacheStats()
+    if size > capacity*0.8 {
+        termos.ClearInternCache()
+    }
+}
+```
+
+### Form Validation Setup
+
+```go
+func createRegistrationForm() {
+    queue := termos.NewQueue("Registration")
+
+    // Email with validation
+    email := termos.NewInputTask("Email", "Your email:").
+        WithValidator(termos.NewEmailValidator())
+
+    // Password with security requirements
+    password := termos.NewInputTask("Password", "Password (min. 8 chars):").
+        WithInputType(termos.InputTypePassword).
+        WithValidator(termos.NewPasswordValidator(8))
+
+    // Username with constraints
+    username := termos.NewInputTask("Username", "Username:").
+        WithValidator(termos.NewTextValidator(3, 20))
+
+    queue.AddTasks(email, password, username)
+}
+```
+
+### Performance Data Processing
+
+```go
+func processLargeDataset(items []string) string {
+    // Use efficient functions for string operations
+    var results []string
+
+    for _, item := range items {
+        // Data cleaning
+        cleaned := termos.CleanWhitespaceEfficient(item)
+
+        // Interning for memory efficiency
+        interned := termos.InternString(cleaned)
+
+        results = append(results, interned)
+    }
+
+    // Efficient result joining
+    return termos.JoinEfficient(results, "\n")
+}
+```
+
+<Tip>
+All these functions are designed for maximum performance and can be used in high-load applications without performance degradation.
+</Tip>
+
+<Warning>
+Functions `EnableEmbeddedMode()` and `EnableASCIIMode()` change global library state. It's recommended to call them only once at the beginning of the program.
+</Warning>

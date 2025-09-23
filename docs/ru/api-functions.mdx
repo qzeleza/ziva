@@ -1,0 +1,224 @@
+---
+title: "API Функции"
+description: "Глобальные функции Termos для настройки окружения, локализации и оптимизации"
+---
+
+# API-функции Termos
+
+Помимо задач и очередей Termos предоставляет набор глобальных функций. Они помогают настроить язык интерфейса, выбрать цветовую схему, оптимизировать работу на встроенных устройствах и управлять строковыми операциями.
+
+<Info>
+Все функции находятся в пакете `termos`. Достаточно подключить библиотеку: `import "github.com/qzeleza/termos"`.
+</Info>
+
+## Локализация
+
+### SetLanguage(lang string) string
+
+Устанавливает активный язык интерфейса (`"ru"`, `"en"`, `"tr"`, ...). Возвращает фактически применённый язык (если запрошенный недоступен, вернётся значение по умолчанию).
+
+```go
+active := termos.SetLanguage("ru")
+fmt.Println("Текущий язык:", active)
+```
+
+### SetDefaultLanguage(lang string) string
+
+Задаёт язык, который будет использоваться до первого вызова `SetLanguage`.
+
+```go
+func init() {
+    termos.SetDefaultLanguage("ru")
+}
+```
+
+### CurrentLanguage() string
+
+Возвращает код текущей локали.
+
+```go
+if termos.CurrentLanguage() != "ru" {
+    fmt.Println("Переключаемся на русский")
+    termos.SetLanguage("ru")
+}
+```
+
+### SupportedLanguages() []string
+
+Список поддерживаемых языков. Можно использовать для выпадающего списка настроек.
+
+```go
+for _, code := range termos.SupportedLanguages() {
+    fmt.Println("Доступен язык:", code)
+}
+```
+
+## Автоконфигурация и окружение
+
+### AutoConfigure()
+
+Анализирует систему и включает оптимизации (лимиты памяти, упрощённые режимы отображения) — полезно на встроенных устройствах.
+
+```go
+func main() {
+    termos.AutoConfigure()
+    // далее ваши задачи/очереди
+}
+```
+
+### Is64Bit() bool
+
+Проверяет архитектуру рантайма. Можно переключать алгоритмы в зависимости от результата.
+
+```go
+if !termos.Is64Bit() {
+    termos.EnableASCIIMode()
+}
+```
+
+### EnableEmbeddedMode()
+
+Включает упрощённую цветовую схему и макет для терминалов с ограниченными возможностями.
+
+### EnableASCIIMode()
+
+Заменяет символы псевдографики на ASCII-аналоги.
+
+### IsEmbeddedColorMode() bool
+
+Показывает, активен ли в данный момент «встроенный» режим.
+
+```go
+if termos.IsEmbeddedColorMode() {
+    fmt.Println("Работаем в упрощённой палитре")
+}
+```
+
+## Управление цветами
+
+### SetErrorColor(message, status lipgloss.TerminalColor)
+
+Настраивает цвета ошибок и меток статуса.
+
+```go
+termos.SetErrorColor(
+    lipgloss.Color("#FF6B6B"), // текст ошибки
+    lipgloss.Color("#FFE66D"), // ярлык статуса
+)
+```
+
+### ResetErrorColors()
+
+Возвращает цвета ошибок к значениям по умолчанию.
+
+```go
+termos.ResetErrorColors()
+```
+
+## Строковые и производительные утилиты
+
+### RepeatEfficient(s string, count int) string
+
+Создаёт строку повторением `s` — минимизирует аллокации.
+
+### JoinEfficient(parts []string, sep string) string
+
+Быстро объединяет срез строк с разделителем.
+
+### FastConcat(parts ...string) string
+
+Соединяет несколько строк без промежуточных аллокаций.
+
+### CleanWhitespaceEfficient(s string) string
+
+Схлопывает повторяющиеся пробелы и переносы строк.
+
+```go
+header := termos.FastConcat(
+    termos.RepeatEfficient("=", 40), "\n",
+    "ОТЧЁТ\n",
+    termos.RepeatEfficient("=", 40),
+)
+```
+
+## Кэш интернирования строк
+
+### InternString(s string) string
+
+Возвращает общую ссылку на строку, если она уже встречалась. Удобно для повторяющихся заголовков/подписей.
+
+### GetCacheStats() (size, capacity int)
+
+Статистика кэша интернированных строк.
+
+### ClearInternCache()
+
+Очищает кэш — полезно при завершении работы CLI или после крупной операции.
+
+```go
+size, cap := termos.GetCacheStats()
+log.Printf("cache %d/%d", size, cap)
+
+if size > cap/2 {
+    termos.ClearInternCache()
+}
+```
+
+## Макет и списки
+
+### CalculateLayoutWidth(screenWidth int) int
+
+Подсказывает оптимальную ширину вывода с учётом отступов Termos.
+
+### SetChoiceHelpDelimiter(delim string)
+
+Меняет разделитель между значением и подсказкой в задачах выбора.
+
+```go
+termos.SetChoiceHelpDelimiter(" → ")
+```
+
+Разделитель применяется глобально ко всем `SingleSelectTask`/`MultiSelectTask`/`YesNoTask`.
+
+## Валидаторы верхнего уровня
+
+Если нужен валидатор вне фабрики `DefaultValidators`, используйте функции-конструкторы.
+
+```go
+passwordValidator := termos.NewPasswordValidator(10)
+emailValidator    := termos.NewEmailValidator()
+ipv4Validator     := termos.NewIPv4Validator()
+domainValidator   := termos.NewDomainValidator()
+textValidator     := termos.NewTextValidator(5, 120)
+```
+
+Все функции возвращают объект с методами `Validate` и `Description`, поэтому их можно комбинировать с собственными проверками.
+
+## Комплексный пример
+
+```go
+func configureEmbeddedCLI() {
+    termos.SetDefaultLanguage("ru")
+    termos.AutoConfigure()
+    termos.EnableEmbeddedMode()
+    termos.EnableASCIIMode()
+
+    if !termos.Is64Bit() {
+        termos.SetChoiceHelpDelimiter(" -> ")
+    }
+
+    termos.SetErrorColor(
+        lipgloss.Color("#FFD166"),
+        lipgloss.Color("#EF476F"),
+    )
+}
+```
+
+## Когда использовать эти функции
+
+- **Перед запуском очередей.** Настройка языка, автоматическая конфигурация и режимы отображения должны быть выполнены в начале программы.
+- **Вспомогательные пакеты.** Утилиты работы со строками удобно использовать при подготовке сообщений/шаблонов.
+- **Экономия памяти.** Интернирование эффективно в долгоживущих CLI, где много повторяющихся строк.
+- **Переиспользование валидаторов.** Фабричные функции помогают описать правила, которые не вошли в `DefaultValidators`.
+
+Остальные настройки (например, цвета тем или логотип) задаются в конфигурации Mintlify или в вашем приложении вручную.

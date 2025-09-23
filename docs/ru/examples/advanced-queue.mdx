@@ -1,0 +1,177 @@
+---
+title: "Продвинутая работа с очередями"
+description: "Комбинирование задач, условные сценарии и управляемые повторные попытки"
+---
+
+# Продвинутая работа с очередями
+
+В этом примере показано, как собирать сложные сценарии на базе `Queue`:
+- разбивать процесс на этапы и добавлять задачи динамически;
+- реагировать на выбор пользователя и результат задач;
+- обрабатывать ошибки и повторные попытки без выхода из TUI.
+
+<Info>
+Все примеры используют публичный API пакета `termos`. Их можно поместить в отдельный пакет `examples` и запускать по мере необходимости.
+</Info>
+
+## Шаблон многоэтапного сценария
+
+```go
+// DeployCluster запускает последовательный сценарий, который спрашивает настройки
+// у оператора, отображает прогресс и сохраняет результаты для последующей логики.
+func DeployCluster() error {
+    summary := termos.NewFuncTask(
+        "Инициализация окружения",
+        runPreflightChecks,
+        termos.WithSummaryFunction(func() []string {
+            return []string{"DNS: ok", "Сеть: ok"}
+        }),
+        termos.WithStopOnError(true),
+    )
+
+    topology := termos.NewSingleSelectTask(
+        "Топология",
+        []string{
+            "single-node::Один узел",
+            "multi-node::Кластер из нескольких узлов",
+            "ha::Высокая доступность",
+        },
+    ).WithDefaultItem("multi-node")
+
+    nodes := termos.NewInputTask(
+        "Количество узлов",
+        "Сколько рабочих узлов разворачиваем?",
+    ).
+        WithInputType(termos.InputTypeNumber).
+        WithValidator(termos.DefaultValidators.Range(1, 20)).
+        WithTimeout(30*time.Second, "3")
+
+    queue := termos.NewQueue("Развертывание Termos").
+        WithAppName("Termos CLI").
+        WithTasksNumbered(true, "[%02d]")
+
+    queue.AddTasks(summary, topology, nodes)
+    if err := queue.Run(); err != nil {
+        return err
+    }
+
+    // В зависимости от выбранной топологии добавим дополнительные задачи.
+    followUp := termos.NewQueue("Дополнительные шаги")
+
+    switch topology.GetSelected() {
+    case "single-node":
+        followUp.AddTasks(planBackupTask(), confirmMetricsTask())
+    case "multi-node":
+        followUp.AddTasks(configureIngressTask(), scaleOutTask(nodes))
+    case "ha":
+        followUp.AddTasks(haPrecheckTask(), configureQuorumTask(nodes))
+    }
+
+    return followUp.Run()
+}
+```
+
+### Ключевые идеи
+
+- **Два запуска очереди.** Первая очередь собирает ввод и сохраняет задачи для повторного использования. Вторая очередь формируется динамически.
+- **Summary-функция.** `FuncTask` с `WithSummaryFunction` позволяет отобразить итог прямо под задачей и лучше информировать пользователя.
+- **Таймауты.** `WithTimeout` гарантирует, что сценарий не зависнет в headless-среде.
+
+## Повторные попытки с подтверждением пользователя
+
+```go
+func RunWithRetries(label string, fn func() error, maxAttempts int) error {
+    attempt := 1
+
+    for {
+        task := termos.NewFuncTask(
+            fmt.Sprintf("%s · попытка %d", label, attempt),
+            fn,
+            termos.WithStopOnError(false),
+        )
+
+        queue := termos.NewQueue(label)
+        queue.AddTasks(task)
+
+        if err := queue.Run(); err == nil {
+            return nil
+        }
+
+        if attempt >= maxAttempts {
+            return fmt.Errorf("достигнут лимит попыток (%d)", maxAttempts)
+        }
+
+        retry := termos.NewYesNoTask(
+            "Повторить попытку",
+            fmt.Sprintf("Попытка %d завершилась ошибкой. Повторить?", attempt),
+        ).WithDefaultYesAndTimeout(10 * time.Second)
+
+        confirm := termos.NewQueue("Решение о повторе")
+        confirm.AddTasks(retry)
+        confirm.Run()
+
+        if !retry.IsYes() {
+            return fmt.Errorf("операция отменена пользователем на попытке %d", attempt)
+        }
+
+        attempt++
+    }
+}
+```
+
+### Когда пригодится
+
+- интеграция с нестабильными сервисами;
+- обновления прошивок на устройствах с малонадежной связью;
+- выполнение длительных действий, которые стоит перезапустить по согласию пользователя.
+
+## Построение задач на лету
+
+```go
+func ConfigureServers() error {
+    count := termos.NewInputTask("Количество серверов", "Сколько серверов конфигурируем?").
+        WithInputType(termos.InputTypeNumber).
+        WithValidator(termos.DefaultValidators.Range(1, 8))
+
+    baseQueue := termos.NewQueue("Параметры конфигурации")
+    baseQueue.AddTasks(count)
+    if err := baseQueue.Run(); err != nil {
+        return err
+    }
+
+    n, _ := strconv.Atoi(count.GetValue())
+
+    var tasks []termos.Task
+    for i := 1; i <= n; i++ {
+        prefix := fmt.Sprintf("Сервер %d", i)
+
+        host := termos.NewInputTask(prefix+" · хост", "Введите FQDN")
+        host.WithValidator(termos.DefaultValidators.Domain())
+
+        port := termos.NewInputTask(prefix+" · порт", "Введите порт")
+        port.WithInputType(termos.InputTypeNumber).
+            WithValidator(termos.DefaultValidators.Port())
+
+        tasks = append(tasks, host, port)
+    }
+
+    servers := termos.NewQueue("Настройка серверов").
+        WithTasksNumbered(true, "[%02d]")
+    servers.AddTasks(tasks...)
+    return servers.Run()
+}
+```
+
+<Note>
+При генерации большого количества задач учитывайте возможности устройства. Если сценарий может создавать сотни шагов, разбивайте их на отдельные очереди и запускайте блоками.
+</Note>
+
+## Мини-чеклист для сложных сценариев
+
+- Сохраняйте ссылки на задачи, чьи результаты понадобятся позже.
+- Используйте отдельные очереди для разных этапов — это упрощает логику и вывод.
+- Вызывайте `AutoConfigure()` при старте CLI, чтобы Termos подобрал безопасные настройки.
+- Для встроенных устройств комбинируйте `EnableEmbeddedMode()` и `WithOutResultLine()` — так вывод остаётся компактным.
+- Помните, что очередь последовательно выполняет задачи; если нужна «параллельность», запускайте отдельные очереди из `FuncTask`.
+
+Следующий пример показывает, как использовать валидаторы для надёжных форм ввода.

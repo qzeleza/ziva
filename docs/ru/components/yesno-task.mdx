@@ -1,285 +1,121 @@
 ---
 title: "YesNoTask"
-description: "Задача бинарного выбора между двумя вариантами"
+description: "Бинарный выбор с таймаутами и настройкой поведения"
 ---
 
 # YesNoTask
 
-`YesNoTask` предоставляет интерфейс для выбора между двумя вариантами: "Да" и "Нет". Это самый простой тип задач в Termos, идеальный для подтверждений и бинарных решений.
+`YesNoTask` решает типичный сценарий подтверждения: «Да» или «Нет». Задача построена поверх `SingleSelectTask`, поэтому наследует часть его возможностей (дефолтные значения, таймауты, подсказки), но скрывает лишние детали.
 
-## Создание задачи
+## Создание
 
 ```go
-task := termos.NewYesNoTask("Заголовок", "Вопрос пользователю?")
+task := termos.NewYesNoTask("Подтверждение", "Запустить обновление?")
 ```
 
-## Основные методы
-
-### Создание с настройками
+Добавьте задачу в очередь и запустите её так же, как любой другой элемент:
 
 ```go
-task := termos.NewYesNoTask("Подтверждение", "Продолжить установку?").
-    WithDefaultItem("Да").                           // значение по умолчанию
-    WithTimeout(10*time.Second, "Нет").              // таймаут с fallback
-    WithCustomLabels("Продолжить", "Отменить")       // кастомные лейблы
+queue := termos.NewQueue("Обновление")
+queue.AddTasks(task)
+_ = queue.Run()
 ```
 
-### Получение результатов
+## Получение результата
 
 ```go
-// После выполнения задачи
-option := task.GetSelectedOption() // termos.YesNoOption
-isYes := task.IsYes()              // bool
-isNo := task.IsNo()                // bool
-```
+if task.IsYes() {
+    fmt.Println("Пользователь подтвердил действие")
+}
 
-## Опции и константы
-
-```go
-// Доступные опции
-const (
-    YesOption = termos.YesOption  // "Да"
-    NoOption  = termos.NoOption   // "Нет"
-)
-
-// Проверка конкретной опции
-if task.GetSelectedOption() == termos.YesOption {
-    fmt.Println("Пользователь выбрал 'Да'")
+switch task.GetSelectedOption() {
+case termos.YesOption:
+    // логика для "Да"
+case termos.NoOption:
+    // логика для "Нет"
 }
 ```
 
-## Настройка по умолчанию
+## Значения по умолчанию
 
-### Выбор по умолчанию
+### Языко-независимые методы
 
 ```go
-// По строке
-task.WithDefaultItem("Да")
-task.WithDefaultItem("Нет")
+task.WithDefaultYes() // подсветить «Да»
+task.WithDefaultNo()  // подсветить «Нет»
+```
 
-// По константе
+### Универсальный метод
+
+```go
 task.WithDefaultItem(termos.YesOption)
-task.WithDefaultItem(termos.NoOption)
-
-// По bool (true = Да, false = Нет)
-task.WithDefaultItem(true)
-task.WithDefaultItem(false)
+task.WithDefaultItem(true)          // эквивалентно YesOption
+task.WithDefaultItem("Нет")         // строковое совпадение без учёта регистра
 ```
 
 ## Таймауты
 
 ```go
-// Таймаут с автоматическим выбором "Да"
-task.WithTimeout(5*time.Second, "Да")
+task.WithTimeoutYes(5 * time.Second) // через 5 секунд автоматически выбрать «Да»
+task.WithTimeoutNo(10 * time.Second) // автоматический «Нет»
 
-// Таймаут с автоматическим выбором "Нет"
-task.WithTimeout(3*time.Second, termos.NoOption)
-
-// Таймаут с bool значением
-task.WithTimeout(10*time.Second, true) // true = Да
+// Комбинированные методы
+task.WithDefaultYesAndTimeout(3 * time.Second)
+task.WithDefaultNoAndTimeout(7 * time.Second)
 ```
 
-## Кастомные лейблы
-
-По умолчанию используются "Да" и "Нет", но можно настроить собственные:
+Если нужен кастомный вариант:
 
 ```go
-// Кастомные лейблы
+task.WithTimeout(8*time.Second, termos.NoOption)
+task.WithTimeout(8*time.Second, false)
+task.WithTimeout(8*time.Second, "да")
+```
+
+## Кастомные подписи
+
+```go
 task.WithCustomLabels("Продолжить", "Отменить")
-task.WithCustomLabels("Accept", "Decline")
-task.WithCustomLabels("Включить", "Выключить")
-task.WithCustomLabels("✓ Да", "✗ Нет")
 ```
 
-## Примеры использования
+<Note>
+Текст кнопок обновляется сразу, поэтому добавляйте кастомные лейблы до передачи задачи в очередь.
+</Note>
 
-### Простое подтверждение
+## Обработка выбора «Нет»
+
+Termos считает вариант «Нет» условной ошибкой, чтобы очередь могла отобразить его в отчёте. При этом выполнение не прерывается. Это поведение удобно для отчётов — пользователь всегда видит, что именно он отклонил.
 
 ```go
-func confirmAction() bool {
-    task := termos.NewYesNoTask(
-        "Подтверждение",
-        "Вы уверены, что хотите удалить файл?",
-    )
-
-    queue := termos.NewQueue("Удаление файла")
-    queue.AddTasks(task)
-    queue.Run()
-
-    return task.IsYes()
+if task.IsNo() {
+    // можно вынести повторный запрос или запись в лог
 }
 ```
 
-### Подтверждение с таймаутом
+## Пример: гарантированное подтверждение
 
 ```go
-func confirmWithTimeout() bool {
-    task := termos.NewYesNoTask(
-        "Автоматическое продолжение",
-        "Продолжить через 5 секунд?",
-    ).WithTimeout(5*time.Second, "Да")
+func mustConfirm(title, question string, timeout time.Duration) bool {
+    confirm := termos.NewYesNoTask(title, question).
+        WithDefaultNo().
+        WithTimeoutYes(timeout) // по истечении времени всё равно продолжим
 
-    queue := termos.NewQueue("Демо")
-    queue.AddTasks(task)
-    queue.Run()
+    queue := termos.NewQueue(title)
+    queue.AddTasks(confirm)
+    _ = queue.Run()
 
-    return task.IsYes()
+    return confirm.IsYes()
 }
 ```
 
-### Кастомные опции
+## Советы
 
-```go
-func enableFeature() bool {
-    task := termos.NewYesNoTask(
-        "Настройка функции",
-        "Включить экспериментальную функцию?",
-    ).WithCustomLabels("Включить", "Оставить выключенной").
-      WithDefaultItem("Оставить выключенной")
+- Используйте `WithTimeoutYes/No`, если интерфейс должен идти дальше без участия пользователя.
+- При смене языка UI (через `termos.SetLanguage`) выбирайте языко-независимые методы — строковые значения могут не совпасть.
+- Сохраняйте ссылку на задачу. Результат доступен только после `queue.Run()`.
+- Для повторного запроса создайте новую очередь, чтобы не смешивать вывод.
 
-    queue := termos.NewQueue("Конфигурация")
-    queue.AddTasks(task)
-    queue.Run()
+## Связанные материалы
 
-    return task.IsYes()
-}
-```
-
-### Цепочка подтверждений
-
-```go
-func multipleConfirmations() {
-    backup := termos.NewYesNoTask(
-        "Резервная копия",
-        "Создать резервную копию перед обновлением?",
-    ).WithDefaultItem("Да")
-
-    proceed := termos.NewYesNoTask(
-        "Продолжение",
-        "Начать обновление?",
-    )
-
-    queue := termos.NewQueue("Обновление системы")
-    queue.AddTasks(backup, proceed)
-    queue.Run()
-
-    if backup.IsYes() {
-        fmt.Println("Создаем резервную копию...")
-    }
-
-    if proceed.IsYes() {
-        fmt.Println("Начинаем обновление...")
-    } else {
-        fmt.Println("Обновление отменено")
-    }
-}
-```
-
-### Условная логика
-
-```go
-func conditionalFlow() {
-    enableSSL := termos.NewYesNoTask(
-        "Безопасность",
-        "Включить SSL шифрование?",
-    ).WithDefaultItem("Да")
-
-    var certTask *termos.InputTask
-    if enableSSL.IsYes() {
-        certTask = termos.NewInputTask(
-            "Сертификат",
-            "Путь к SSL сертификату:",
-        )
-    }
-
-    queue := termos.NewQueue("Настройка сервера")
-    queue.AddTasks(enableSSL)
-
-    if enableSSL.IsYes() {
-        queue.AddTasks(certTask)
-    }
-
-    queue.Run()
-
-    if enableSSL.IsYes() && certTask != nil {
-        fmt.Printf("SSL включен, сертификат: %s\n", certTask.GetValue())
-    }
-}
-```
-
-## Интеграция с валидацией
-
-Хотя YesNoTask не использует валидацию напрямую, результаты можно проверять:
-
-```go
-func validateChoice(task *termos.YesNoTask) error {
-    if task.IsNo() {
-        return errors.New("операция отменена пользователем")
-    }
-    return nil
-}
-
-// Использование
-task := termos.NewYesNoTask("Confirm", "Proceed?")
-queue := termos.NewQueue("Demo")
-queue.AddTasks(task)
-queue.Run()
-
-if err := validateChoice(task); err != nil {
-    log.Fatal(err)
-}
-```
-
-## Стилизация
-
-```go
-// YesNoTask наследует стили из общей системы
-// Можно настроить через глобальные стили:
-
-// В main или init функции
-termos.SelectionStyle = termos.SelectionStyle.Foreground(termos.GreenBright)
-termos.ActiveStyle = termos.ActiveStyle.Foreground(termos.BlueBright)
-```
-
-## Лучшие практики
-
-### 1. Используйте понятные вопросы
-
-```go
-// Хорошо
-termos.NewYesNoTask("Удаление", "Удалить все файлы в папке?")
-
-// Плохо
-termos.NewYesNoTask("Файлы", "Действие?")
-```
-
-### 2. Устанавливайте разумные значения по умолчанию
-
-```go
-// Для безопасных операций - "Да"
-task.WithDefaultItem("Да")
-
-// Для опасных операций - "Нет"
-task.WithDefaultItem("Нет")
-```
-
-### 3. Используйте таймауты для автоматизации
-
-```go
-// Для CI/CD пайплайнов
-task.WithTimeout(30*time.Second, "Да")
-```
-
-### 4. Кастомизируйте лейблы для контекста
-
-```go
-// Вместо "Да/Нет" используйте контекстные лейблы
-task.WithCustomLabels("Сохранить", "Отменить")
-task.WithCustomLabels("Установить", "Пропустить")
-```
-
-## См. также
-
-- [SingleSelectTask](/ru/components/singleselect-task) - для выбора из нескольких вариантов
-- [InputTask](/ru/components/input-task) - для ввода произвольного текста
-- [Примеры](/ru/examples/basic-usage) - практические примеры использования
+- [SingleSelectTask](/ru/components/singleselect-task) — общие возможности списковых задач
+- [FuncTask](/ru/components/func-task) — полезно для действий после подтверждения

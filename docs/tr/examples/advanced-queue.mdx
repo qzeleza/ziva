@@ -1,0 +1,177 @@
+---
+title: "Gelişmiş Kuyruk Rehberi"
+description: "Koşullu akışlar, dinamik görev üretimi ve dayanıklı yeniden denemeler"
+---
+
+# Gelişmiş Kuyruk Rehberi
+
+Aşağıdaki örnekler Termos ile karmaşık iş akışlarını nasıl düzenleyebileceğinizi gösterir:
+- süreci aşamalara bölmek ve görevleri dinamik olarak eklemek;
+- kullanıcı seçimlerine ve görev sonuçlarına tepki vermek;
+- TUI'dan çıkmadan hatalardan toparlanmak.
+
+<Info>
+Tüm kod parçaları `termos` paketinin herkese açık API'sini kullanır. Bunları `examples` paketine koyabilir ve davranışı göstermek istediğinizde çağırabilirsiniz.
+</Info>
+
+## Çok aşamalı kurulum şablonu
+
+```go
+// DeployCluster, kullanıcının yanıtlarını toplayan, ilerlemeyi gösteren
+// ve sonraki adımlar için sonuçları saklayan sıralı bir kurulumu organize eder.
+func DeployCluster() error {
+    summary := termos.NewFuncTask(
+        "Ön kontroller",
+        runPreflightChecks,
+        termos.WithSummaryFunction(func() []string {
+            return []string{"DNS: ok", "Ağ: ok"}
+        }),
+        termos.WithStopOnError(true),
+    )
+
+    topology := termos.NewSingleSelectTask(
+        "Topoloji",
+        []string{
+            "single-node::Tek düğüm",
+            "multi-node::Çok düğüm",
+            "ha::Yüksek erişilebilirlik",
+        },
+    ).WithDefaultItem("multi-node")
+
+    nodes := termos.NewInputTask(
+        "Düğüm sayısı",
+        "Kaç işçi düğümü kurulacak?",
+    ).
+        WithInputType(termos.InputTypeNumber).
+        WithValidator(termos.DefaultValidators.Range(1, 20)).
+        WithTimeout(30*time.Second, "3")
+
+    queue := termos.NewQueue("Termos Dağıtımı").
+        WithAppName("Termos CLI").
+        WithTasksNumbered(true, "[%02d]")
+
+    queue.AddTasks(summary, topology, nodes)
+    if err := queue.Run(); err != nil {
+        return err
+    }
+
+    // Seçilen topolojiye göre ek görevler ekleyelim.
+    followUp := termos.NewQueue("Takip görevleri")
+
+    switch topology.GetSelected() {
+    case "single-node":
+        followUp.AddTasks(planBackupTask(), confirmMetricsTask())
+    case "multi-node":
+        followUp.AddTasks(configureIngressTask(), scaleOutTask(nodes))
+    case "ha":
+        followUp.AddTasks(haPrecheckTask(), configureQuorumTask(nodes))
+    }
+
+    return followUp.Run()
+}
+```
+
+### Öne çıkanlar
+
+- **İki kuyruk çalıştırması.** İlk kuyruk girişleri toplar; ikinci kuyruk çalışma zamanında oluşturulur.
+- **Özet fonksiyonu.** `WithSummaryFunction`, görevin altında kısa bir özet gösterir ve operatör geri bildirimini güçlendirir.
+- **Zaman aşımı.** `WithTimeout`, başsız oturumların sonsuza kadar askıda kalmasını engeller.
+
+## Kullanıcı onayıyla yeniden deneme
+
+```go
+func RunWithRetries(label string, fn func() error, maxAttempts int) error {
+    attempt := 1
+
+    for {
+        task := termos.NewFuncTask(
+            fmt.Sprintf("%s · deneme %d", label, attempt),
+            fn,
+            termos.WithStopOnError(false),
+        )
+
+        queue := termos.NewQueue(label)
+        queue.AddTasks(task)
+
+        if err := queue.Run(); err == nil {
+            return nil
+        }
+
+        if attempt >= maxAttempts {
+            return fmt.Errorf("deneme limiti aşıldı (%d)", maxAttempts)
+        }
+
+        retry := termos.NewYesNoTask(
+            "Tekrar dene",
+            fmt.Sprintf("%d. deneme başarısız oldu. Tekrar denensin mi?", attempt),
+        ).WithDefaultYesAndTimeout(10 * time.Second)
+
+        confirmation := termos.NewQueue("Tekrar kararı")
+        confirmation.AddTasks(retry)
+        confirmation.Run()
+
+        if !retry.IsYes() {
+            return fmt.Errorf("işlem %d. denemede iptal edildi", attempt)
+        }
+
+        attempt++
+    }
+}
+```
+
+### Ne zaman gerekli?
+
+- kararsız altyapı çağrıları;
+- güvenilir olmayan bağlantılarda ürün yazılımı güncellemeleri;
+- insan onayıyla yeniden denenmesi gereken uzun işlemler.
+
+## Görevleri uçuş sırasında oluşturma
+
+```go
+func ConfigureServers() error {
+    count := termos.NewInputTask("Sunucu sayısı", "Kaç sunucu yapılandırılacak?").
+        WithInputType(termos.InputTypeNumber).
+        WithValidator(termos.DefaultValidators.Range(1, 8))
+
+    baseQueue := termos.NewQueue("Yapılandırma parametreleri")
+    baseQueue.AddTasks(count)
+    if err := baseQueue.Run(); err != nil {
+        return err
+    }
+
+    n, _ := strconv.Atoi(count.GetValue())
+
+    var tasks []termos.Task
+    for i := 1; i <= n; i++ {
+        prefix := fmt.Sprintf("Sunucu %d", i)
+
+        host := termos.NewInputTask(prefix+" · host", "FQDN girin")
+        host.WithValidator(termos.DefaultValidators.Domain())
+
+        port := termos.NewInputTask(prefix+" · port", "Port girin")
+        port.WithInputType(termos.InputTypeNumber).
+            WithValidator(termos.DefaultValidators.Port())
+
+        tasks = append(tasks, host, port)
+    }
+
+    servers := termos.NewQueue("Sunucu yapılandırması").
+        WithTasksNumbered(true, "[%02d]")
+    servers.AddTasks(tasks...)
+    return servers.Run()
+}
+```
+
+<Note>
+Yüzlerce görev üretebilecek bir akışınız varsa yürütmeyi birkaç kuyruğa bölün ve bellek tüketimini tahmin edilebilir tutmak için bloklar halinde çalıştırın.
+</Note>
+
+## Karmaşık akışlar için hızlı kontrol listesi
+
+- Sonuçlarına daha sonra ihtiyaç duyacağınız görevlerin referanslarını saklayın.
+- Farklı aşamalar için ayrı kuyruklar kullanın — bu, mantığı ve test yazmayı kolaylaştırır.
+- Termos'un hedef sistemi otomatik ayarlaması için başlangıçta `AutoConfigure()` çağırın.
+- Kısıtlı cihazlarda çıktıyı kompakt tutmak için `EnableEmbeddedMode()` ile `WithOutResultLine()` kombinasyonunu tercih edin.
+- Kuyruk sırayla çalışır; sözde paralellik gerekiyorsa ek kuyrukları `FuncTask` içinden başlatın.
+
+Dayanıklı formlar oluşturmayı öğrenmek için doğrulama demosuna göz atın.

@@ -1,181 +1,260 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "Termos",
-  "description": "Terminal Multitask Orchestrator System - A powerful Go library for creating interactive TUI applications",
-  "theme": "almond",
+  "name": "Термос",
+  "theme": "willow",
   "colors": {
     "primary": "#0ea5e9",
     "light": "#0284c7",
     "dark": "#0369a1"
   },
+  "codeblocks": "dark",
   "logo": {
     "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "dark": "/logo/dark.svg",
+    "href": "https://github.com/qzeleza/termos"
   },
   "favicon": "/favicon.svg",
   "navigation": {
     "languages": [
       {
         "language": "ru",
-        "groups": [
+        "tabs": [
           {
-            "group": "Начало работы",
-            "pages": [
-              "ru/index",
-              "ru/installation",
-              "ru/quick-start"
+            "tab": "Документация",
+            "groups": [
+              {
+                "group": "Начало работы",
+                "pages": [
+                  "ru/index",
+                  "ru/installation",
+                  "ru/quick-start"
+                ]
+              },
+              {
+                "group": "Основные компоненты",
+                "pages": [
+                  "ru/components/queue",
+                  "ru/components/tasks",
+                  "ru/components/yesno-task",
+                  "ru/components/singleselect-task",
+                  "ru/components/multiselect-task",
+                  "ru/components/input-task",
+                  "ru/components/func-task"
+                ]
+              },
+              {
+                "group": "Валидация",
+                "pages": [
+                  "ru/validation/overview",
+                  "ru/validation/built-in-validators",
+                  "ru/validation/custom-validators"
+                ]
+              },
+              {
+                "group": "API и функции",
+                "pages": [
+                  "ru/api-functions"
+                ]
+              },
+              {
+                "group": "Настройка и стили",
+                "pages": [
+                  "ru/customization/styling",
+                  "ru/customization/colors",
+                  "ru/customization/embedded-systems"
+                ]
+              },
+              {
+                "group": "Лучшие практики",
+                "pages": [
+                  "ru/best-practices"
+                ]
+              },
+              {
+                "group": "Примеры",
+                "pages": [
+                  "ru/examples/basic-usage",
+                  "ru/examples/advanced-queue",
+                  "ru/examples/validation-demo"
+                ]
+              }
             ]
           },
           {
-            "group": "Основные компоненты",
-            "pages": [
-              "ru/components/queue",
-              "ru/components/tasks",
-              "ru/components/yesno-task",
-              "ru/components/singleselect-task",
-              "ru/components/multiselect-task",
-              "ru/components/input-task",
-              "ru/components/func-task"
-            ]
-          },
-          {
-            "group": "Валидация",
-            "pages": [
-              "ru/validation/overview",
-              "ru/validation/built-in-validators",
-              "ru/validation/custom-validators"
-            ]
-          },
-          {
-            "group": "Настройка и стили",
-            "pages": [
-              "ru/customization/styling",
-              "ru/customization/colors",
-              "ru/customization/embedded-systems"
-            ]
-          },
-          {
-            "group": "Примеры",
-            "pages": [
-              "ru/examples/basic-usage",
-              "ru/examples/advanced-queue",
-              "ru/examples/validation-demo"
+            "tab": "История версий",
+            "groups": [
+              {
+                "group": "История",
+                "pages": [
+                  "ru/versions/history"
+                ]
+              }
             ]
           }
         ]
       },
       {
         "language": "en",
-        "groups": [
+        "tabs": [
           {
-            "group": "Getting Started",
-            "pages": [
-              "en/index",
-              "en/installation",
-              "en/quick-start"
+            "tab": "Main",
+            "groups": [
+              {
+                "group": "Getting Started",
+                "pages": [
+                  "en/index",
+                  "en/installation",
+                  "en/quick-start"
+                ]
+              },
+              {
+                "group": "Core Components",
+                "pages": [
+                  "en/components/queue",
+                  "en/components/tasks",
+                  "en/components/yesno-task",
+                  "en/components/singleselect-task",
+                  "en/components/multiselect-task",
+                  "en/components/input-task",
+                  "en/components/func-task"
+                ]
+              },
+              {
+                "group": "Validation",
+                "pages": [
+                  "en/validation/overview",
+                  "en/validation/built-in-validators",
+                  "en/validation/custom-validators"
+                ]
+              },
+              {
+                "group": "API & Functions",
+                "pages": [
+                  "en/api-functions"
+                ]
+              },
+              {
+                "group": "Customization & Styling",
+                "pages": [
+                  "en/customization/styling",
+                  "en/customization/colors",
+                  "en/customization/embedded-systems"
+                ]
+              },
+              {
+                "group": "Best Practices",
+                "pages": [
+                  "en/best-practices"
+                ]
+              },
+              {
+                "group": "Examples",
+                "pages": [
+                  "en/examples/basic-usage",
+                  "en/examples/advanced-queue",
+                  "en/examples/validation-demo"
+                ]
+              }
             ]
           },
           {
-            "group": "Core Components",
-            "pages": [
-              "en/components/queue",
-              "en/components/tasks",
-              "en/components/yesno-task",
-              "en/components/singleselect-task",
-              "en/components/multiselect-task",
-              "en/components/input-task",
-              "en/components/func-task"
-            ]
-          },
-          {
-            "group": "Validation",
-            "pages": [
-              "en/validation/overview",
-              "en/validation/built-in-validators",
-              "en/validation/custom-validators"
-            ]
-          },
-          {
-            "group": "Customization & Styling",
-            "pages": [
-              "en/customization/styling",
-              "en/customization/colors",
-              "en/customization/embedded-systems"
-            ]
-          },
-          {
-            "group": "Examples",
-            "pages": [
-              "en/examples/basic-usage",
-              "en/examples/advanced-queue",
-              "en/examples/validation-demo"
+            "tab": "Version History",
+            "groups": [
+              {
+                "group": "History",
+                "pages": [
+                  "en/versions/history"
+                ]
+              }
             ]
           }
         ]
       },
       {
         "language": "tr",
-        "groups": [
+        "tabs": [
           {
-            "group": "Başlangıç",
-            "pages": [
-              "tr/index",
-              "tr/installation",
-              "tr/quick-start"
+            "tab": "Ana İçerik",
+            "groups": [
+              {
+                "group": "Başlangıç",
+                "pages": [
+                  "tr/index",
+                  "tr/installation",
+                  "tr/quick-start"
+                ]
+              },
+              {
+                "group": "Ana Bileşenler",
+                "pages": [
+                  "tr/components/queue",
+                  "tr/components/tasks",
+                  "tr/components/yesno-task",
+                  "tr/components/singleselect-task",
+                  "tr/components/multiselect-task",
+                  "tr/components/input-task",
+                  "tr/components/func-task"
+                ]
+              },
+              {
+                "group": "Doğrulama",
+                "pages": [
+                  "tr/validation/overview",
+                  "tr/validation/built-in-validators",
+                  "tr/validation/custom-validators"
+                ]
+              },
+              {
+                "group": "API ve Fonksiyonlar",
+                "pages": [
+                  "tr/api-functions"
+                ]
+              },
+              {
+                "group": "Özelleştirme ve Stiller",
+                "pages": [
+                  "tr/customization/styling",
+                  "tr/customization/colors",
+                  "tr/customization/embedded-systems"
+                ]
+              },
+              {
+                "group": "En İyi Uygulamalar",
+                "pages": [
+                  "tr/best-practices"
+                ]
+              },
+              {
+                "group": "Örnekler",
+                "pages": [
+                  "tr/examples/basic-usage",
+                  "tr/examples/advanced-queue",
+                  "tr/examples/validation-demo"
+                ]
+              }
             ]
           },
           {
-            "group": "Ana Bileşenler",
-            "pages": [
-              "tr/components/queue",
-              "tr/components/tasks",
-              "tr/components/yesno-task",
-              "tr/components/singleselect-task",
-              "tr/components/multiselect-task",
-              "tr/components/input-task",
-              "tr/components/func-task"
-            ]
-          },
-          {
-            "group": "Doğrulama",
-            "pages": [
-              "tr/validation/overview",
-              "tr/validation/built-in-validators",
-              "tr/validation/custom-validators"
-            ]
-          },
-          {
-            "group": "Özelleştirme ve Stiller",
-            "pages": [
-              "tr/customization/styling",
-              "tr/customization/colors",
-              "tr/customization/embedded-systems"
-            ]
-          },
-          {
-            "group": "Örnekler",
-            "pages": [
-              "tr/examples/basic-usage",
-              "tr/examples/advanced-queue",
-              "tr/examples/validation-demo"
+            "tab": "Sürüm Geçmişi",
+            "groups": [
+              {
+                "group": "Geçmiş",
+                "pages": [
+                  "tr/versions/history"
+                ]
+              }
             ]
           }
         ]
       }
     ]
   },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "GitHub",
-        "href": "https://github.com/qzeleza/termos"
-      }
-    ]
-  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/qzeleza/termos"
+    }
+  ],
   "anchors": [
     {
       "name": "GitHub",

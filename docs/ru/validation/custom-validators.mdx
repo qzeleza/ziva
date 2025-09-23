@@ -1,0 +1,118 @@
+---
+title: "Кастомные валидаторы"
+description: "Как описывать собственные правила проверки ввода"
+---
+
+# Кастомные валидаторы
+
+Если стандартных проверок недостаточно, создайте собственный валидатор. Достаточно объявить тип с методами `Validate(string) error` и `Description() string`.
+
+## Пошаговый пример
+
+Допустим, нужно проверить SKU вида `CAT-000123`:
+
+```go
+type skuValidator struct{}
+
+func (skuValidator) Validate(input string) error {
+    input = strings.TrimSpace(input)
+    if matched := skuPattern.MatchString(input); !matched {
+        return errors.New("формат SKU: AAA-000000")
+    }
+    return nil
+}
+
+func (skuValidator) Description() string {
+    return "Три буквы, дефис и шесть цифр"
+}
+
+var skuPattern = regexp.MustCompile(`^[A-Z]{3}-\d{6}$`)
+```
+
+Использование:
+
+```go
+sku := termos.NewInputTask("SKU", "Введите код товара:")
+sku.WithValidator(skuValidator{})
+```
+
+## Сообщения об ошибках
+
+- `Validate` — короткое сообщение о проблеме (например, «Нужен чётный номер»).
+- `Description` — общие требования. Termos показывает его под полем ввода, чтобы пользователь сразу видел формат.
+
+## Повторное использование
+
+Сложные правила можно собрать из нескольких валидаторов:
+
+```go
+type chainValidator struct {
+    validators []interface {
+        Validate(string) error
+        Description() string
+    }
+}
+
+func (c chainValidator) Validate(input string) error {
+    for _, v := range c.validators {
+        if err := v.Validate(input); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+func (c chainValidator) Description() string {
+    var desc []string
+    for _, v := range c.validators {
+        desc = append(desc, v.Description())
+    }
+    return strings.Join(desc, "; ")
+}
+```
+
+Теперь можно комбинировать встроенные проверки и свои собственные:
+
+```go
+v := termos.DefaultValidators
+
+validator := chainValidator{validators: []interface {
+    Validate(string) error
+    Description() string
+}{
+    v.Required(),
+    skuValidator{},
+}}
+
+sku := termos.NewInputTask("SKU", "Введите код:").
+    WithValidator(validator)
+```
+
+## Валидация с внешними сервисами
+
+Если проверка требует обращения к API или базе данных, используйте `FuncTask` сразу после `InputTask`:
+
+```go
+email := termos.NewInputTask("Email", "Введите адрес:").
+    WithValidator(v.Email())
+
+check := termos.NewFuncTask("Проверка email", func() error {
+    if existsInCRM(email.GetValue()) {
+        return fmt.Errorf("адрес %s уже зарегистрирован", email.GetValue())
+    }
+    return nil
+}, termos.WithStopOnError(true))
+
+queue.AddTasks(email, check)
+```
+
+Такой подход позволяет оставить интерфейс отзывчивым и не блокировать ввод.
+
+## Советы
+
+- Старайтесь писать позитивные подсказки: «Используйте формат AAA-000000», а не «Нельзя вводить …».
+- Если правило длинное, выводите краткое сообщение в `Validate`, а подробности — в `Description`.
+- Используйте `WithAllowEmpty(true)` вместе с кастомными валидаторами, если поле не обязательно.
+- Покрывайте критичные правила юнит-тестами — валидатор это обычный Go-код.
+
+Дальше изучите [список встроенных валидаторов](/ru/validation/built-in-validators) и комбинируйте их с собственными правилами.

@@ -1,210 +1,131 @@
 ---
 title: "Очередь задач (Queue)"
-description: "Система управления последовательностью задач в Termos"
+description: "Как управлять последовательностью задач в Termos и настраивать поведение очереди"
 ---
 
 # Очередь задач (Queue)
 
-`Queue` - это центральный компонент Termos, который управляет последовательным выполнением задач и предоставляет единый интерфейс для взаимодействия с пользователем.
+`Queue` — центральный оркестратор Termos. Он последовательно запускает задачи, управляет отображением статусов и обеспечивает единый цикл ввода/вывода в терминале.
 
-## Создание очереди
-
-```go
-queue := termos.NewQueue("Заголовок очереди")
-```
-
-## Основные методы
-
-### Добавление задач
+## Создание и запуск
 
 ```go
-// Добавление одной задачи
-queue.AddTasks(task1)
+queue := termos.NewQueue("Развертывание MyApp")
 
-// Добавление нескольких задач
-queue.AddTasks(task1, task2, task3)
+queue.AddTasks(
+    termos.NewYesNoTask("Подтверждение", "Начать установку?"),
+    termos.NewSingleSelectTask("Выбор среды", []string{"dev", "staging", "prod"}),
+)
 
-// Цепочечное добавление
-queue.AddTasks(task1).AddTasks(task2)
-```
-
-### Запуск очереди
-
-```go
 if err := queue.Run(); err != nil {
     log.Fatal(err)
 }
 ```
 
+![Скриншот: итоговая сводка очереди](/images/pic_5.png)
+
+<Info>
+Сохраняйте ссылки на созданные задачи, если нужно считать их результат после `Run()`.
+</Info>
+
+## Добавление задач
+
+```go
+queue.AddTasks(task1)                 // одиночная задача
+queue.AddTasks(task1, task2, task3)   // несколько задач сразу
+queue.AddTasks(task1).AddTasks(task2) // цепочка вызовов
+```
+
+Задачи запускаются в том порядке, в котором были добавлены. Повторно использовать одну и ту же очередь не рекомендуется — создавайте новую под каждый сценарий.
+
 ## Настройка отображения
 
-### Название приложения
+### Имя приложения и заголовок
 
 ```go
-queue.WithAppName("MyApplication")
+queue.
+  WithAppName("Deploy CLI").              // надпись в шапке
+  WithAppNameColor(termos.BlueBright, true).
+  WithTitleColor(termos.GreenBright, false)
 ```
 
-### Цвета названия и заголовка
-
-```go
-// Цвет названия приложения
-queue.WithAppNameColor(termos.BlueBright, true) // цвет, жирный
-
-// Цвет заголовка очереди
-queue.WithTitleColor(termos.GreenBright, false) // цвет, обычный
-```
+Для цветов используйте функции `lipgloss.Color()` либо готовые константы Termos (`termos.BlueBright`, `termos.GrayDark` и т.д.).
 
 ### Нумерация задач
 
 ```go
-// Включить нумерацию с форматом
-queue.WithTasksNumbered(true, "[%02d]") // [01], [02], [03]...
-
-// Альтернативные форматы
-queue.WithTasksNumbered(true, "(%d)")   // (1), (2), (3)...
-queue.WithTasksNumbered(true, "%d.")    // 1., 2., 3....
-
-// Сохранение первого символа формата
-queue.WithTasksNumbered(true, "[%02d]") // сохранить '['
+queue.WithTasksNumbered(false, "[%02d]") // [01], [02], ... без сохранения исходного символа
+queue.WithTasksNumbered(true, "(%d)")    // (1), (2), ... первый символ формата сохраняется
 ```
 
-### Управление сводкой
+Первый параметр (`keepFirstSymbol`) определяет, нужно ли сохранять символ завершения (`✔`, `✗`) для первой задачи. Формат — любая строка для `fmt.Sprintf`.
+
+### Сводка и разделительные линии
 
 ```go
-// Отключить сводку по завершению
-queue.WithOutSummary(true)
-
-// Отключить разделительные линии результатов
-queue.WithOutResultLine()
+queue.WithOutSummary(true)   // убрать финальный блок-резюме
+queue.WithOutResultLine()    // отключить разделительные линии перед результатами задач
 ```
+
+Даже при отключенной сводке статусы задач и их результаты остаются доступными прямо в выводе.
 
 ### Очистка экрана
 
 ```go
-// Очищать экран перед запуском
-queue.WithClearScreen(true)
+queue.WithClearScreen(true) // очистка терминала перед запуском очереди
 ```
 
-## Управление ошибками
+Полезно, если приложение должно стартовать «с чистого листа». Для встроенных устройств, наоборот, часто удобно оставить вывод предыдущих команд.
 
-### Настройка цветов ошибок
-
-```go
-// Импорт типов ошибок
-import "github.com/qzeleza/termos/internal/query"
-
-// Установка цвета ошибок
-queue.SetErrorColor(query.ErrorColorRed)    // Красный
-queue.SetErrorColor(query.ErrorColorYellow) // Желтый
-queue.SetErrorColor(query.ErrorColorNone)   // Без цвета
-```
-
-## Примеры конфигурации
-
-### Минималистичная конфигурация
+## Чтение результатов задач
 
 ```go
-queue := termos.NewQueue("Простое приложение")
-queue.AddTasks(task1, task2)
-queue.Run()
-```
+yesno := termos.NewYesNoTask("Подтверждение", "Продолжить?")
+choice := termos.NewSingleSelectTask("Выберите среду", envs)
 
-### Полная конфигурация
+queue := termos.NewQueue("Демо")
+queue.AddTasks(yesno, choice)
+_ = queue.Run()
 
-```go
-queue := termos.NewQueue("Продвинутое TUI приложение")
-queue.WithAppName("AdvancedApp").
-      WithAppNameColor(termos.BlueBright, true).
-      WithTitleColor(termos.GreenBright, false).
-      WithTasksNumbered(true, "[%02d]").
-      WithClearScreen(true).
-      WithOutResultLine().
-      SetErrorColor(query.ErrorColorRed)
-
-queue.AddTasks(
-    confirmTask,
-    selectTask,
-    inputTask,
-    functionTask,
-)
-
-if err := queue.Run(); err != nil {
-    log.Fatalf("Ошибка выполнения: %v", err)
+if yesno.IsYes() {
+    fmt.Printf("Среда: %s\n", choice.GetSelected())
 }
 ```
 
-### Конфигурация для встроенных систем
+Данные хранятся внутри объектов задач. Вам не нужно передавать дополнительные колбэки — достаточно доступа к экземплярам.
 
-```go
-queue := termos.NewQueue("IoT Configuration")
-queue.WithAppName("RouterSetup").
-      WithOutSummary(true).        // Экономия места
-      WithOutResultLine().         // Упрощенный вывод
-      WithTasksNumbered(false, ""). // Без нумерации
-      WithClearScreen(false)       // Сохранить контекст
+## Обработка ошибок и отмены
 
-// Используем упрощенные цвета
-queue.WithAppNameColor(termos.WhiteBright, false).
-      WithTitleColor(termos.GrayBright, false)
+- Пользователь может прервать очередь (`Ctrl+C`). В этом случае `Run()` вернёт ошибку, которую можно обработать.
+- Используйте `FuncTask.WithStopOnError(true)`, чтобы оборвать очередь при сбое важной операции.
+- Для дружелюбного вывода сообщений об ошибке изменяйте глобальные цвета через `termos.SetErrorColor()`.
+
+## Производительность и ресурсы
+
+Termos содержит встроенные механизмы контроля памяти. Их удобно конфигурировать через переменные окружения:
+
+```bash
+export TERMOS_MAX_COMPLETED_TASKS=10          # лимит хранения завершённых задач
+export TERMOS_MEMORY_PRESSURE_THRESHOLD=80M  # порог очистки кэша
 ```
 
-## Жизненный цикл очереди
-
-1. **Создание** - `NewQueue(title)`
-2. **Конфигурация** - вызовы `With*` методов
-3. **Добавление задач** - `AddTasks(...)`
-4. **Выполнение** - `Run()`
-
-## Обработка состояний
-
-### Успешное выполнение
-
-Когда все задачи завершаются успешно, `Run()` возвращает `nil`.
-
-### Отмена пользователем
-
-Если пользователь отменяет выполнение (Ctrl+C), очередь корректно завершается.
-
-### Ошибки выполнения
+Для сред с ограниченными ресурсами:
 
 ```go
-if err := queue.Run(); err != nil {
-    switch err {
-    case context.Canceled:
-        fmt.Println("Выполнение отменено пользователем")
-    default:
-        fmt.Printf("Ошибка: %v\n", err)
-    }
-}
+termos.AutoConfigure()     // единоразовая автоконфигурация
+termos.EnableEmbeddedMode() // упрощённая цветовая схема и макет
 ```
 
-## Оптимизация производительности
+## Лучшие практики
 
-### Для больших очередей
+- **Минимизируйте побочные эффекты в задачах.** Пусть каждая задача отвечает только за свой ввод/вывод.
+- **Готовьте данные заранее.** Формируйте списки вариантов и дефолтные значения до создания задач.
+- **Логируйте за пределами очереди.** Queue управляет только TUI. Используйте отдельные журналы для внутреннего состояния приложения.
+- **Сохраняйте результаты.** После `Run()` извлеките значения и сохраните их в собственных структурах, пока пользователь помнит контекст.
+- **Разделяйте сценарии.** Лучше несколько небольших очередей, чем одна гигантская — пользователю проще ориентироваться.
 
-```go
-// Ограничение истории выполненных задач
-os.Setenv("TERMOS_MAX_COMPLETED_TASKS", "5")
+## Связанные материалы
 
-// Мониторинг памяти
-os.Setenv("TERMOS_MEMORY_PRESSURE_THRESHOLD", "100M")
-```
-
-### Для медленных терминалов
-
-```go
-// Упрощенный режим отображения
-queue.WithOutResultLine().
-      WithOutSummary(true).
-      WithTasksNumbered(false, "")
-```
-
-<Info>
-**Совет:** Экспериментируйте с различными настройками для достижения оптимального пользовательского опыта в вашем конкретном окружении.
-</Info>
-
-## См. также
-
-- [Типы задач](/ru/components/tasks) - обзор всех доступных задач
-- [Стилизация](/ru/customization/styling) - настройка внешнего вида
-- [Встроенные системы](/ru/customization/embedded-systems) - оптимизация для IoT
+- [Типы задач](/ru/components/tasks)
+- [Настройка цветов и стилей](/ru/customization/colors)
+- [Оптимизация под встроенные системы](/ru/customization/embedded-systems)

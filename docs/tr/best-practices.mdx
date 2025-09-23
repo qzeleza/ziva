@@ -1,0 +1,58 @@
+---
+title: "En İyi Uygulamalar"
+description: "Termos ile TUI geliştirmek için kanıtlanmış rehber"
+---
+
+# Termos En İyi Uygulamaları
+
+Termos'u üretim sistemlerine entegre ederken bu rehberi kullanın. Yapı, doğrulama, stil, performans ve test konularında ipuçları içerir.
+
+## Mimari ve kod düzeni
+
+- Kuyrukları okunur tutmak için görev oluşturmayı fabrika/yardımcı fonksiyonlara taşıyın.
+- Görevleri aşamalara ayırın ve her aşama için ayrı kuyruklar çalıştırın (topla → doğrula → uygula). Bu yaklaşım testi ve yeniden kullanımı kolaylaştırır.
+- `queue.Run()` sonrasında ihtiyaç duyacağınız görev referanslarını saklayın; görevler durumlarını korur.
+- Kuyruk oluşturmadan önce `main()` içinde `termos.AutoConfigure()` çağırın ve dil ayarlarını (`SetDefaultLanguage`, `SetLanguage`) yapın.
+
+## Kuyruk yönetimi
+
+- Uzun senaryolarda `WithTasksNumbered(true, "[%02d]")` kullanarak numaralandırma ekleyin; operatörler daha hızlı yön bulur.
+- Son özet gerekmediğinde `WithOutSummary(true)` ile kapatın; aksi hâlde `WithSummaryFunction` ile önemli sonuçları satır içinde gösterin.
+- Headless ortamlarda (CI, SSH) mutlaka `WithTimeout*()` belirtin ve senaryo için güvenli bir varsayılan değer seçin.
+- Dinamik akışlarda yeni bir `Queue` oluşturun, üretilen görevleri ekleyin ve ana kuyruktan sonra çalıştırın.
+
+## Doğrulama ve giriş
+
+- `Description()` metinlerini kullanıcı dostu tutun — Termos metni alanın altında gösterir.
+- `DefaultValidators` içindeki yerleşik doğrulayıcıları özel tiplerle birleştirin. Karmaşık kurallar için kompozisyon yapın ve testlerle güvence altına alın.
+- Boş girişe izin verecekseniz `WithAllowEmpty(true)` ile boş değeri kabul eden doğrulayıcıları (örn. `OptionalEmail`) birlikte kullanın.
+- CRM'de kopya e-posta gibi harici kontroller gerekiyorsa girdiden sonra `FuncTask` ekleyin ve sonucu kullanıcıya gösterin.
+
+## Stil ve yerelleştirme
+
+- Marka renklerini yakalamak için `termos.SetErrorColor` kullanın; denemelerden sonra `ResetErrorColors()` çağırmayı unutmayın.
+- Kısıtlı terminallerde `EnableEmbeddedMode()` ve `EnableASCIIMode()` kombinasyonu çıktıyı okunur tutar.
+- Birden fazla dilde açıklama sağlamak için `SetChoiceHelpDelimiter()` ile yardım metinleri ekleyin (`"prod::Canlı ortam"`).
+
+## Performans ve gömülü hedefler
+
+- Tamamlanan görev geçmişini `TERMOS_MAX_COMPLETED_TASKS` ortam değişkeniyle sınırlandırın.
+- Belleği `TERMOS_MEMORY_PRESSURE_THRESHOLD` ile izleyin ve uzun ömürlü CLI'larda `termos.ClearInternCache()` çağırarak string önbelleğini temizleyin.
+- Büyük listelerde `WithViewport(...)` kullanın; arayüz tepki verilir kalır.
+- Ağır işleri küçük `FuncTask` adımlarına bölün ki kullanıcı sık sık ilerleme görsün.
+
+## Test ve hata ayıklama
+
+- Görev fabrikalarını unit testlerle doğrulayın: görevi oluşturun, `Update` ile mesaj simüle edin ve son durumu kontrol edin.
+- `examples/` altında demo kuyruklar tutun ve manuel olarak çalıştırın. Kayıt sırasında `WithClearScreen(false)` ayarıyla ekran görüntüsü/GIF almak kolaylaşır.
+- `WithStopOnError(true)` nedeniyle durdurulan kuyruklar için Termos dışında (örn. `log`, `zap`) hata kaydı tutun.
+
+## Yayın öncesi kontrol listesi
+
+- [ ] Tüm zaman aşımı ve varsayılan değerler gözden geçirildi.
+- [ ] Görevler aşamalara göre gruplanmış, düzen hedef terminal genişliğine uyuyor.
+- [ ] Doğrulama negatif senaryoları kapsıyor, karmaşık kurallar test edildi.
+- [ ] Renk şeması ve yerelleştirme ürün gereksinimlerini karşılıyor.
+- [ ] Gömülü cihazlar `AutoConfigure()` ve embedded mod ile test edildi.
+
+Bu önerileri örnekler bölümündeki kodlarla birlikte kullanarak dayanıklı ve kullanıcı dostu Termos tabanlı TUI'ler geliştirin.

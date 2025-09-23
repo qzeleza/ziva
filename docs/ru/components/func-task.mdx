@@ -1,64 +1,80 @@
 ---
 title: "FuncTask"
-description: "Задача выполнения функций с отображением прогресса"
+description: "Выполнение произвольного кода внутри очереди с отображением прогресса"
 ---
 
 # FuncTask
 
-`FuncTask` позволяет выполнять произвольные функции с отображением прогресса и результатов.
+`FuncTask` выполняет любую функцию, пока очередь показывает статус «в работе». Задача полезна для операций без пользовательского ввода: загрузка данных, проверка подключений, подготовка окружения.
 
 ## Создание
 
 ```go
-task := termos.NewFuncTask("Обработка", func() error {
-    // выполнить работу
-    time.Sleep(2 * time.Second)
-    return nil
+task := termos.NewFuncTask("Сборка", func() error {
+    return buildArtifacts()
 })
 ```
 
+Функция должна возвращать `error`. Любая ошибка отображается в интерфейсе и может остановить очередь.
+
 ## Опции конфигурации
 
+### `WithStopOnError`
+
 ```go
-task := termos.NewFuncTask(
-    "Загрузка данных",
-    processFunc,
-    termos.WithSummaryFunction(func() []string {
-        return []string{"Обработано: 100 файлов"}
-    }),
-    termos.WithStopOnError(true), // остановить очередь при ошибке
+task := termos.NewFuncTask("Развертывание", deploy,
+    termos.WithStopOnError(true),
 )
 ```
 
-## Пример с отчетом
+Если функция вернёт ошибку, очередь остановится и `Run()` завершится с этой ошибкой.
+
+### `WithSummaryFunction`
 
 ```go
 var stats struct {
-    Processed int
-    Errors    int
+    Duration time.Duration
+    Hosts    int
 }
 
-task := termos.NewFuncTask(
-    "Обработка файлов",
-    func() error {
-        for i := 0; i < 100; i++ {
-            time.Sleep(50 * time.Millisecond)
-            stats.Processed++
-            if rand.Intn(20) == 0 {
-                stats.Errors++
-            }
-        }
-        return nil
-    },
-    termos.WithSummaryFunction(func() []string {
-        return []string{
-            fmt.Sprintf("Обработано: %d", stats.Processed),
-            fmt.Sprintf("Ошибок: %d", stats.Errors),
-        }
-    }),
-)
-
-queue := termos.NewQueue("Пакетная обработка")
-queue.AddTasks(task)
-queue.Run()
+task := termos.NewFuncTask("Проверка кластера", func() error {
+    start := time.Now()
+    hosts, err := pingAll()
+    stats.Duration = time.Since(start)
+    stats.Hosts = hosts
+    return err
+}, termos.WithSummaryFunction(func() []string {
+    return []string{
+        fmt.Sprintf("Время: %s", stats.Duration),
+        fmt.Sprintf("Узлов доступно: %d", stats.Hosts),
+    }
+}))
 ```
+
+Сводка выводится сразу под заголовком задачи после успешного выполнения.
+
+## Комбинирование с другими задачами
+
+```go
+confirm := termos.NewYesNoTask("Подтверждение", "Запустить развёртывание?")
+deploy := termos.NewFuncTask("Развёртывание", runDeployment, termos.WithStopOnError(true))
+verify := termos.NewFuncTask("Проверка", verifySetup)
+
+queue := termos.NewQueue("CI/CD")
+queue.AddTasks(confirm, deploy, verify)
+_ = queue.Run()
+```
+
+Если пользователь выберет «Нет», `FuncTask` всё равно выполнится, но будет помечен как отклонённый (см. `YesNoTask`).
+
+## Рекомендации
+
+- **Не блокируйте рендеринг.** Если функция выполняется долго и может предоставить прогресс, обновляйте состояние через внешние каналы либо используйте несколько последовательных `FuncTask`.
+- **Комбинируйте с таймерами.** Для долгих операций добавьте `time.Sleep` или прогресс-бары внутри функции, если это оправдано.
+- **Не выводите в stdout.** Пусть очередь управляет экраном. Для логирования используйте файлы или отдельный канал вывода.
+- **Используйте горутины осторожно.** `FuncTask` вызывается внутри основного цикла. Если запускаете горутину, синхронизируйте её завершение внутри функции, иначе очередь перейдёт к следующей задаче преждевременно.
+
+## Связанные материалы
+
+- [Queue](/ru/components/queue) — управление последовательностью задач
+- [YesNoTask](/ru/components/yesno-task) — удобно запускать `FuncTask` по подтверждению

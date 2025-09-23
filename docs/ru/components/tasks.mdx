@@ -1,270 +1,132 @@
 ---
 title: "Обзор задач"
-description: "Все типы задач в Termos и их основные возможности"
+description: "Какие типы задач доступны в Termos и как с ними работать"
 ---
 
-# Типы задач в Termos
+# Типы задач Termos
 
-Termos предоставляет пять основных типов задач для создания интерактивных TUI приложений. Каждая задача имеет уникальные возможности и область применения.
-
-## Типы задач
+Termos предоставляет пять готовых типов задач. Каждая из них решает конкретный сценарий пользовательского ввода и интегрируется в очередь без ручного управления состоянием.
 
 <CardGroup cols={2}>
   <Card title="YesNoTask" icon="check-circle" href="/ru/components/yesno-task">
-    Бинарный выбор между двумя вариантами (Да/Нет)
+    Быстрый бинарный выбор (Да/Нет) с поддержкой таймаута
   </Card>
   <Card title="SingleSelectTask" icon="mouse-pointer" href="/ru/components/singleselect-task">
-    Выбор одного варианта из списка
+    Выбор одного варианта из списка с подсказками и отключением пунктов
   </Card>
   <Card title="MultiSelectTask" icon="list-check" href="/ru/components/multiselect-task">
-    Выбор нескольких вариантов из списка
+    Множественный выбор с пунктом «Выбрать все» и предзаполненными значениями
   </Card>
   <Card title="InputTask" icon="keyboard" href="/ru/components/input-task">
-    Ввод текста с валидацией
+    Текстовый ввод с типами полей, таймаутами и встроенной валидацией
   </Card>
   <Card title="FuncTask" icon="play" href="/ru/components/func-task">
-    Выполнение функций с отображением прогресса
+    Запуск произвольной функции с отображением прогресса и сводки
   </Card>
 </CardGroup>
 
 ## Общие возможности
 
-Все задачи в Termos имеют общий набор базовых возможностей:
-
-### Интерфейс Task
-
-```go
-type Task interface {
-    Execute() error
-    GetTitle() string
-    GetResult() interface{}
-    IsCompleted() bool
-}
-```
-
 ### Таймауты
 
-Все задачи поддерживают настройку таймаутов с значениями по умолчанию:
+Каждая задача поддерживает таймаут с автоматическим значением по умолчанию:
 
 ```go
-// Для YesNoTask
-task.WithTimeout(5*time.Second, "Да")
-
-// Для SingleSelectTask
-task.WithTimeout(10*time.Second, "option1")
-
-// Для MultiSelectTask
-task.WithTimeout(15*time.Second, []string{"item1", "item2"})
-
-// Для InputTask
-task.WithTimeout(30*time.Second, "default text")
+task.WithTimeout(5*time.Second, fallbackValue)
 ```
 
-### Подсказки в выборе
+Укажите fallback так, чтобы он соответствовал типу задачи (строка, индекс, `[]string`, `bool` и т.д.). YesNoTask также предоставляет специальные методы `WithTimeoutYes()` / `WithTimeoutNo()`.
 
-Для задач с вариантами выбора можно добавлять подсказки:
+### Подсказки и разделители
 
-```go
-// Используя разделитель (по умолчанию "::")
-options := []string{
-    "dev::Среда разработки",
-    "prod::Боевая среда",
-}
-
-// Настройка пользовательского разделителя
-termos.SetChoiceHelpDelimiter("||")
-options := []string{
-    "api||REST API сервер",
-    "web||Веб интерфейс",
-}
-```
-
-## Создание задач
-
-### Фабричные методы
+В списковых задачах можно добавлять вспомогательный текст через разделитель (по умолчанию `::`). Новый разделитель задаётся глобально:
 
 ```go
-// YesNo задача
-yesno := termos.NewYesNoTask("Заголовок", "Вопрос?")
-
-// Single select задача
-single := termos.NewSingleSelectTask("Заголовок", []string{"opt1", "opt2"})
-
-// Multi select задача
-multi := termos.NewMultiSelectTask("Заголовок", []string{"item1", "item2"})
-
-// Input задача
-input := termos.NewInputTask("Заголовок", "Подсказка:")
-
-// Function задача
-fn := termos.NewFuncTask("Заголовок", func() error {
-    // выполнить работу
-    return nil
-})
-```
-
-### Цепочечная конфигурация
-
-Все задачи поддерживают цепочечную конфигурацию:
-
-```go
-task := termos.NewSingleSelectTask("Выбор", options).
-    WithDefaultItem("option2").
-    WithTimeout(10*time.Second, "option1").
-    WithViewport(5, true)
-```
-
-## Получение результатов
-
-### После выполнения очереди
-
-```go
-// Сохраняем ссылки на задачи
-yesnoTask := termos.NewYesNoTask("Confirm", "Continue?")
-selectTask := termos.NewSingleSelectTask("Choose", options)
-
-queue := termos.NewQueue("Demo")
-queue.AddTasks(yesnoTask, selectTask)
-queue.Run()
-
-// Получаем результаты
-if yesnoTask.IsYes() {
-    fmt.Printf("Selected: %s\n", selectTask.GetSelected())
-}
-```
-
-### Типизированные результаты
-
-```go
-// YesNoTask
-option := yesnoTask.GetSelectedOption() // YesNoOption
-isYes := yesnoTask.IsYes()              // bool
-isNo := yesnoTask.IsNo()                // bool
-
-// SingleSelectTask
-selected := task.GetSelected()          // string
-index := task.GetSelectedIndex()        // int
-
-// MultiSelectTask
-items := task.GetSelected()             // []string
-
-// InputTask
-value := task.GetValue()                // string
-```
-
-## Продвинутые возможности
-
-### Viewport для длинных списков
-
-```go
-task := termos.NewSingleSelectTask("Choose", longList).
-    WithViewport(5, true) // показать 5 элементов, показать счетчики
+termos.SetChoiceHelpDelimiter(" → ")
 ```
 
 ### Отключение элементов
 
-```go
-// По индексам
-task.WithItemsDisabled([]int{0, 2, 4})
+`SingleSelectTask` и `MultiSelectTask` умеют блокировать пункты по значению, индексу или списку:
 
-// По значениям
-task.WithItemsDisabled([]string{"item1", "item3"})
+```go
+selector.WithItemsDisabled([]string{"beta", "legacy"})
 ```
 
-### Значения по умолчанию
+### Viewport
+
+Для длинных списков ограничьте видимую часть:
 
 ```go
-// Для single select
-task.WithDefaultItem("option2")
-task.WithDefaultItem(1) // по индексу
-
-// Для multi select
-task.WithDefaultItems([]string{"item1", "item3"})
-task.WithDefaultItems([]int{0, 2}) // по индексам
+selector.WithViewport(7, true) // 7 элементов на экране + счётчики
 ```
 
-## Обработка ошибок
+### Хранение результатов
 
-### Валидация в InputTask
+После `queue.Run()` данные остаются в объектах задач:
 
 ```go
-input := termos.NewInputTask("Email", "Enter email:").
-    WithValidator(termos.DefaultValidators.Email())
+selectedEnv := envTask.GetSelected()
+choices := multiTask.GetSelected()
+confirmed := yesTask.IsYes()
+inputValue := inputTask.GetValue()
+```
 
-// После выполнения
-if input.GetValue() != "" {
-    fmt.Printf("Valid email: %s\n", input.GetValue())
+<Info>
+Не пытайтесь читать результаты внутри очереди. Дождитесь окончания `Run()` и работайте с сохранёнными ссылками на задачи.
+</Info>
+
+## Реализация собственного типа задачи
+
+`termos.Task` — это алиас интерфейса `common.Task`. Если встроенных типов недостаточно, можно реализовать его самостоятельно:
+
+```go
+type customTask struct {
+    task.BaseTask // используйте составление, чтобы получить готовые вспомогательные методы
 }
+
+func (t *customTask) Title() string                 { return "Моя задача" }
+func (t *customTask) Run() tea.Cmd                  { return nil }
+func (t *customTask) Update(msg tea.Msg) (termos.Task, tea.Cmd) { return t, nil }
+func (t *customTask) View(width int) string         { return "" }
+func (t *customTask) IsDone() bool                  { return true }
+func (t *customTask) FinalView(width int) string    { return t.View(width) }
+func (t *customTask) HasError() bool                { return false }
+func (t *customTask) Error() error                  { return nil }
+func (t *customTask) StopOnError() bool             { return false }
+func (t *customTask) SetStopOnError(bool)           {}
+func (t *customTask) WithNewLinesInErrors(bool) termos.Task { return t }
 ```
 
-### Ошибки в FuncTask
+Практика показывает, что в большинстве случаев достаточно комбинации стандартных задач и `FuncTask` для побочных действий.
+
+## Шаблон структуры приложения
 
 ```go
-funcTask := termos.NewFuncTask("Process", func() error {
-    // Может вернуть ошибку
-    return errors.New("processing failed")
-}).WithStopOnError(true) // остановить очередь при ошибке
+queue := termos.NewQueue("Настройка кластера")
+
+confirm := termos.NewYesNoTask("Подтверждение", "Продолжить?")
+mode    := termos.NewSingleSelectTask("Режим", modes)
+features := termos.NewMultiSelectTask("Фичи", featureList)
+name     := termos.NewInputTask("Имя", "Введите имя кластера")
+build    := termos.NewFuncTask("Сборка", assembleCluster)
+
+queue.AddTasks(confirm, mode, features, name, build)
+if err := queue.Run(); err != nil {
+    log.Fatal(err)
+}
+
+if confirm.IsYes() {
+    deploy(mode.GetSelected(), features.GetSelected(), name.GetValue())
+}
 ```
 
 ## Лучшие практики
 
-### 1. Группировка связанных задач
+- **Группируйте задачи по смыслу.** Пользователю проще пройти несколько небольших очередей, чем одну огромную.
+- **Используйте таймауты аккуратно.** Всегда выбирайте fallback, безопасный для вашей системы.
+- **Показывайте подсказки.** Разделитель помогает объяснить значения вроде `prod`, `staging`, `cli`.
+- **Не дублируйте вывод.** Termos сам управляет TUI-рендерингом; избегайте `fmt.Println` внутри задач.
+- **Сохраняйте ссылки на задачи.** Это единственный способ получить результаты после завершения очереди.
 
-```go
-// Группа задач конфигурации
-configTasks := []termos.Task{
-    termos.NewInputTask("Host", "Enter hostname:"),
-    termos.NewInputTask("Port", "Enter port:"),
-    termos.NewYesNoTask("SSL", "Enable SSL?"),
-}
-queue.AddTasks(configTasks...)
-```
-
-### 2. Использование контекста
-
-```go
-type Config struct {
-    Host string
-    Port string
-    SSL  bool
-}
-
-func setupConfig() *Config {
-    var config Config
-
-    hostTask := termos.NewInputTask("Host", "Enter hostname:")
-    portTask := termos.NewInputTask("Port", "Enter port:")
-    sslTask := termos.NewYesNoTask("SSL", "Enable SSL?")
-
-    queue := termos.NewQueue("Configuration")
-    queue.AddTasks(hostTask, portTask, sslTask)
-    queue.Run()
-
-    config.Host = hostTask.GetValue()
-    config.Port = portTask.GetValue()
-    config.SSL = sslTask.IsYes()
-
-    return &config
-}
-```
-
-### 3. Валидация результатов
-
-```go
-task := termos.NewInputTask("Port", "Enter port (1-65535):").
-    WithValidator(termos.DefaultValidators.Port())
-
-// Дополнительная проверка после выполнения
-if task.GetValue() != "" {
-    port, _ := strconv.Atoi(task.GetValue())
-    if port < 1024 {
-        fmt.Println("Warning: Using privileged port")
-    }
-}
-```
-
-## См. также
-
-- [YesNoTask](/ru/components/yesno-task) - подробности о задачах подтверждения
-- [Валидация](/ru/validation/overview) - система валидации входных данных
-- [Примеры](/ru/examples/basic-usage) - практические примеры использования
+Продолжайте с подробным описанием конкретных задач в соответствующих разделах.

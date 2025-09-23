@@ -204,15 +204,6 @@ func (t *YesNoTask) WithTimeoutNo(duration time.Duration) *YesNoTask {
 	return t
 }
 
-// WithDefaultItem задает опцию, которая будет подсвечена при открытии задачи.
-//
-// @param option Опция, которая будет подсвечена при открытии задачи
-// @return Указатель на задачу для цепочки вызовов
-func (t *YesNoTask) WithDefaultItem(option interface{}) *YesNoTask {
-	t.YesNoTask.WithDefaultItem(option)
-	return t
-}
-
 // WithDefaultYes устанавливает "Да" как вариант по умолчанию (языко-независимый)
 //
 // @return Указатель на задачу для цепочки вызовов

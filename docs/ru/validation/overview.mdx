@@ -1,321 +1,138 @@
 ---
 title: "Обзор валидации"
-description: "Система валидации входных данных в Termos"
+description: "Как работает система проверки ввода в Termos"
 ---
 
 # Система валидации
 
-Termos предоставляет мощную и гибкую систему валидации для проверки пользовательского ввода в `InputTask`. Система включает встроенные валидаторы для распространенных случаев и возможность создания собственных валидаторов.
+Termos выполняет проверку пользовательского ввода непосредственно в `InputTask`. Как только пользователь нажимает <kbd>Enter</kbd>, задача вызывает валидатор и, при необходимости, возвращает сообщение об ошибке прямо в интерфейс.
 
-## Основные концепции
-
-### Интерфейс валидатора
-
-```go
-type Validator interface {
-    Validate(input string) error
-}
-```
-
-Валидатор получает строку ввода и возвращает ошибку, если ввод не соответствует требованиям.
-
-### Применение валидации
-
-```go
-input := termos.NewInputTask("Email", "Введите email:").
-    WithValidator(termos.DefaultValidators.Email())
-```
-
-Валидация выполняется при подтверждении ввода (нажатии Enter). Если валидация не пройдена, пользователю показывается ошибка и предлагается ввести данные заново.
-
-## Встроенные валидаторы
-
-Termos предоставляет фабрику валидаторов через `termos.DefaultValidators`:
-
-### Базовые валидаторы
+## Базовое использование
 
 ```go
 v := termos.DefaultValidators
 
-// Обязательное поле (не пустое)
-validator := v.Required()
-
-// Минимальная длина
-validator = v.MinLength(5)
-
-// Максимальная длина
-validator = v.MaxLength(20)
-
-// Точная длина
-validator = v.Length(8)
-
-// Числовой диапазон
-validator = v.Range(1, 100)
+email := termos.NewInputTask("Email", "Введите адрес:").
+    WithInputType(termos.InputTypeEmail).
+    WithValidator(v.Email())
 ```
 
-### Форматные валидаторы
+Если email некорректен, пользователь увидит подсказку и сможет исправить значение без выхода из очереди.
+
+## Что такое валидатор
+
+Валидатор — это значение с двумя методами:
 
 ```go
-// Email адрес
-validator := v.Email()
-
-// Опциональный email (может быть пустым)
-validator = v.OptionalEmail()
-
-// URL адрес
-validator = v.URL()
-
-// Только буквы и цифры
-validator = v.AlphaNumeric()
-
-// Имя пользователя
-validator = v.Username()
-
-// Путь к файлу/директории
-validator = v.Path()
-```
-
-### Сетевые валидаторы
-
-```go
-// IP адрес (IPv4 или IPv6)
-validator := v.IP()
-
-// Только IPv4
-validator = v.IPv4()
-
-// Только IPv6
-validator = v.IPv6()
-
-// Доменное имя
-validator = v.Domain()
-
-// Порт (1-65535)
-validator = v.Port()
-```
-
-### Валидаторы паролей
-
-```go
-// Стандартный пароль (минимум 8 символов)
-validator := v.StandardPassword()
-
-// Сильный пароль (минимум 12 символов, буквы, цифры, символы)
-validator = v.StrongPassword()
-```
-
-## Комбинирование валидаторов
-
-### Цепочка валидаторов
-
-```go
-// Можно создать составной валидатор
-type ChainValidator struct {
-    validators []validation.Validator
-}
-
-func (c *ChainValidator) Validate(input string) error {
-    for _, v := range c.validators {
-        if err := v.Validate(input); err != nil {
-            return err
-        }
-    }
-    return nil
-}
-
-// Использование
-chainValidator := &ChainValidator{
-    validators: []validation.Validator{
-        v.Required(),
-        v.MinLength(3),
-        v.MaxLength(20),
-        v.AlphaNumeric(),
-    },
+type Validator interface {
+    Validate(input string) error
+    Description() string
 }
 ```
 
-## Примеры использования
+Возвращаемая ошибка попадает в интерфейс, описание используется для пояснения требований. Вам не нужно импортировать интерфейс — достаточно объявить тип с такими методами.
 
-### Валидация email
-
-```go
-emailTask := termos.NewInputTask("Email", "Введите ваш email:").
-    WithValidator(termos.DefaultValidators.Email())
-
-queue := termos.NewQueue("Регистрация")
-queue.AddTasks(emailTask)
-queue.Run()
-
-fmt.Printf("Email: %s\n", emailTask.GetValue())
-```
-
-### Валидация порта
+## Подключение встроенных валидаторов
 
 ```go
-portTask := termos.NewInputTask("Порт", "Введите порт (1-65535):").
+v := termos.DefaultValidators
+
+username := termos.NewInputTask("Имя", "3-20 символов, латиница")
+username.WithValidator(v.Username())
+
+port := termos.NewInputTask("Порт", "1..65535").
     WithInputType(termos.InputTypeNumber).
-    WithValidator(termos.DefaultValidators.Port())
-
-queue := termos.NewQueue("Настройка сервера")
-queue.AddTasks(portTask)
-queue.Run()
-
-port, _ := strconv.Atoi(portTask.GetValue())
-fmt.Printf("Порт: %d\n", port)
+    WithValidator(v.Port())
 ```
 
-### Валидация пароля
+Список всех доступных проверок смотрите в разделе [Встроенные валидаторы](/ru/validation/built-in-validators).
+
+## Опциональные поля
+
+Если значение может быть пустым:
 
 ```go
-passwordTask := termos.NewInputTask("Пароль", "Введите пароль:").
-    WithInputType(termos.InputTypePassword).
-    WithValidator(termos.DefaultValidators.StrongPassword())
-
-queue := termos.NewQueue("Безопасность")
-queue.AddTasks(passwordTask)
-queue.Run()
-
-fmt.Println("Пароль установлен")
+phone := termos.NewInputTask("Телефон", "Необязательно")
+phone.WithAllowEmpty(true)
+phone.WithValidator(funcValidator)
 ```
 
-### Комплексная валидация
+Комбинируйте `WithAllowEmpty(true)` с валидатором, который корректно обрабатывает пустую строку (например, `OptionalEmail()`).
+
+## Кастомные валидаторы
 
 ```go
-func createUserForm() {
-    v := termos.DefaultValidators
+type evenNumber struct{}
 
-    username := termos.NewInputTask("Имя пользователя", "Логин (3-20 символов):").
-        WithValidator(v.Username())
-
-    email := termos.NewInputTask("Email", "Электронная почта:").
-        WithValidator(v.Email())
-
-    password := termos.NewInputTask("Пароль", "Пароль (мин. 8 символов):").
-        WithInputType(termos.InputTypePassword).
-        WithValidator(v.StandardPassword())
-
-    website := termos.NewInputTask("Сайт", "Веб-сайт (опционально):").
-        WithValidator(v.OptionalURL()) // Кастомный optional URL валидатор
-
-    queue := termos.NewQueue("Регистрация пользователя")
-    queue.AddTasks(username, email, password, website)
-
-    if err := queue.Run(); err != nil {
-        log.Fatal(err)
+func (evenNumber) Validate(input string) error {
+    n, err := strconv.Atoi(strings.TrimSpace(input))
+    if err != nil {
+        return errors.New("введите целое число")
     }
-
-    fmt.Printf("Пользователь создан:\n")
-    fmt.Printf("Логин: %s\n", username.GetValue())
-    fmt.Printf("Email: %s\n", email.GetValue())
-    fmt.Printf("Сайт: %s\n", website.GetValue())
-}
-```
-
-## Обработка ошибок валидации
-
-### Пользовательские сообщения
-
-```go
-type CustomEmailValidator struct{}
-
-func (v *CustomEmailValidator) Validate(input string) error {
-    if input == "" {
-        return errors.New("Email не может быть пустым")
-    }
-
-    emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-    if !emailRegex.MatchString(input) {
-        return errors.New("Введите корректный email адрес (example@domain.com)")
-    }
-
-    return nil
-}
-```
-
-### Мультиязычные сообщения
-
-```go
-type LocalizedValidator struct {
-    lang string
-}
-
-func (v *LocalizedValidator) Validate(input string) error {
-    if input == "" {
-        switch v.lang {
-        case "ru":
-            return errors.New("Поле не может быть пустым")
-        case "en":
-            return errors.New("Field cannot be empty")
-        default:
-            return errors.New("Required field")
-        }
+    if n%2 != 0 {
+        return errors.New("нужно чётное число")
     }
     return nil
+}
+
+func (evenNumber) Description() string {
+    return "Чётное целое число"
+}
+
+code := termos.NewInputTask("Чётный ID", "Введите значение:")
+code.WithInputType(termos.InputTypeNumber)
+code.WithValidator(evenNumber{})
+```
+
+Таким образом можно описывать любую бизнес-логику: от проверки контрольных сумм до валидации с внешними сервисами.
+
+## Несколько проверок подряд
+
+Часто нужно объединять условия:
+
+```go
+v := termos.DefaultValidators
+
+validationChain := []interface {
+    Validate(string) error
+    Description() string
+}{
+    v.Required(),
+    v.MinLength(3),
+    v.MaxLength(20),
+    v.AlphaNumeric(),
+}
+
+validator := compositeValidator(validationChain)
+
+login := termos.NewInputTask("Логин", "3-20 латинских символов")
+login.WithValidator(validator)
+```
+
+`compositeValidator` — удобная обёртка (см. пример в разделе встроенных валидаторов). Можно написать свою, чтобы красиво объединять сообщения об ошибках.
+
+## Обработка результата после очереди
+
+Даже если поле прошло валидацию, дополнительно проверяйте его после `queue.Run()` — особенно если требуется обращение к внешним сервисам или БД.
+
+```go
+queue := termos.NewQueue("Регистрация")
+queue.AddTasks(login, email)
+if err := queue.Run(); err != nil {
+    return err
+}
+
+// Дополнительная проверка уникальности
+if exists(login.GetValue()) {
+    return fmt.Errorf("логин %q уже используется", login.GetValue())
 }
 ```
 
 ## Лучшие практики
 
-### 1. Используйте соответствующие типы ввода
+- Формулируйте сообщения об ошибке так, чтобы пользователь понимал, как исправить ввод.
+- Для сложных правил описывайте требования через `Description()` — Termos покажет их как подсказку.
+- Комбинируйте InputTask с FuncTask, если нужно выполнить длительную проверку (например, запрос к API) и показать подробный результат.
+- Учитывайте локаль: если используете числа, не забудьте обрезать пробелы и заменить запятые на точки (в случае необходимости — сделайте собственный валидатор).
 
-```go
-// Для чисел
-task.WithInputType(termos.InputTypeNumber).
-     WithValidator(v.Range(1, 100))
-
-// Для паролей
-task.WithInputType(termos.InputTypePassword).
-     WithValidator(v.StrongPassword())
-
-// Для email
-task.WithInputType(termos.InputTypeEmail).
-     WithValidator(v.Email())
-```
-
-### 2. Предоставляйте понятные сообщения об ошибках
-
-```go
-type ClearValidator struct{}
-
-func (v *ClearValidator) Validate(input string) error {
-    if len(input) < 3 {
-        return errors.New("Имя должно содержать минимум 3 символа")
-    }
-    if len(input) > 20 {
-        return errors.New("Имя не должно превышать 20 символов")
-    }
-    return nil
-}
-```
-
-### 3. Валидируйте по контексту
-
-```go
-// Разные требования для разных сред
-func createPasswordValidator(env string) validation.Validator {
-    switch env {
-    case "production":
-        return termos.DefaultValidators.StrongPassword()
-    case "development":
-        return termos.DefaultValidators.StandardPassword()
-    default:
-        return termos.DefaultValidators.Required()
-    }
-}
-```
-
-### 4. Используйте опциональные валидаторы
-
-```go
-// Для необязательных полей
-optionalURL := termos.NewInputTask("Сайт", "URL (опционально):").
-    WithValidator(&OptionalValidator{
-        validator: termos.DefaultValidators.URL(),
-    })
-```
-
-## См. также
-
-- [Встроенные валидаторы](/ru/validation/built-in-validators) - полный список встроенных валидаторов
-- [Пользовательские валидаторы](/ru/validation/custom-validators) - создание собственных валидаторов
-- [InputTask](/ru/components/input-task) - использование валидации в задачах ввода
+Подробнее о создании собственных валидаторов — в разделе [Кастомные валидаторы](/ru/validation/custom-validators).

@@ -1,0 +1,53 @@
+---
+title: "Version History"
+description: "Chronological overview of Termos releases"
+---
+
+# Version History
+
+<Info>
+The list below highlights notable changes per release. Dates reflect the maintainer's timezone.
+</Info>
+
+## v1.2.4 · September 22, 2025
+- Fixed the broken `WithTimeout` logic for confirmation/select tasks.
+- Added language-agnostic timeout helpers (`WithTimeoutYes/No` and combined variants).
+- Updated the API reference with the new configuration helpers.
+
+## v1.2.3 · September 21, 2025
+- Extended `WithViewport` for list-based tasks with a flag that toggles the element counters.
+
+## v1.2.2 · September 20, 2025
+- Added left/right arrow hotkeys to speed up navigation in selection lists.
+
+## v1.2.1 · September 20, 2025
+- Introduced built-in localisation for service labels (ru, en, tr, be, uk).
+
+## v1.2.0 · August 27, 2025
+- Released `WithViewport`, allowing you to cap the visible height of long lists.
+
+## v1.1.12 · August 25, 2025
+- `formatErrorEveryLine` now accepts the `delNewLines` argument to control newline stripping.
+
+## v1.1.11 · August 25, 2025
+- Error output is no longer truncated — the full message is shown in the TUI.
+
+## v1.1.10 · August 24, 2025
+- Refined error rendering and moved shared constants into the `defaults` module.
+
+## v1.1.0 · August 22, 2025
+- Added timeout support to every task type, including a default fallback value.
+
+## v1.0.2 · August 10, 2025
+- Fixed state prefixes in the TUI summary.
+
+## v1.0.0 · August 8, 2025
+- First stable release:
+  - introduced the task queue, validation subsystem and all core task types;
+  - shipped UI styles, utility packages and error handling;
+  - delivered demo applications, documentation and embedded-focused examples;
+  - covered queues, validators, UI and utilities with tests.
+
+<Note>
+For exhaustive change sets, check `git log` or the GitHub Releases feed.
+</Note>
