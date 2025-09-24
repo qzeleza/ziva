@@ -896,7 +896,7 @@ func (t *MultiSelectTask) View(width int) string {
 			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.UpArrowSymbol)
 		}
 		// Не добавляем перенос строки в самой строке, чтобы не нарушать форматирование
-		sb.WriteString(ui.SubtleStyle.Render(indicator))
+		appendIndicatorWithPlainPipe(&sb, indicator)
 		// Добавляем перенос строки отдельно
 		sb.WriteString("\n")
 	}
@@ -972,7 +972,7 @@ func (t *MultiSelectTask) View(width int) string {
 		} else {
 			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.DownArrowSymbol)
 		}
-		sb.WriteString(ui.SubtleStyle.Render(indicator))
+		appendIndicatorWithPlainPipe(&sb, indicator)
 		// Добавляем перенос строки отдельно
 		sb.WriteString("\n")
 	}

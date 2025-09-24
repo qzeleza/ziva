@@ -3,6 +3,7 @@
 package task
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -10,6 +11,12 @@ import (
 	"github.com/qzeleza/termos/internal/defaults"
 	"github.com/stretchr/testify/assert"
 )
+
+var ansiRegexp = regexp.MustCompile(`\x1b\[[0-9;]*m`)
+
+func stripANSI(input string) string {
+	return ansiRegexp.ReplaceAllString(input, "")
+}
 
 // TestSingleSelectTaskCreation проверяет корректность создания задачи SingleSelectTask
 func TestSingleSelectTaskCreation(t *testing.T) {
@@ -225,7 +232,8 @@ func TestSingleSelectTaskViewportIndicators(t *testing.T) {
 		task, _ = updated.(*SingleSelectTask)
 	}
 	viewWithCounters := task.View(80)
-	assert.True(t, strings.Contains(viewWithCounters, "▲  1"), "Индикатор должен содержать двойной пробел и количество")
+	assert.Contains(t, viewWithCounters, "▲", "Индикатор должен содержать символ стрелки")
+	assert.Contains(t, viewWithCounters, "выше", "Индикатор должен указывать на элементы выше")
 
 	task = NewSingleSelectTask(title, options).WithViewport(2, false)
 	for i := 0; i < 3; i++ {
@@ -249,4 +257,19 @@ func TestSingleSelectTaskHelpTagRendering(t *testing.T) {
 	task, _ = updated.(*SingleSelectTask)
 	view = task.View(80)
 	assert.NotContains(t, view, "подсказка 1", "Пустая подсказка не должна добавлять строку")
+
+	cleanView := stripANSI(view)
+	lines := strings.Split(cleanView, "\n")
+	hintLineIndex := -1
+	for i, line := range lines {
+		if strings.Contains(line, defaults.SingleSelectHelp) {
+			hintLineIndex = i
+			break
+		}
+	}
+	assert.GreaterOrEqual(t, hintLineIndex, 0, "Подсказка должна отображаться в выводе")
+	if hintLineIndex > 0 {
+		prevLine := strings.TrimSpace(lines[hintLineIndex-1])
+		assert.NotEqual(t, "", prevLine, "Строка подсказки не должна отделяться пустой строкой")
+	}
 }

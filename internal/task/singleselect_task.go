@@ -482,7 +482,7 @@ func (t *SingleSelectTask) View(width int) string {
 		} else {
 			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.UpArrowSymbol)
 		}
-		sb.WriteString(ui.SubtleStyle.Render(indicator))
+		appendIndicatorWithPlainPipe(&sb, indicator)
 		sb.WriteString("\n")
 	}
 
@@ -557,7 +557,7 @@ func (t *SingleSelectTask) View(width int) string {
 		} else {
 			indicator = fmt.Sprintf("%s %s", indentPrefix, ui.DownArrowSymbol)
 		}
-		sb.WriteString(ui.SubtleStyle.Render(indicator))
+		appendIndicatorWithPlainPipe(&sb, indicator)
 		sb.WriteString("\n")
 	}
 
@@ -567,8 +567,9 @@ func (t *SingleSelectTask) View(width int) string {
 	sb.WriteString("\n" + ui.DrawLine(width))
 	if activeHelp != "" {
 		sb.WriteString(ui.HelpTextStyle.Render(fmt.Sprintf("%s%s", helpIndent, activeHelp)))
+		sb.WriteString("\n")
 	}
-	sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s\n%s%s", helpIndent, helpIndent, defaults.SingleSelectHelp)))
+	sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s%s", helpIndent, defaults.SingleSelectHelp)))
 
 	return sb.String()
 }

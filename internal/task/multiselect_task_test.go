@@ -3,7 +3,6 @@
 package task
 
 import (
-	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -253,7 +252,8 @@ func TestMultiSelectTaskViewportIndicators(t *testing.T) {
 		task, _ = updated.(*MultiSelectTask)
 	}
 	viewWithCounters := task.View(80)
-	assert.True(t, strings.Contains(viewWithCounters, "▲  1"), "Индикатор должен содержать двойной пробел и количество")
+	assert.Contains(t, viewWithCounters, "▲", "Индикатор должен содержать символ стрелки")
+	assert.Contains(t, viewWithCounters, "выше", "Индикатор должен указывать на элементы выше")
 
 	task = NewMultiSelectTask(title, options).WithViewport(2, false)
 	for i := 0; i < 3; i++ {

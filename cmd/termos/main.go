@@ -26,7 +26,7 @@ func main() {
 	// Настраиваем язык интерфейса и предупреждаем о возможных ограничениях терминала
 	activeLang := configureLanguage()
 	warnTerminalCapabilities(activeLang)
-	termos.SetDefaultLanguage("tr")
+	termos.SetDefaultLanguage("ru")
 	// Используем собственный разделитель для подсказок в пунктах меню
 	termos.SetChoiceHelpDelimiter("||")
 
@@ -127,7 +127,7 @@ func main() {
 	}
 	// 5) Подтверждение Да/Нет (например, для сохранения настроек)
 	// Используем языко-независимый метод вместо строки "Да"
-	ys := termos.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeoutYes(2*time.Second)
+	ys := termos.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeoutYes(2 * time.Second)
 
 	// inUsername := termos.NewInputTask("Имя пользователя", "Введите username:").
 	// 	WithValidator(v.Username()).
