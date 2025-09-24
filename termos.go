@@ -250,9 +250,9 @@ func (t *YesNoTask) WithCustomLabels(yesLabel, noLabel string) *YesNoTask {
 	return t
 }
 
-// SetChoiceHelpDelimiter задаёт разделитель, используемый для встроенных подсказок в строках выбора.
+// SetDescriptionSeparator задаёт разделитель, используемый для встроенных подсказок в строках выбора.
 // По умолчанию используется "::".
-func SetChoiceHelpDelimiter(delim string) {
+func SetDescriptionSeparator(delim string) {
 	task.SetChoiceHelpDelimiter(delim)
 }
 
