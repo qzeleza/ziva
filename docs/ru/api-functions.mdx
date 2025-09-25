@@ -1,14 +1,14 @@
 ---
 title: "API Функции"
-description: "Глобальные функции Termos для настройки окружения, локализации и оптимизации"
+description: "Глобальные функции Ziva для настройки окружения, локализации и оптимизации"
 ---
 
-# API-функции Termos
+# API-функции Ziva
 
-Помимо задач и очередей Termos предоставляет набор глобальных функций. Они помогают настроить язык интерфейса, выбрать цветовую схему, оптимизировать работу на встроенных устройствах и управлять строковыми операциями.
+Помимо задач и очередей Ziva предоставляет набор глобальных функций. Они помогают настроить язык интерфейса, выбрать цветовую схему, оптимизировать работу на встроенных устройствах и управлять строковыми операциями.
 
 <Info>
-Все функции находятся в пакете `termos`. Достаточно подключить библиотеку: `import "github.com/qzeleza/termos"`.
+Все функции находятся в пакете `ziva`. Достаточно подключить библиотеку: `import "github.com/qzeleza/ziva"`.
 </Info>
 
 ## Локализация
@@ -18,7 +18,7 @@ description: "Глобальные функции Termos для настройк
 Устанавливает активный язык интерфейса (`"ru"`, `"en"`, `"tr"`, ...). Возвращает фактически применённый язык (если запрошенный недоступен, вернётся значение по умолчанию).
 
 ```go
-active := termos.SetLanguage("ru")
+active := ziva.SetLanguage("ru")
 fmt.Println("Текущий язык:", active)
 ```
 
@@ -28,7 +28,7 @@ fmt.Println("Текущий язык:", active)
 
 ```go
 func init() {
-    termos.SetDefaultLanguage("ru")
+    ziva.SetDefaultLanguage("ru")
 }
 ```
 
@@ -37,9 +37,9 @@ func init() {
 Возвращает код текущей локали.
 
 ```go
-if termos.CurrentLanguage() != "ru" {
+if ziva.CurrentLanguage() != "ru" {
     fmt.Println("Переключаемся на русский")
-    termos.SetLanguage("ru")
+    ziva.SetLanguage("ru")
 }
 ```
 
@@ -48,7 +48,7 @@ if termos.CurrentLanguage() != "ru" {
 Список поддерживаемых языков. Можно использовать для выпадающего списка настроек.
 
 ```go
-for _, code := range termos.SupportedLanguages() {
+for _, code := range ziva.SupportedLanguages() {
     fmt.Println("Доступен язык:", code)
 }
 ```
@@ -61,7 +61,7 @@ for _, code := range termos.SupportedLanguages() {
 
 ```go
 func main() {
-    termos.AutoConfigure()
+    ziva.AutoConfigure()
     // далее ваши задачи/очереди
 }
 ```
@@ -71,8 +71,8 @@ func main() {
 Проверяет архитектуру рантайма. Можно переключать алгоритмы в зависимости от результата.
 
 ```go
-if !termos.Is64Bit() {
-    termos.EnableASCIIMode()
+if !ziva.Is64Bit() {
+    ziva.EnableASCIIMode()
 }
 ```
 
@@ -89,7 +89,7 @@ if !termos.Is64Bit() {
 Показывает, активен ли в данный момент «встроенный» режим.
 
 ```go
-if termos.IsEmbeddedColorMode() {
+if ziva.IsEmbeddedColorMode() {
     fmt.Println("Работаем в упрощённой палитре")
 }
 ```
@@ -101,7 +101,7 @@ if termos.IsEmbeddedColorMode() {
 Настраивает цвета ошибок и меток статуса.
 
 ```go
-termos.SetErrorColor(
+ziva.SetErrorColor(
     lipgloss.Color("#FF6B6B"), // текст ошибки
     lipgloss.Color("#FFE66D"), // ярлык статуса
 )
@@ -112,7 +112,7 @@ termos.SetErrorColor(
 Возвращает цвета ошибок к значениям по умолчанию.
 
 ```go
-termos.ResetErrorColors()
+ziva.ResetErrorColors()
 ```
 
 ## Строковые и производительные утилиты
@@ -134,10 +134,10 @@ termos.ResetErrorColors()
 Схлопывает повторяющиеся пробелы и переносы строк.
 
 ```go
-header := termos.FastConcat(
-    termos.RepeatEfficient("=", 40), "\n",
+header := ziva.FastConcat(
+    ziva.RepeatEfficient("=", 40), "\n",
     "ОТЧЁТ\n",
-    termos.RepeatEfficient("=", 40),
+    ziva.RepeatEfficient("=", 40),
 )
 ```
 
@@ -156,11 +156,11 @@ header := termos.FastConcat(
 Очищает кэш — полезно при завершении работы CLI или после крупной операции.
 
 ```go
-size, cap := termos.GetCacheStats()
+size, cap := ziva.GetCacheStats()
 log.Printf("cache %d/%d", size, cap)
 
 if size > cap/2 {
-    termos.ClearInternCache()
+    ziva.ClearInternCache()
 }
 ```
 
@@ -168,14 +168,14 @@ if size > cap/2 {
 
 ### CalculateLayoutWidth(screenWidth int) int
 
-Подсказывает оптимальную ширину вывода с учётом отступов Termos.
+Подсказывает оптимальную ширину вывода с учётом отступов Ziva.
 
 ### SetChoiceHelpDelimiter(delim string)
 
 Меняет разделитель между значением и подсказкой в задачах выбора.
 
 ```go
-termos.SetChoiceHelpDelimiter(" → ")
+ziva.SetChoiceHelpDelimiter(" → ")
 ```
 
 Разделитель применяется глобально ко всем `SingleSelectTask`/`MultiSelectTask`/`YesNoTask`.
@@ -185,11 +185,11 @@ termos.SetChoiceHelpDelimiter(" → ")
 Если нужен валидатор вне фабрики `DefaultValidators`, используйте функции-конструкторы.
 
 ```go
-passwordValidator := termos.NewPasswordValidator(10)
-emailValidator    := termos.NewEmailValidator()
-ipv4Validator     := termos.NewIPv4Validator()
-domainValidator   := termos.NewDomainValidator()
-textValidator     := termos.NewTextValidator(5, 120)
+passwordValidator := ziva.NewPasswordValidator(10)
+emailValidator    := ziva.NewEmailValidator()
+ipv4Validator     := ziva.NewIPv4Validator()
+domainValidator   := ziva.NewDomainValidator()
+textValidator     := ziva.NewTextValidator(5, 120)
 ```
 
 Все функции возвращают объект с методами `Validate` и `Description`, поэтому их можно комбинировать с собственными проверками.
@@ -198,16 +198,16 @@ textValidator     := termos.NewTextValidator(5, 120)
 
 ```go
 func configureEmbeddedCLI() {
-    termos.SetDefaultLanguage("ru")
-    termos.AutoConfigure()
-    termos.EnableEmbeddedMode()
-    termos.EnableASCIIMode()
+    ziva.SetDefaultLanguage("ru")
+    ziva.AutoConfigure()
+    ziva.EnableEmbeddedMode()
+    ziva.EnableASCIIMode()
 
-    if !termos.Is64Bit() {
-        termos.SetChoiceHelpDelimiter(" -> ")
+    if !ziva.Is64Bit() {
+        ziva.SetChoiceHelpDelimiter(" -> ")
     }
 
-    termos.SetErrorColor(
+    ziva.SetErrorColor(
         lipgloss.Color("#FFD166"),
         lipgloss.Color("#EF476F"),
     )

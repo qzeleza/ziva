@@ -1,16 +1,16 @@
 ---
 title: "Task Queue"
-description: "Task sequence management system in Termos"
+description: "Task sequence management system in Ziva"
 ---
 
 # Task Queue
 
-`Queue` is the central component of Termos that manages sequential task execution and provides a unified interface for user interaction.
+`Queue` is the central component of Ziva that manages sequential task execution and provides a unified interface for user interaction.
 
 ## Creating a Queue
 
 ```go
-queue := termos.NewQueue("Queue title")
+queue := ziva.NewQueue("Queue title")
 ```
 
 ![Screenshot: queue summary view](/images/pic_5.png)
@@ -50,10 +50,10 @@ queue.WithAppName("MyApplication")
 
 ```go
 // Application name color
-queue.WithAppNameColor(termos.BlueBright, true) // color, bold
+queue.WithAppNameColor(ziva.BlueBright, true) // color, bold
 
 // Queue title color
-queue.WithTitleColor(termos.GreenBright, false) // color, normal
+queue.WithTitleColor(ziva.GreenBright, false) // color, normal
 ```
 
 ### Task Numbering
@@ -93,7 +93,7 @@ queue.WithClearScreen(true)
 
 ```go
 // Import error types
-import "github.com/qzeleza/termos/internal/query"
+import "github.com/qzeleza/ziva/internal/query"
 
 // Set error color
 queue.SetErrorColor(query.ErrorColorRed)    // Red
@@ -106,7 +106,7 @@ queue.SetErrorColor(query.ErrorColorNone)   // No color
 ### Minimal Configuration
 
 ```go
-queue := termos.NewQueue("Simple application")
+queue := ziva.NewQueue("Simple application")
 queue.AddTasks(task1, task2)
 queue.Run()
 ```
@@ -114,10 +114,10 @@ queue.Run()
 ### Full Configuration
 
 ```go
-queue := termos.NewQueue("Advanced TUI Application")
+queue := ziva.NewQueue("Advanced TUI Application")
 queue.WithAppName("AdvancedApp").
-      WithAppNameColor(termos.BlueBright, true).
-      WithTitleColor(termos.GreenBright, false).
+      WithAppNameColor(ziva.BlueBright, true).
+      WithTitleColor(ziva.GreenBright, false).
       WithTasksNumbered(true, "[%02d]").
       WithClearScreen(true).
       WithOutResultLine().
@@ -138,7 +138,7 @@ if err := queue.Run(); err != nil {
 ### Embedded Systems Configuration
 
 ```go
-queue := termos.NewQueue("IoT Configuration")
+queue := ziva.NewQueue("IoT Configuration")
 queue.WithAppName("RouterSetup").
       WithOutSummary(true).        // Space saving
       WithOutResultLine().         // Simplified output
@@ -146,8 +146,8 @@ queue.WithAppName("RouterSetup").
       WithClearScreen(false)       // Preserve context
 
 // Use simplified colors
-queue.WithAppNameColor(termos.WhiteBright, false).
-      WithTitleColor(termos.GrayBright, false)
+queue.WithAppNameColor(ziva.WhiteBright, false).
+      WithTitleColor(ziva.GrayBright, false)
 ```
 
 ## Queue Lifecycle
@@ -186,10 +186,10 @@ if err := queue.Run(); err != nil {
 
 ```go
 // Limit completed task history
-os.Setenv("TERMOS_MAX_COMPLETED_TASKS", "5")
+os.Setenv("ZIVA_MAX_COMPLETED_TASKS", "5")
 
 // Memory monitoring
-os.Setenv("TERMOS_MEMORY_PRESSURE_THRESHOLD", "100M")
+os.Setenv("ZIVA_MEMORY_PRESSURE_THRESHOLD", "100M")
 ```
 
 ### For Slow Terminals

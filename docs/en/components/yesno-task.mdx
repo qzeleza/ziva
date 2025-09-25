@@ -5,12 +5,12 @@ description: "Binary choice task between two options"
 
 # YesNoTask
 
-`YesNoTask` provides an interface for choosing between two options: "Yes" and "No". This is the simplest task type in Termos, perfect for confirmations and binary decisions.
+`YesNoTask` provides an interface for choosing between two options: "Yes" and "No". This is the simplest task type in Ziva, perfect for confirmations and binary decisions.
 
 ## Creating a Task
 
 ```go
-task := termos.NewYesNoTask("Title", "Question for user?")
+task := ziva.NewYesNoTask("Title", "Question for user?")
 ```
 
 ## Main Methods
@@ -18,7 +18,7 @@ task := termos.NewYesNoTask("Title", "Question for user?")
 ### Creating with Settings
 
 ```go
-task := termos.NewYesNoTask("Confirmation", "Continue installation?").
+task := ziva.NewYesNoTask("Confirmation", "Continue installation?").
     WithDefaultItem("Yes").                          // default value
     WithTimeout(10*time.Second, "No").               // timeout with fallback
     WithCustomLabels("Continue", "Cancel")           // custom labels
@@ -28,7 +28,7 @@ task := termos.NewYesNoTask("Confirmation", "Continue installation?").
 
 ```go
 // After task execution
-option := task.GetSelectedOption() // termos.YesNoOption
+option := task.GetSelectedOption() // ziva.YesNoOption
 isYes := task.IsYes()              // bool
 isNo := task.IsNo()                // bool
 ```
@@ -38,12 +38,12 @@ isNo := task.IsNo()                // bool
 ```go
 // Available options
 const (
-    YesOption = termos.YesOption  // "Yes"
-    NoOption  = termos.NoOption   // "No"
+    YesOption = ziva.YesOption  // "Yes"
+    NoOption  = ziva.NoOption   // "No"
 )
 
 // Check specific option
-if task.GetSelectedOption() == termos.YesOption {
+if task.GetSelectedOption() == ziva.YesOption {
     fmt.Println("User chose 'Yes'")
 }
 ```
@@ -58,8 +58,8 @@ task.WithDefaultItem("Yes")
 task.WithDefaultItem("No")
 
 // By constant
-task.WithDefaultItem(termos.YesOption)
-task.WithDefaultItem(termos.NoOption)
+task.WithDefaultItem(ziva.YesOption)
+task.WithDefaultItem(ziva.NoOption)
 
 // By bool (true = Yes, false = No)
 task.WithDefaultItem(true)
@@ -73,7 +73,7 @@ task.WithDefaultItem(false)
 task.WithTimeout(5*time.Second, "Yes")
 
 // Timeout with automatic "No" selection
-task.WithTimeout(3*time.Second, termos.NoOption)
+task.WithTimeout(3*time.Second, ziva.NoOption)
 
 // Timeout with bool value
 task.WithTimeout(10*time.Second, true) // true = Yes
@@ -97,12 +97,12 @@ task.WithCustomLabels("✓ Yes", "✗ No")
 
 ```go
 func confirmAction() bool {
-    task := termos.NewYesNoTask(
+    task := ziva.NewYesNoTask(
         "Confirmation",
         "Are you sure you want to delete the file?",
     )
 
-    queue := termos.NewQueue("File Deletion")
+    queue := ziva.NewQueue("File Deletion")
     queue.AddTasks(task)
     queue.Run()
 
@@ -114,12 +114,12 @@ func confirmAction() bool {
 
 ```go
 func confirmWithTimeout() bool {
-    task := termos.NewYesNoTask(
+    task := ziva.NewYesNoTask(
         "Auto-continue",
         "Continue in 5 seconds?",
     ).WithTimeout(5*time.Second, "Yes")
 
-    queue := termos.NewQueue("Demo")
+    queue := ziva.NewQueue("Demo")
     queue.AddTasks(task)
     queue.Run()
 
@@ -131,13 +131,13 @@ func confirmWithTimeout() bool {
 
 ```go
 func enableFeature() bool {
-    task := termos.NewYesNoTask(
+    task := ziva.NewYesNoTask(
         "Feature Setup",
         "Enable experimental feature?",
     ).WithCustomLabels("Enable", "Keep disabled").
       WithDefaultItem("Keep disabled")
 
-    queue := termos.NewQueue("Configuration")
+    queue := ziva.NewQueue("Configuration")
     queue.AddTasks(task)
     queue.Run()
 

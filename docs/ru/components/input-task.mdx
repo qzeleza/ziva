@@ -10,7 +10,7 @@ description: "Текстовый ввод с типами полей, тайма
 ## Создание
 
 ```go
-name := termos.NewInputTask("Имя проекта", "Введите название:")
+name := ziva.NewInputTask("Имя проекта", "Введите название:")
 ```
 
 ![Скриншот: ввод с валидацией](/images/pic_4.png)
@@ -20,21 +20,21 @@ name := termos.NewInputTask("Имя проекта", "Введите назва�
 ### Тип ввода
 
 ```go
-name.WithInputType(termos.InputTypeText)
-password := termos.NewInputTask("Пароль", "Введите пароль:").
-    WithInputType(termos.InputTypePassword)
+name.WithInputType(ziva.InputTypeText)
+password := ziva.NewInputTask("Пароль", "Введите пароль:").
+    WithInputType(ziva.InputTypePassword)
 ```
 
 Доступные типы:
 
 ```go
 const (
-    termos.InputTypeText     // обычный текст
-    termos.InputTypePassword // скрытый ввод
-    termos.InputTypeEmail    // email
-    termos.InputTypeNumber   // число
-    termos.InputTypeIP       // IP адрес
-    termos.InputTypeDomain   // доменное имя
+    ziva.InputTypeText     // обычный текст
+    ziva.InputTypePassword // скрытый ввод
+    ziva.InputTypeEmail    // email
+    ziva.InputTypeNumber   // число
+    ziva.InputTypeIP       // IP адрес
+    ziva.InputTypeDomain   // доменное имя
 )
 ```
 
@@ -43,11 +43,11 @@ const (
 ### Валидаторы
 
 ```go
-v := termos.DefaultValidators
+v := ziva.DefaultValidators
 
 name.WithValidator(v.Username())
-email := termos.NewInputTask("Email", "Введите email:").
-    WithInputType(termos.InputTypeEmail).
+email := ziva.NewInputTask("Email", "Введите email:").
+    WithInputType(ziva.InputTypeEmail).
     WithValidator(v.Email())
 ```
 
@@ -71,7 +71,7 @@ name.
 ## Получение результата
 
 ```go
-queue := termos.NewQueue("Регистрация")
+queue := ziva.NewQueue("Регистрация")
 queue.AddTasks(name)
 _ = queue.Run()
 
@@ -82,16 +82,16 @@ fmt.Println("Имя проекта:", name.GetValue())
 
 ```go
 func askCredentials() (string, string) {
-    v := termos.DefaultValidators
+    v := ziva.DefaultValidators
 
-    login := termos.NewInputTask("Логин", "Имя пользователя:").
+    login := ziva.NewInputTask("Логин", "Имя пользователя:").
         WithValidator(v.Username())
 
-    password := termos.NewInputTask("Пароль", "Пароль (>=12 символов):").
-        WithInputType(termos.InputTypePassword).
+    password := ziva.NewInputTask("Пароль", "Пароль (>=12 символов):").
+        WithInputType(ziva.InputTypePassword).
         WithValidator(v.StrongPassword())
 
-    queue := termos.NewQueue("Авторизация")
+    queue := ziva.NewQueue("Авторизация")
     queue.AddTasks(login, password)
     _ = queue.Run()
 

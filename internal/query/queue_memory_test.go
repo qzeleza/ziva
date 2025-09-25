@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/ui"
+	"github.com/qzeleza/ziva/internal/common"
+	"github.com/qzeleza/ziva/internal/ui"
 	"github.com/stretchr/testify/assert"
 )
 

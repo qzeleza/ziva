@@ -1,26 +1,26 @@
 ---
 title: "Стили и макет"
-description: "Как переопределять стили Termos и интегрировать собственные элементы оформления"
+description: "Как переопределять стили Ziva и интегрировать собственные элементы оформления"
 ---
 
-# Стили и макет Termos
+# Стили и макет Ziva
 
 Интерфейс формируется с помощью Lip Gloss. Библиотека экспортирует готовые стили, которые можно использовать как есть или модифицировать.
 
 ## Готовые стили
 
 ```go
-termos.ErrorStatusStyle
-termos.CancelStyle
-termos.SelectionStyle
-termos.ActiveTitleStyle
-termos.SuccessLabelStyle
+ziva.ErrorStatusStyle
+ziva.CancelStyle
+ziva.SelectionStyle
+ziva.ActiveTitleStyle
+ziva.SuccessLabelStyle
 ```
 
 Каждый — это объект `lipgloss.Style`. Его можно клонировать и изменить под свои нужды:
 
 ```go
-customSelection := termos.SelectionStyle.Copy().Foreground(lipgloss.Color("#22D3EE"))
+customSelection := ziva.SelectionStyle.Copy().Foreground(lipgloss.Color("#22D3EE"))
 ```
 
 Используйте новые стили в собственных компонентах (например, в кастомных `FuncTask` или дополнительном выводе после очереди).
@@ -28,23 +28,23 @@ customSelection := termos.SelectionStyle.Copy().Foreground(lipgloss.Color("#22D3
 ## Настройка заголовка
 
 ```go
-queue := termos.NewQueue("Профили")
+queue := ziva.NewQueue("Профили")
 queue.WithAppName("Provisioning CLI")
-queue.WithAppNameColor(termos.CyanBright, true)
+queue.WithAppNameColor(ziva.CyanBright, true)
 queue.WithTitleColor(lipgloss.Color("#FDE68A"), true)
 ```
 
 ## Управление шириной
 
-`termos.CalculateLayoutWidth()` помогает подобрать ширину вывода, чтобы контент выглядел аккуратно на разных размерах терминала.
+`ziva.CalculateLayoutWidth()` помогает подобрать ширину вывода, чтобы контент выглядел аккуратно на разных размерах терминала.
 
 ```go
-width := termos.CalculateLayoutWidth(terminalWidth)
+width := ziva.CalculateLayoutWidth(terminalWidth)
 fmt.Println("Рекомендуемая ширина:", width)
 ```
 
 <Info>
-Для расчёта `terminalWidth` можно использовать `lipgloss.Width()` или `github.com/muesli/termenv`. Если ширина неизвестна, Termos использует значение по умолчанию.
+Для расчёта `terminalWidth` можно использовать `lipgloss.Width()` или `github.com/muesli/termenv`. Если ширина неизвестна, Ziva использует значение по умолчанию.
 </Info>
 
 ## Дополнительные подсказки
@@ -59,7 +59,7 @@ fmt.Println("Рекомендуемая ширина:", width)
 Вы можете добавить дополнительный вывод до или после `queue.Run()` с использованием тех же стилей:
 
 ```go
-banner := termos.ActiveTitleStyle.Copy().
+banner := ziva.ActiveTitleStyle.Copy().
     Margin(1, 0).
     Padding(0, 2).
     Render("⚙ Настройка инфраструктуры")

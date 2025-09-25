@@ -5,66 +5,66 @@ description: "Rich input flows with built-in and custom validators"
 
 # Validation Showcase
 
-This guide demonstrates how to build reliable forms with Termos: cover every built-in validator, assemble validation chains, and plug in external checks.
+This guide demonstrates how to build reliable forms with Ziva: cover every built-in validator, assemble validation chains, and plug in external checks.
 
 ## Queue with all built-in validators
 
 ```go
 func ShowBuiltInValidators() {
-    v := termos.DefaultValidators
+    v := ziva.DefaultValidators
 
-    tasks := []termos.Task{
-        termos.NewInputTask("Name", "Required field:").
+    tasks := []ziva.Task{
+        ziva.NewInputTask("Name", "Required field:").
             WithValidator(v.Required()),
 
-        termos.NewInputTask("Username", "3-20 characters, latin/number:").
+        ziva.NewInputTask("Username", "3-20 characters, latin/number:").
             WithValidator(v.Username()),
 
-        termos.NewInputTask("Short description", "Up to 40 characters:").
+        ziva.NewInputTask("Short description", "Up to 40 characters:").
             WithValidator(v.MaxLength(40)),
 
-        termos.NewInputTask("Comment", "At least 5 characters:").
+        ziva.NewInputTask("Comment", "At least 5 characters:").
             WithValidator(v.MinLength(5)),
 
-        termos.NewInputTask("Code", "Exactly 8 characters:").
+        ziva.NewInputTask("Code", "Exactly 8 characters:").
             WithValidator(v.Length(8)),
 
-        termos.NewInputTask("Email", "Email address:").
-            WithInputType(termos.InputTypeEmail).
+        ziva.NewInputTask("Email", "Email address:").
+            WithInputType(ziva.InputTypeEmail).
             WithValidator(v.Email()),
 
-        termos.NewInputTask("Website", "URL (optional):").
+        ziva.NewInputTask("Website", "URL (optional):").
             WithValidator(v.OptionalURL()),
 
-        termos.NewInputTask("IP", "IPv4 or IPv6:").
-            WithInputType(termos.InputTypeIP).
+        ziva.NewInputTask("IP", "IPv4 or IPv6:").
+            WithInputType(ziva.InputTypeIP).
             WithValidator(v.IP()),
 
-        termos.NewInputTask("Domain", "Domain name:").
-            WithInputType(termos.InputTypeDomain).
+        ziva.NewInputTask("Domain", "Domain name:").
+            WithInputType(ziva.InputTypeDomain).
             WithValidator(v.Domain()),
 
-        termos.NewInputTask("Port", "Range 1-65535:").
-            WithInputType(termos.InputTypeNumber).
+        ziva.NewInputTask("Port", "Range 1-65535:").
+            WithInputType(ziva.InputTypeNumber).
             WithValidator(v.Port()),
 
-        termos.NewInputTask("Number", "Range 1-100:").
-            WithInputType(termos.InputTypeNumber).
+        ziva.NewInputTask("Number", "Range 1-100:").
+            WithInputType(ziva.InputTypeNumber).
             WithValidator(v.Range(1, 100)),
 
-        termos.NewInputTask("Alphanumeric", "Letters and digits only:").
+        ziva.NewInputTask("Alphanumeric", "Letters and digits only:").
             WithValidator(v.AlphaNumeric()),
 
-        termos.NewInputTask("Password", "Minimum 8 characters:").
-            WithInputType(termos.InputTypePassword).
+        ziva.NewInputTask("Password", "Minimum 8 characters:").
+            WithInputType(ziva.InputTypePassword).
             WithValidator(v.StandardPassword()),
 
-        termos.NewInputTask("Strong password", "Minimum 12 characters, mixed set:").
-            WithInputType(termos.InputTypePassword).
+        ziva.NewInputTask("Strong password", "Minimum 12 characters, mixed set:").
+            WithInputType(ziva.InputTypePassword).
             WithValidator(v.StrongPassword()),
     }
 
-    queue := termos.NewQueue("Validation tour").
+    queue := ziva.NewQueue("Validation tour").
         WithTasksNumbered(true, "[%02d]")
     queue.AddTasks(tasks...)
     _ = queue.Run()
@@ -79,7 +79,7 @@ Each task triggers its validator after the user presses <kbd>Enter</kbd>. When v
 
 ```go
 type Chain struct {
-    validators []termos.Validator
+    validators []ziva.Validator
 }
 
 func (c Chain) Validate(input string) error {
@@ -100,13 +100,13 @@ func (c Chain) Description() string {
 }
 
 func AskSecureToken() {
-    v := termos.DefaultValidators
+    v := ziva.DefaultValidators
 
-    token := termos.NewInputTask(
+    token := ziva.NewInputTask(
         "API token",
         "Required, 16-64 characters, alphanumeric",
     ).WithValidator(Chain{
-        validators: []termos.Validator{
+        validators: []ziva.Validator{
             v.Required(),
             v.MinLength(16),
             v.MaxLength(64),
@@ -114,7 +114,7 @@ func AskSecureToken() {
         },
     })
 
-    queue := termos.NewQueue("Token validation")
+    queue := ziva.NewQueue("Token validation")
     queue.AddTasks(token)
     _ = queue.Run()
 
@@ -144,34 +144,34 @@ func (UniqueEmail) Description() string {
 }
 
 func SignUpForm() error {
-    v := termos.DefaultValidators
+    v := ziva.DefaultValidators
 
-    email := termos.NewInputTask("Email", "Enter work email:").
-        WithInputType(termos.InputTypeEmail).
+    email := ziva.NewInputTask("Email", "Enter work email:").
+        WithInputType(ziva.InputTypeEmail).
         WithValidator(v.Email())
 
-    password := termos.NewInputTask(
+    password := ziva.NewInputTask(
         "Password",
         "Minimum 12 characters, letters/digits/symbols",
-    ).WithInputType(termos.InputTypePassword).
+    ).WithInputType(ziva.InputTypePassword).
         WithValidator(v.StrongPassword())
 
-    confirm := termos.NewYesNoTask(
+    confirm := ziva.NewYesNoTask(
         "Confirmation",
         "Submit data to CRM?",
     ).WithDefaultYes()
 
-    queue := termos.NewQueue("User signup")
+    queue := ziva.NewQueue("User signup")
     queue.AddTasks(email, password, confirm)
     if err := queue.Run(); err != nil {
         return err
     }
 
-    check := termos.NewInputTask("Uniqueness check", "Email must be unique:").
-        WithInputType(termos.InputTypeEmail).
+    check := ziva.NewInputTask("Uniqueness check", "Email must be unique:").
+        WithInputType(ziva.InputTypeEmail).
         WithValidator(UniqueEmail{})
 
-    followUp := termos.NewQueue("CRM check")
+    followUp := ziva.NewQueue("CRM check")
     followUp.AddTasks(check)
     return followUp.Run()
 }
@@ -183,7 +183,7 @@ Use a `FuncTask` after collecting input if you need to call an external service 
 
 ## Quick tips
 
-- Keep `Description()` human-friendly — Termos shows it near the input field.
+- Keep `Description()` human-friendly — Ziva shows it near the input field.
 - Combine `WithAllowEmpty(true)` with validators that handle empty strings correctly.
 - Break long forms into several queues; it simplifies returning to the problem field.
 - Write unit tests for elaborate validators — they are plain Go code.

@@ -7,9 +7,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/qzeleza/termos/internal/defaults"
-	"github.com/qzeleza/termos/internal/performance"
-	"github.com/qzeleza/termos/internal/ui"
+	"github.com/qzeleza/ziva/internal/defaults"
+	"github.com/qzeleza/ziva/internal/performance"
+	"github.com/qzeleza/ziva/internal/ui"
 )
 
 // SelectionBitset представляет битовый набор для оптимальной работы с embedded устройствами

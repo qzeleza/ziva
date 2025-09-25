@@ -1,9 +1,9 @@
 ---
 title: "Установка"
-description: "Как установить и настроить Termos в вашем Go проекте"
+description: "Как установить и настроить Ziva в вашем Go проекте"
 ---
 
-# Установка Термоса
+# Установка Живаа
 
 ## Требования
 
@@ -16,7 +16,7 @@ description: "Как установить и настроить Termos в ваш
 ### Через go get
 
 ```bash
-go get github.com/qzeleza/termos
+go get github.com/qzeleza/ziva
 ```
 
 ### Через go mod
@@ -24,7 +24,7 @@ go get github.com/qzeleza/termos
 Добавьте в ваш `go.mod`:
 
 ```go
-require github.com/qzeleza/termos latest
+require github.com/qzeleza/ziva latest
 ```
 
 Затем выполните:
@@ -43,15 +43,15 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
     // Создаем простую задачу
-    task := termos.NewYesNoTask("Тест", "Termos установлен корректно?")
+    task := ziva.NewYesNoTask("Тест", "Ziva установлен корректно?")
 
     // Создаем очередь и добавляем задачу
-    queue := termos.NewQueue("Проверка установки Termos")
+    queue := ziva.NewQueue("Проверка установки Ziva")
     queue.AddTasks(task)
 
     // Запускаем
@@ -61,7 +61,7 @@ func main() {
 
     // Проверяем результат
     if task.IsYes() {
-        fmt.Println("✅ Отлично! Termos готов к работе.")
+        fmt.Println("✅ Отлично! Ziva готов к работе.")
     } else {
         fmt.Println("❌ Нужно проверить установку.")
     }
@@ -108,16 +108,16 @@ setterm -font latarcyrheb-sun32  # для Cyrillic
 
 ### Переменные окружения
 
-Termos поддерживает настройку через переменные окружения:
+Ziva поддерживает настройку через переменные окружения:
 
 ```bash
 # Язык интерфейса
-export TERMOS_LANG=ru
-export TERMOS_DEFAULT_LANG=ru
+export ZIVA_LANG=ru
+export ZIVA_DEFAULT_LANG=ru
 
 # Для встроенных систем
-export TERMOS_MEMORY_PRESSURE_THRESHOLD=50M
-export TERMOS_MAX_COMPLETED_TASKS=10
+export ZIVA_MEMORY_PRESSURE_THRESHOLD=50M
+export ZIVA_MAX_COMPLETED_TASKS=10
 
 # Цвета терминала
 export COLORTERM=truecolor
@@ -126,7 +126,7 @@ export TERM=xterm-256color
 
 ## Структура проекта
 
-Рекомендуемая структура Go проекта с Termos:
+Рекомендуемая структура Go проекта с Ziva:
 
 ```go
 myapp/
@@ -146,7 +146,7 @@ myapp/
 
 ## Зависимости
 
-Termos использует следующие основные зависимости:
+Ziva использует следующие основные зависимости:
 
 - **Bubble Tea** - основа для TUI
 - **Lip Gloss** - стилизация и цвета

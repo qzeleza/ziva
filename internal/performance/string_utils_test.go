@@ -15,7 +15,7 @@ func BenchmarkTrimSpaceEfficient(b *testing.B) {
 		"end   ",
 		"  mixed  spaces  here  ",
 	}
-	
+
 	b.Run("Efficient", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			for _, s := range testCases {
@@ -23,7 +23,7 @@ func BenchmarkTrimSpaceEfficient(b *testing.B) {
 			}
 		}
 	})
-	
+
 	b.Run("Standard", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			for _, s := range testCases {
@@ -36,13 +36,13 @@ func BenchmarkTrimSpaceEfficient(b *testing.B) {
 func BenchmarkJoinEfficient(b *testing.B) {
 	parts := []string{"one", "two", "three", "four", "five"}
 	separator := ", "
-	
+
 	b.Run("Efficient", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_ = JoinEfficient(parts, separator)
 		}
 	})
-	
+
 	b.Run("Standard", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_ = strings.Join(parts, separator)
@@ -53,13 +53,13 @@ func BenchmarkJoinEfficient(b *testing.B) {
 func BenchmarkRepeatEfficient(b *testing.B) {
 	text := "test"
 	count := 100
-	
+
 	b.Run("Efficient", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_ = RepeatEfficient(text, count)
 		}
 	})
-	
+
 	b.Run("Standard", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_ = strings.Repeat(text, count)
@@ -69,7 +69,7 @@ func BenchmarkRepeatEfficient(b *testing.B) {
 
 func BenchmarkStringPool(b *testing.B) {
 	pool := NewStringPool(8)
-	
+
 	b.Run("WithPool", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			buf := pool.Get()
@@ -80,7 +80,7 @@ func BenchmarkStringPool(b *testing.B) {
 			pool.Put(buf)
 		}
 	})
-	
+
 	b.Run("WithoutPool", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			var buf strings.Builder
@@ -94,13 +94,13 @@ func BenchmarkStringPool(b *testing.B) {
 
 func BenchmarkFastConcat(b *testing.B) {
 	parts := []string{"part1", "part2", "part3", "part4", "part5"}
-	
+
 	b.Run("FastConcat", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_ = FastConcat(parts...)
 		}
 	})
-	
+
 	b.Run("StandardConcat", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			result := ""
@@ -110,7 +110,7 @@ func BenchmarkFastConcat(b *testing.B) {
 			_ = result
 		}
 	})
-	
+
 	b.Run("StringsJoin", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_ = strings.Join(parts, "")
@@ -121,13 +121,13 @@ func BenchmarkFastConcat(b *testing.B) {
 func BenchmarkContainsAnyEfficient(b *testing.B) {
 	text := "This is a test string with various characters!"
 	chars := "xyz123"
-	
+
 	b.Run("Efficient", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_ = ContainsAnyEfficient(text, chars)
 		}
 	})
-	
+
 	b.Run("Standard", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_ = strings.ContainsAny(text, chars)
@@ -137,13 +137,13 @@ func BenchmarkContainsAnyEfficient(b *testing.B) {
 
 func BenchmarkCleanWhitespaceEfficient(b *testing.B) {
 	text := "  This   has    multiple    spaces   between   words  "
-	
+
 	b.Run("Efficient", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_ = CleanWhitespaceEfficient(text)
 		}
 	})
-	
+
 	b.Run("Standard", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			// Стандартная обработка с регулярными выражениями
@@ -167,7 +167,7 @@ func TestTrimSpaceEfficient(t *testing.T) {
 		{"   end", "end"},
 		{"\t\n  hello  \r\n", "hello"},
 	}
-	
+
 	for _, test := range tests {
 		result := TrimSpaceEfficient(test.input)
 		if result != test.expected {
@@ -187,7 +187,7 @@ func TestJoinEfficient(t *testing.T) {
 		{[]string{}, ",", ""},
 		{[]string{"a", "b"}, " - ", "a - b"},
 	}
-	
+
 	for _, test := range tests {
 		result := JoinEfficient(test.parts, test.separator)
 		if result != test.expected {
@@ -207,7 +207,7 @@ func TestRepeatEfficient(t *testing.T) {
 		{"", 5, ""},
 		{"x", 1, "x"},
 	}
-	
+
 	for _, test := range tests {
 		result := RepeatEfficient(test.input, test.count)
 		if result != test.expected {
@@ -228,7 +228,7 @@ func TestContainsAnyEfficient(t *testing.T) {
 		{"", "abc", false},
 		{"abc", "c", true},
 	}
-	
+
 	for _, test := range tests {
 		result := ContainsAnyEfficient(test.text, test.chars)
 		if result != test.expected {
@@ -244,7 +244,7 @@ func TestEmbeddedLimits(t *testing.T) {
 	if cap(largePool.buffers) > 16 {
 		t.Errorf("StringPool size should be limited to 16 for embedded devices, got %d", cap(largePool.buffers))
 	}
-	
+
 	// Проверяем ограничение размера результата RepeatEfficient
 	longResult := RepeatEfficient("a", 10000)
 	if len(longResult) > 2048 {

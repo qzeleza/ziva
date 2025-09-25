@@ -1,16 +1,16 @@
 ---
 title: "Görev Kuyruğu (Queue)"
-description: "Termos'ta görev dizilerinin yönetim sistemi"
+description: "Ziva'ta görev dizilerinin yönetim sistemi"
 ---
 
 # Görev Kuyruğu (Queue)
 
-`Queue`, Termos'un merkezi bileşenidir. Görevlerin sıralı yürütülmesini yönetir ve kullanıcı etkileşimi için birleşik bir arayüz sağlar.
+`Queue`, Ziva'un merkezi bileşenidir. Görevlerin sıralı yürütülmesini yönetir ve kullanıcı etkileşimi için birleşik bir arayüz sağlar.
 
 ## Kuyruk Oluşturma
 
 ```go
-queue := termos.NewQueue("Kuyruk başlığı")
+queue := ziva.NewQueue("Kuyruk başlığı")
 ```
 
 ![Ekran görüntüsü: kuyruk özet görünümü](/images/pic_5.png)
@@ -50,10 +50,10 @@ queue.WithAppName("BenimUygulamam")
 
 ```go
 // Uygulama adı rengi
-queue.WithAppNameColor(termos.BlueBright, true) // renk, kalın
+queue.WithAppNameColor(ziva.BlueBright, true) // renk, kalın
 
 // Kuyruk başlığı rengi
-queue.WithTitleColor(termos.GreenBright, false) // renk, normal
+queue.WithTitleColor(ziva.GreenBright, false) // renk, normal
 ```
 
 ### Görev Numaralandırma
@@ -93,7 +93,7 @@ queue.WithClearScreen(true)
 
 ```go
 // Hata türlerini içe aktarma
-import "github.com/qzeleza/termos/internal/query"
+import "github.com/qzeleza/ziva/internal/query"
 
 // Hata rengini ayarlama
 queue.SetErrorColor(query.ErrorColorRed)    // Kırmızı
@@ -106,7 +106,7 @@ queue.SetErrorColor(query.ErrorColorNone)   // Renksiz
 ### Minimalist Yapılandırma
 
 ```go
-queue := termos.NewQueue("Basit uygulama")
+queue := ziva.NewQueue("Basit uygulama")
 queue.AddTasks(task1, task2)
 queue.Run()
 ```
@@ -114,10 +114,10 @@ queue.Run()
 ### Tam Yapılandırma
 
 ```go
-queue := termos.NewQueue("Gelişmiş TUI Uygulaması")
+queue := ziva.NewQueue("Gelişmiş TUI Uygulaması")
 queue.WithAppName("GelişmişUygulama").
-      WithAppNameColor(termos.BlueBright, true).
-      WithTitleColor(termos.GreenBright, false).
+      WithAppNameColor(ziva.BlueBright, true).
+      WithTitleColor(ziva.GreenBright, false).
       WithTasksNumbered(true, "[%02d]").
       WithClearScreen(true).
       WithOutResultLine().
@@ -138,7 +138,7 @@ if err := queue.Run(); err != nil {
 ### Gömülü Sistemler için Yapılandırma
 
 ```go
-queue := termos.NewQueue("IoT Yapılandırması")
+queue := ziva.NewQueue("IoT Yapılandırması")
 queue.WithAppName("RouterKurulum").
       WithOutSummary(true).        // Yer tasarrufu
       WithOutResultLine().         // Basitleştirilmiş çıktı
@@ -146,8 +146,8 @@ queue.WithAppName("RouterKurulum").
       WithClearScreen(false)       // Bağlamı koru
 
 // Basitleştirilmiş renkler kullan
-queue.WithAppNameColor(termos.WhiteBright, false).
-      WithTitleColor(termos.GrayBright, false)
+queue.WithAppNameColor(ziva.WhiteBright, false).
+      WithTitleColor(ziva.GrayBright, false)
 ```
 
 ## Kuyruk Yaşam Döngüsü
@@ -186,10 +186,10 @@ if err := queue.Run(); err != nil {
 
 ```go
 // Tamamlanan görev geçmişini sınırla
-os.Setenv("TERMOS_MAX_COMPLETED_TASKS", "5")
+os.Setenv("ZIVA_MAX_COMPLETED_TASKS", "5")
 
 // Bellek izleme
-os.Setenv("TERMOS_MEMORY_PRESSURE_THRESHOLD", "100M")
+os.Setenv("ZIVA_MEMORY_PRESSURE_THRESHOLD", "100M")
 ```
 
 ### Yavaş Terminaller İçin

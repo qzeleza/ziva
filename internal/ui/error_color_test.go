@@ -89,7 +89,7 @@ func TestErrorColorPersistence(t *testing.T) {
 
 	// Сбрасываем
 	ResetErrorColors()
-	
+
 	// Проверяем сброс
 	assert.Equal(t, ColorDarkYellow, ErrorMessageStyle.GetForeground())
 	assert.Equal(t, ColorBrightYellow, ErrorStatusStyle.GetForeground())

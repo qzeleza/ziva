@@ -16,7 +16,7 @@ options := []string{
     "production::Боевая среда",
 }
 
-env := termos.NewSingleSelectTask("Выбор среды", options)
+env := ziva.NewSingleSelectTask("Выбор среды", options)
 ```
 
 ![Скриншот: задача одиночного выбора](/images/pic_2.png)
@@ -24,7 +24,7 @@ env := termos.NewSingleSelectTask("Выбор среды", options)
 Добавьте задачу в очередь и прочитайте результат после выполнения:
 
 ```go
-queue := termos.NewQueue("Конфигурация")
+queue := ziva.NewQueue("Конфигурация")
 queue.AddTasks(env)
 _ = queue.Run()
 
@@ -68,7 +68,7 @@ env.WithItemsDisabled([]int{0, 3})              // по индексам
 ### Настройка подсказок
 
 ```go
-termos.SetChoiceHelpDelimiter(" → ")
+ziva.SetChoiceHelpDelimiter(" → ")
 ```
 
 Разделитель применяется ко всем задачам выбора в приложении.

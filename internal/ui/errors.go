@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/qzeleza/termos/internal/performance"
+	"github.com/qzeleza/ziva/internal/performance"
 )
 
 // FormatErrorMessage форматирует сообщение об ошибке с отступами и ограничением по ширине

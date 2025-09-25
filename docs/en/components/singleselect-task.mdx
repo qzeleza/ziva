@@ -5,13 +5,13 @@ description: "Single option selection task from a list"
 
 # SingleSelectTask
 
-`SingleSelectTask` provides an interface for selecting one option from a provided list of choices. This is one of the most commonly used task types in Termos.
+`SingleSelectTask` provides an interface for selecting one option from a provided list of choices. This is one of the most commonly used task types in Ziva.
 
 ## Creating a Task
 
 ```go
 options := []string{"option1", "option2", "option3"}
-task := termos.NewSingleSelectTask("Title", options)
+task := ziva.NewSingleSelectTask("Title", options)
 ```
 
 ![Screenshot: single-select task](/images/pic_2.png)
@@ -21,7 +21,7 @@ task := termos.NewSingleSelectTask("Title", options)
 ### Creating with Settings
 
 ```go
-task := termos.NewSingleSelectTask("Environment Selection", environments).
+task := ziva.NewSingleSelectTask("Environment Selection", environments).
     WithDefaultItem("staging").                    // default value
     WithTimeout(10*time.Second, "production").     // timeout with fallback
     WithViewport(5, true).                         // display limitation
@@ -49,7 +49,7 @@ options := []string{
 }
 
 // Or configure custom delimiter
-termos.SetChoiceHelpDelimiter("||")
+ziva.SetChoiceHelpDelimiter("||")
 options = []string{
     "api||REST API server",
     "web||Web interface",

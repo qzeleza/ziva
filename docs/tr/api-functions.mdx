@@ -1,29 +1,29 @@
 ---
 title: "API Fonksiyonları"
-description: "Termos kütüphanesinin yapılandırma, optimizasyon ve gelişmiş kullanım için global API fonksiyonlarının tam referansı"
+description: "Ziva kütüphanesinin yapılandırma, optimizasyon ve gelişmiş kullanım için global API fonksiyonlarının tam referansı"
 ---
 
 # API Fonksiyonları
 
-Termos, kütüphane davranışını yapılandırmak, performansı optimize etmek ve gelişmiş kullanım için zengin bir global fonksiyon seti sağlar.
+Ziva, kütüphane davranışını yapılandırmak, performansı optimize etmek ve gelişmiş kullanım için zengin bir global fonksiyon seti sağlar.
 
 <Info>
-Bu fonksiyonlar ana kütüphane bileşenlerini tamamlar ve Termos davranışını özel uygulama gereksinimlerinize göre ince ayar yapmanıza olanak tanır.
+Bu fonksiyonlar ana kütüphane bileşenlerini tamamlar ve Ziva davranışını özel uygulama gereksinimlerinize göre ince ayar yapmanıza olanak tanır.
 </Info>
 
 ## Otomatik Yapılandırma
 
 ### AutoConfigure()
 
-Mevcut sistemde optimal performans için Termos'u otomatik olarak yapılandırır.
+Mevcut sistemde optimal performans için Ziva'u otomatik olarak yapılandırır.
 
 ```go
 func main() {
     // Program başlatımında çağrılması önerilir
-    termos.AutoConfigure()
+    ziva.AutoConfigure()
 
     // Uygulama kodunuz
-    queue := termos.NewQueue("Başlık")
+    queue := ziva.NewQueue("Başlık")
 }
 ```
 
@@ -42,7 +42,7 @@ Sistem için otomatik optimizasyon sağlamak üzere program başlatımında `Aut
 Optimal algoritmaları seçmek için sistem mimarisini belirler.
 
 ```go
-if termos.Is64Bit() {
+if ziva.Is64Bit() {
     // 64-bit sistemler için algoritmaları kullan
     fmt.Println("64-bit mimari")
 } else {
@@ -61,7 +61,7 @@ Temel dizeyi verimli şekilde tekrarlayarak dize oluşturur.
 
 ```go
 // Tekrarlardan verimli dize oluşturma
-separator := termos.RepeatEfficient("-", 50)
+separator := ziva.RepeatEfficient("-", 50)
 fmt.Println(separator) // "------------------------------------------------"
 ```
 
@@ -77,7 +77,7 @@ Performans için optimize edilmiş ayırıcı ile dize dizisini birleştirir.
 
 ```go
 parts := []string{"bir", "iki", "üç"}
-result := termos.JoinEfficient(parts, " | ")
+result := ziva.JoinEfficient(parts, " | ")
 fmt.Println(result) // "bir | iki | üç"
 ```
 
@@ -92,7 +92,7 @@ fmt.Println(result) // "bir | iki | üç"
 Ayırıcı olmadan birden fazla dizenin hızlı birleştirilmesi.
 
 ```go
-result := termos.FastConcat("Merhaba", " ", "dünya", "!")
+result := ziva.FastConcat("Merhaba", " ", "dünya", "!")
 fmt.Println(result) // "Merhaba dünya!"
 ```
 
@@ -106,7 +106,7 @@ fmt.Println(result) // "Merhaba dünya!"
 Fazla boşlukları ve satır başlarını verimli şekilde kaldırır.
 
 ```go
-cleaned := termos.CleanWhitespaceEfficient("  çok   boşluk  \n\t")
+cleaned := ziva.CleanWhitespaceEfficient("  çok   boşluk  \n\t")
 fmt.Println(cleaned) // "çok boşluk"
 ```
 
@@ -125,7 +125,7 @@ Arayüzde hataları ve durumları görüntülemek için renkleri yapılandırır
 import "github.com/charmbracelet/lipgloss"
 
 // Hatalar için kırmızı, durum için sarı renk ayarla
-termos.SetErrorColor(lipgloss.Color("#FF0000"), lipgloss.Color("#FFFF00"))
+ziva.SetErrorColor(lipgloss.Color("#FF0000"), lipgloss.Color("#FFFF00"))
 ```
 
 **Parametreler:**
@@ -138,7 +138,7 @@ Hata ve durum renklerini varsayılan değerlere sıfırlar.
 
 ```go
 // Varsayılan renkleri geri yükle
-termos.ResetErrorColors()
+ziva.ResetErrorColors()
 ```
 
 ### EnableEmbeddedMode()
@@ -147,7 +147,7 @@ Optimize edilmiş renk şeması ile gömülü sistem modunu etkinleştirir.
 
 ```go
 // Yönlendiriciler, IoT cihazları için
-termos.EnableEmbeddedMode()
+ziva.EnableEmbeddedMode()
 ```
 
 <Note>
@@ -160,7 +160,7 @@ Sınırlı karakter desteği olan terminaller için ASCII modunu etkinleştirir.
 
 ```go
 // Eski terminaller veya sınırlı ortamlar için
-termos.EnableASCIIMode()
+ziva.EnableASCIIMode()
 ```
 
 ### IsEmbeddedColorMode() bool
@@ -168,7 +168,7 @@ termos.EnableASCIIMode()
 Gömülü sistem modunun etkin olup olmadığını kontrol eder.
 
 ```go
-if termos.IsEmbeddedColorMode() {
+if ziva.IsEmbeddedColorMode() {
     fmt.Println("Gömülü sistem modunda çalışıyor")
 }
 ```
@@ -178,7 +178,7 @@ if termos.IsEmbeddedColorMode() {
 ## Doğrulayıcılar
 
 <Info>
-Termos, çeşitli veri türlerini kontrol etmek için hazır doğrulayıcılar sağlar. Tüm doğrulayıcılar `InputTask` ile kullanılabilir.
+Ziva, çeşitli veri türlerini kontrol etmek için hazır doğrulayıcılar sağlar. Tüm doğrulayıcılar `InputTask` ile kullanılabilir.
 </Info>
 
 ### NewPasswordValidator(minLength int) Validator
@@ -186,8 +186,8 @@ Termos, çeşitli veri türlerini kontrol etmek için hazır doğrulayıcılar s
 Minimum uzunlukta şifreleri kontrol etmek için doğrulayıcı oluşturur.
 
 ```go
-validator := termos.NewPasswordValidator(8)
-task := termos.NewInputTask("Şifre", "Şifre girin:")
+validator := ziva.NewPasswordValidator(8)
+task := ziva.NewInputTask("Şifre", "Şifre girin:")
 task.WithValidator(validator)
 ```
 
@@ -201,8 +201,8 @@ task.WithValidator(validator)
 E-posta adreslerini kontrol etmek için doğrulayıcı oluşturur.
 
 ```go
-validator := termos.NewEmailValidator()
-task := termos.NewInputTask("E-posta", "E-posta girin:")
+validator := ziva.NewEmailValidator()
+task := ziva.NewInputTask("E-posta", "E-posta girin:")
 task.WithValidator(validator)
 ```
 
@@ -214,10 +214,10 @@ IPv4 ve/veya IPv6 desteği ile IP adreslerini kontrol etmek için doğrulayıcı
 
 ```go
 // Sadece IPv4'e izin ver
-validator := termos.NewIPValidator(true, false)
+validator := ziva.NewIPValidator(true, false)
 
 // Hem IPv4 hem IPv6'ya izin ver
-validatorBoth := termos.NewIPValidator(true, true)
+validatorBoth := ziva.NewIPValidator(true, true)
 ```
 
 **Parametreler:**
@@ -231,8 +231,8 @@ validatorBoth := termos.NewIPValidator(true, true)
 IPv4 adreslerini kontrol etmek için doğrulayıcı oluşturur.
 
 ```go
-validator := termos.NewIPv4Validator()
-task := termos.NewInputTask("IP", "IPv4 adresi girin:")
+validator := ziva.NewIPv4Validator()
+task := ziva.NewInputTask("IP", "IPv4 adresi girin:")
 task.WithValidator(validator)
 ```
 
@@ -243,8 +243,8 @@ task.WithValidator(validator)
 IPv6 adreslerini kontrol etmek için doğrulayıcı oluşturur.
 
 ```go
-validator := termos.NewIPv6Validator()
-task := termos.NewInputTask("IPv6", "IPv6 adresi girin:")
+validator := ziva.NewIPv6Validator()
+task := ziva.NewInputTask("IPv6", "IPv6 adresi girin:")
 task.WithValidator(validator)
 ```
 
@@ -255,8 +255,8 @@ task.WithValidator(validator)
 Alan adlarını kontrol etmek için doğrulayıcı oluşturur.
 
 ```go
-validator := termos.NewDomainValidator()
-task := termos.NewInputTask("Alan Adı", "Alan adı girin:")
+validator := ziva.NewDomainValidator()
+task := ziva.NewInputTask("Alan Adı", "Alan adı girin:")
 task.WithValidator(validator)
 ```
 
@@ -268,8 +268,8 @@ Metin uzunluğunu kontrol etmek için doğrulayıcı oluşturur.
 
 ```go
 // 5 ila 100 karakter arası metin
-validator := termos.NewTextValidator(5, 100)
-task := termos.NewInputTask("Metin", "Açıklama girin:")
+validator := ziva.NewTextValidator(5, 100)
+task := ziva.NewInputTask("Metin", "Açıklama girin:")
 task.WithValidator(validator)
 ```
 
@@ -287,8 +287,8 @@ Tekrarlanan dizelerle çalışırken bellek tasarrufu için dizeyi intern eder.
 
 ```go
 // Aynı dizelerle çalışırken bellek tasarrufu
-title1 := termos.InternString("Başlık")
-title2 := termos.InternString("Başlık") // Aynı belleği kullanır
+title1 := ziva.InternString("Başlık")
+title2 := ziva.InternString("Başlık") // Aynı belleği kullanır
 ```
 
 **Parametreler:**
@@ -305,7 +305,7 @@ Dikkatli kullanın - intern edilmiş dizeler önbellek temizlenene kadar bellekt
 İntern edilmiş dize önbelleğinin kullanım istatistiklerini döndürür.
 
 ```go
-size, capacity := termos.GetCacheStats()
+size, capacity := ziva.GetCacheStats()
 fmt.Printf("Kullanılan: %d/%d\n", size, capacity)
 ```
 
@@ -319,7 +319,7 @@ Belleği boşaltmak için intern edilmiş dize önbelleğini temizler.
 
 ```go
 // Kapatma sırasında veya bellek düşük olduğunda temizle
-termos.ClearInternCache()
+ziva.ClearInternCache()
 ```
 
 ## Düzen Araçları
@@ -330,7 +330,7 @@ Arayüz öğesi düzeni için optimal genişliği hesaplar.
 
 ```go
 screenWidth := 120
-layoutWidth := termos.CalculateLayoutWidth(screenWidth)
+layoutWidth := ziva.CalculateLayoutWidth(screenWidth)
 fmt.Printf("Önerilen genişlik: %d\n", layoutWidth)
 ```
 
@@ -345,7 +345,7 @@ Seçim listelerinde yardım bilgisini görüntülemek için ayırıcı ayarlar.
 
 ```go
 // Ayırıcıyı " - " den " → " ya değiştir
-termos.SetChoiceHelpDelimiter(" → ")
+ziva.SetChoiceHelpDelimiter(" → ")
 ```
 
 **Parametreler:**
@@ -362,18 +362,18 @@ Seçim listelerindeki yardım ipuçlarının görünümünü özelleştirmek iç
 ```go
 func setupEmbeddedEnvironment() {
     // Otomatik yapılandırma
-    termos.AutoConfigure()
+    ziva.AutoConfigure()
 
     // Gömülü sistem modunu etkinleştir
-    termos.EnableEmbeddedMode()
+    ziva.EnableEmbeddedMode()
 
     // Daha iyi görünürlük için renkleri yapılandır
-    termos.SetErrorColor(lipgloss.Color("#FF6B6B"), lipgloss.Color("#FFE66D"))
+    ziva.SetErrorColor(lipgloss.Color("#FF6B6B"), lipgloss.Color("#FFE66D"))
 
     // Mimariyi kontrol et
-    if !termos.Is64Bit() {
+    if !ziva.Is64Bit() {
         // 32-bit sistemler için ek optimizasyonlar
-        termos.EnableASCIIMode()
+        ziva.EnableASCIIMode()
     }
 }
 ```
@@ -383,13 +383,13 @@ func setupEmbeddedEnvironment() {
 ```go
 func createFormattedOutput(items []string) string {
     // Verimli ayırıcı oluşturma
-    separator := termos.RepeatEfficient("=", 50)
+    separator := ziva.RepeatEfficient("=", 50)
 
     // Öğeleri birleştir
-    content := termos.JoinEfficient(items, "\n")
+    content := ziva.JoinEfficient(items, "\n")
 
     // Tüm parçaları hızlı birleştirme
-    return termos.FastConcat(
+    return ziva.FastConcat(
         separator, "\n",
         "RAPOR\n",
         separator, "\n",
@@ -404,15 +404,15 @@ func createFormattedOutput(items []string) string {
 ```go
 func createValidatedInput() {
     // Doğrulamalı e-posta
-    emailTask := termos.NewInputTask("E-posta", "E-postanızı girin:")
-    emailTask.WithValidator(termos.NewEmailValidator())
+    emailTask := ziva.NewInputTask("E-posta", "E-postanızı girin:")
+    emailTask.WithValidator(ziva.NewEmailValidator())
 
     // Minimum uzunlukta şifre
-    passwordTask := termos.NewInputTask("Şifre", "Şifre oluşturun:")
-    passwordTask.WithValidator(termos.NewPasswordValidator(8))
+    passwordTask := ziva.NewInputTask("Şifre", "Şifre oluşturun:")
+    passwordTask.WithValidator(ziva.NewPasswordValidator(8))
 
     // IPv4 ve IPv6 destekli IP adresi
-    ipTask := termos.NewInputTask("IP", "IP adresi girin:")
-    ipTask.WithValidator(termos.NewIPValidator(true, true))
+    ipTask := ziva.NewInputTask("IP", "IP adresi girin:")
+    ipTask.WithValidator(ziva.NewIPValidator(true, true))
 }
 ```

@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "Термос",
+  "name": "Жива",
   "theme": "willow",
   "colors": {
     "primary": "#0ea5e9",
@@ -11,7 +11,7 @@
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
-    "href": "https://github.com/qzeleza/termos"
+    "href": "https://github.com/qzeleza/ziva"
   },
   "favicon": "/favicon.svg",
   "navigation": {
@@ -252,24 +252,24 @@
   "topbarLinks": [
     {
       "name": "GitHub",
-      "url": "https://github.com/qzeleza/termos"
+      "url": "https://github.com/qzeleza/ziva"
     }
   ],
   "anchors": [
     {
       "name": "GitHub",
       "icon": "github",
-      "url": "https://github.com/qzeleza/termos"
+      "url": "https://github.com/qzeleza/ziva"
     },
     {
       "name": "Go Package",
       "icon": "golang",
-      "url": "https://pkg.go.dev/github.com/qzeleza/termos"
+      "url": "https://pkg.go.dev/github.com/qzeleza/ziva"
     }
   ],
   "footer": {
     "socials": {
-      "github": "https://github.com/qzeleza/termos"
+      "github": "https://github.com/qzeleza/ziva"
     }
   }
 }

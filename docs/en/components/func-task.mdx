@@ -10,7 +10,7 @@ description: "Function execution task with progress display"
 ## Creating
 
 ```go
-task := termos.NewFuncTask("Processing", func() error {
+task := ziva.NewFuncTask("Processing", func() error {
     // perform work
     time.Sleep(2 * time.Second)
     return nil
@@ -20,13 +20,13 @@ task := termos.NewFuncTask("Processing", func() error {
 ## Configuration Options
 
 ```go
-task := termos.NewFuncTask(
+task := ziva.NewFuncTask(
     "Data Loading",
     processFunc,
-    termos.WithSummaryFunction(func() []string {
+    ziva.WithSummaryFunction(func() []string {
         return []string{"Processed: 100 files"}
     }),
-    termos.WithStopOnError(true), // stop queue on error
+    ziva.WithStopOnError(true), // stop queue on error
 )
 ```
 
@@ -38,7 +38,7 @@ var stats struct {
     Errors    int
 }
 
-task := termos.NewFuncTask(
+task := ziva.NewFuncTask(
     "File Processing",
     func() error {
         for i := 0; i < 100; i++ {
@@ -50,7 +50,7 @@ task := termos.NewFuncTask(
         }
         return nil
     },
-    termos.WithSummaryFunction(func() []string {
+    ziva.WithSummaryFunction(func() []string {
         return []string{
             fmt.Sprintf("Processed: %d", stats.Processed),
             fmt.Sprintf("Errors: %d", stats.Errors),
@@ -58,7 +58,7 @@ task := termos.NewFuncTask(
     }),
 )
 
-queue := termos.NewQueue("Batch Processing")
+queue := ziva.NewQueue("Batch Processing")
 queue.AddTasks(task)
 queue.Run()
 ```

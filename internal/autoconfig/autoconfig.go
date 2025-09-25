@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/qzeleza/termos/internal/ui"
+	"github.com/qzeleza/ziva/internal/ui"
 )
 
 // init вызывается при импортировании пакета и запускает авто-конфигурацию
@@ -42,8 +42,8 @@ func applyEmbeddedDefaults() {
 	}
 
 	// 3) Консервативный лимит памяти рантайма
-	// Терминология: предпочитаем явный лимит из TERMOS_MEMORY_LIMIT или GOMEMLIMIT.
-	if limitStr := firstNonEmpty(os.Getenv("GOMEMLIMIT"), os.Getenv("TERMOS_MEMORY_LIMIT")); limitStr != "" {
+	// Терминология: предпочитаем явный лимит из ZIVA_MEMORY_LIMIT или GOMEMLIMIT.
+	if limitStr := firstNonEmpty(os.Getenv("GOMEMLIMIT"), os.Getenv("ZIVA_MEMORY_LIMIT")); limitStr != "" {
 		if bytes, err := parseMemoryLimit(limitStr); err == nil {
 			debug.SetMemoryLimit(int64(bytes))
 		}
@@ -57,7 +57,7 @@ func applyEmbeddedDefaults() {
 // isEmbeddedEnvironment автоматически определяет, является ли окружение embedded
 func isEmbeddedEnvironment() bool {
 	// Принудительная установка через переменную окружения
-	if embedded := os.Getenv("TERMOS_EMBEDDED"); embedded != "" {
+	if embedded := os.Getenv("ZIVA_EMBEDDED"); embedded != "" {
 		v := strings.TrimSpace(strings.ToLower(embedded))
 		return v == "1" || v == "true" || v == "yes" || v == "on"
 	}
@@ -79,7 +79,7 @@ func isMemoryConstrained() bool {
 	runtime.ReadMemStats(&m)
 
 	// Принудительный лимит из переменной окружения (например, 64MB, 128KB, 1GB)
-	if limitStr := os.Getenv("TERMOS_MEMORY_LIMIT"); limitStr != "" {
+	if limitStr := os.Getenv("ZIVA_MEMORY_LIMIT"); limitStr != "" {
 		if limit, err := parseMemoryLimit(limitStr); err == nil {
 			return m.Sys < limit
 		}
@@ -157,7 +157,7 @@ func isLimitedTerminal() bool {
 	}
 
 	// Принудительный ASCII‑режим
-	if v := strings.TrimSpace(strings.ToLower(os.Getenv("TERMOS_ASCII_ONLY"))); v == "1" || v == "true" || v == "yes" || v == "on" {
+	if v := strings.TrimSpace(strings.ToLower(os.Getenv("ZIVA_ASCII_ONLY"))); v == "1" || v == "true" || v == "yes" || v == "on" {
 		return true
 	}
 

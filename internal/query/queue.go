@@ -11,10 +11,10 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/defaults"
-	"github.com/qzeleza/termos/internal/performance"
-	"github.com/qzeleza/termos/internal/ui"
+	"github.com/qzeleza/ziva/internal/common"
+	"github.com/qzeleza/ziva/internal/defaults"
+	"github.com/qzeleza/ziva/internal/performance"
+	"github.com/qzeleza/ziva/internal/ui"
 )
 
 type ErrorColor int
@@ -33,15 +33,15 @@ var (
 )
 
 func init() {
-	// TERMOS_MAX_COMPLETED_TASKS=int
-	if v := strings.TrimSpace(os.Getenv("TERMOS_MAX_COMPLETED_TASKS")); v != "" {
+	// ZIVA_MAX_COMPLETED_TASKS=int
+	if v := strings.TrimSpace(os.Getenv("ZIVA_MAX_COMPLETED_TASKS")); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			MaxCompletedTasks = n
 		}
 	}
 
-	// TERMOS_MEMORY_PRESSURE_THRESHOLD=64MB/65536KB/67108864/64MiB
-	if v := strings.TrimSpace(os.Getenv("TERMOS_MEMORY_PRESSURE_THRESHOLD")); v != "" {
+	// ZIVA_MEMORY_PRESSURE_THRESHOLD=64MB/65536KB/67108864/64MiB
+	if v := strings.TrimSpace(os.Getenv("ZIVA_MEMORY_PRESSURE_THRESHOLD")); v != "" {
 		if bytes, err := parseMemoryEnv(v); err == nil && bytes > 0 {
 			MemoryPressureThreshold = bytes
 		}

@@ -1,16 +1,16 @@
 ---
 title: "AB@>5==K5 20;840B>@K"
-description: ">;=K9 A?8A>: 2AB@>5==KE 20;840B>@>2 Termos"
+description: ">;=K9 A?8A>: 2AB@>5==KE 20;840B>@>2 Ziva"
 ---
 
 # AB@>5==K5 20;840B>@K
 
-Termos ?@54>AB02;O5B H8@>:89 =01>@ 2AB@>5==KE 20;840B>@>2.
+Ziva ?@54>AB02;O5B H8@>:89 =01>@ 2AB@>5==KE 20;840B>@>2.
 
 ## 07>2K5 20;840B>@K
 
 ```go
-v := termos.DefaultValidators
+v := ziva.DefaultValidators
 
 // 1O70B5;L=>5 ?>;5
 v.Required()

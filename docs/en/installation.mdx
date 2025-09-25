@@ -1,9 +1,9 @@
 ---
 title: "Installation"
-description: "How to install and configure Termos in your Go project"
+description: "How to install and configure Ziva in your Go project"
 ---
 
-# Installing Termos
+# Installing Ziva
 
 ## Requirements
 
@@ -16,7 +16,7 @@ description: "How to install and configure Termos in your Go project"
 ### Via go get
 
 ```bash
-go get github.com/qzeleza/termos
+go get github.com/qzeleza/ziva
 ```
 
 ### Via go mod
@@ -24,7 +24,7 @@ go get github.com/qzeleza/termos
 Add to your `go.mod`:
 
 ```go
-require github.com/qzeleza/termos latest
+require github.com/qzeleza/ziva latest
 ```
 
 Then run:
@@ -43,15 +43,15 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
     // Create a simple task
-    task := termos.NewYesNoTask("Test", "Is Termos installed correctly?")
+    task := ziva.NewYesNoTask("Test", "Is Ziva installed correctly?")
 
     // Create queue and add task
-    queue := termos.NewQueue("Termos Installation Check")
+    queue := ziva.NewQueue("Ziva Installation Check")
     queue.AddTasks(task)
 
     // Run
@@ -61,7 +61,7 @@ func main() {
 
     // Check result
     if task.IsYes() {
-        fmt.Println("✅ Great! Termos is ready to work.")
+        fmt.Println("✅ Great! Ziva is ready to work.")
     } else {
         fmt.Println("❌ Installation needs to be checked.")
     }
@@ -106,16 +106,16 @@ setterm -font ter-116n  # for international characters
 
 ### Environment Variables
 
-Termos supports configuration via environment variables:
+Ziva supports configuration via environment variables:
 
 ```bash
 # Interface language
-export TERMOS_LANG=en
-export TERMOS_DEFAULT_LANG=en
+export ZIVA_LANG=en
+export ZIVA_DEFAULT_LANG=en
 
 # For embedded systems
-export TERMOS_MEMORY_PRESSURE_THRESHOLD=50M
-export TERMOS_MAX_COMPLETED_TASKS=10
+export ZIVA_MEMORY_PRESSURE_THRESHOLD=50M
+export ZIVA_MAX_COMPLETED_TASKS=10
 
 # Terminal colors
 export COLORTERM=truecolor
@@ -124,7 +124,7 @@ export TERM=xterm-256color
 
 ## Project Structure
 
-Recommended Go project structure with Termos:
+Recommended Go project structure with Ziva:
 
 ```
 myapp/
@@ -144,7 +144,7 @@ myapp/
 
 ## Dependencies
 
-Termos uses the following main dependencies:
+Ziva uses the following main dependencies:
 
 - **Bubble Tea** - foundation for TUI
 - **Lip Gloss** - styling and colors

@@ -1,9 +1,9 @@
 ---
-title: "Termos"
-description: "Termos - (Terminal Multitask Orchestrator System), etkileşimli terminal kullanıcı arayüzleri (TUI) oluşturmak için güçlü bir Go kütüphanesidir. Bubble Tea üzerine inşa edilmiş olup, konsol uygulamaları oluşturmak için üst düzey bileşenler sağlar."
+title: "Ziva"
+description: "Ziva - (Terminal Multitask Orchestrator System), etkileşimli terminal kullanıcı arayüzleri (TUI) oluşturmak için güçlü bir Go kütüphanesidir. Bubble Tea üzerine inşa edilmiş olup, konsol uygulamaları oluşturmak için üst düzey bileşenler sağlar."
 ---
 
-# Termos'a Hoş Geldiniz
+# Ziva'a Hoş Geldiniz
 
 <img
   src="/images/pic_5.png"
@@ -38,19 +38,19 @@ package main
 
 import (
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
     // Görev kuyruğu oluştur
-    queue := termos.NewQueue("TUI Uygulamam")
+    queue := ziva.NewQueue("TUI Uygulamam")
 
     // Onay görevi ekle
-    confirm := termos.NewYesNoTask("Onay", "Devam et?")
+    confirm := ziva.NewYesNoTask("Onay", "Devam et?")
 
     // Seçim görevi ekle
     options := []string{"development", "staging", "production"}
-    env := termos.NewSingleSelectTask("Ortam seçin", options)
+    env := ziva.NewSingleSelectTask("Ortam seçin", options)
 
     // Görevleri kuyruğa ekle ve çalıştır
     queue.AddTasks(confirm, env)
@@ -62,14 +62,14 @@ func main() {
 
 ## Gömülü Sistemler İçin Optimize
 
-Termos, gömülü sistemlerde çalışmak için otomatik olarak algılar ve optimize eder:
+Ziva, gömülü sistemlerde çalışmak için otomatik olarak algılar ve optimize eder:
 
 - **Bellek Yönetimi** - yük izleme ve string interning
 - **Uyarlanabilir Renk Şemaları** - sınırlı terminaller için basitleştirilmiş renkler
 - **Otomatik Yapılandırma** - router, IoT cihaz algılama ve parametre ayarlama
 
 <Card title="Başlayın" icon="rocket" href="/tr/installation">
-  Termos'u yükleyin ve ilk TUI uygulamanızı oluşturun
+  Ziva'u yükleyin ve ilk TUI uygulamanızı oluşturun
 </Card>
 
 ---
@@ -77,10 +77,10 @@ Termos, gömülü sistemlerde çalışmak için otomatik olarak algılar ve opti
 ## Topluluk ve Destek
 
 <CardGroup cols={3}>
-  <Card title="GitHub" icon="github" href="https://github.com/qzeleza/termos">
+  <Card title="GitHub" icon="github" href="https://github.com/qzeleza/ziva">
     Kaynak kodu, issue tracker ve sürümler
   </Card>
-  <Card title="Go Package" icon="golang" href="https://pkg.go.dev/github.com/qzeleza/termos">
+  <Card title="Go Package" icon="golang" href="https://pkg.go.dev/github.com/qzeleza/ziva">
     API belgeleri ve kullanım örnekleri
   </Card>
   <Card title="Örnekler" icon="code" href="/tr/examples/basic-usage">

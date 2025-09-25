@@ -1,4 +1,4 @@
-# Руководство по стилизации Термос
+# Руководство по стилизации Жива
 
 Настраивайте внешний вид TUI с помощью экспортируемых стилей, цветов, иконок и хелперов из `ui/styles.go`. Это руководство отражает актуальный API.
 
@@ -16,7 +16,7 @@
 ```go
 import (
     "github.com/charmbracelet/lipgloss"
-    "github.com/qzeleza/termos/ui"
+    "github.com/qzeleza/ziva/ui"
 )
 
 func init() {
@@ -60,8 +60,8 @@ line := prefix + ui.ActiveTitleStyle.Render("Downloading")
 
 ```go
 import (
-    "github.com/qzeleza/termos/common"
-    "github.com/qzeleza/termos/ui"
+    "github.com/qzeleza/ziva/common"
+    "github.com/qzeleza/ziva/ui"
 )
 
 width := common.CalculateLayoutWidth(120)

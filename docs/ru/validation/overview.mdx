@@ -1,19 +1,19 @@
 ---
 title: "Обзор валидации"
-description: "Как работает система проверки ввода в Termos"
+description: "Как работает система проверки ввода в Ziva"
 ---
 
 # Система валидации
 
-Termos выполняет проверку пользовательского ввода непосредственно в `InputTask`. Как только пользователь нажимает <kbd>Enter</kbd>, задача вызывает валидатор и, при необходимости, возвращает сообщение об ошибке прямо в интерфейс.
+Ziva выполняет проверку пользовательского ввода непосредственно в `InputTask`. Как только пользователь нажимает <kbd>Enter</kbd>, задача вызывает валидатор и, при необходимости, возвращает сообщение об ошибке прямо в интерфейс.
 
 ## Базовое использование
 
 ```go
-v := termos.DefaultValidators
+v := ziva.DefaultValidators
 
-email := termos.NewInputTask("Email", "Введите адрес:").
-    WithInputType(termos.InputTypeEmail).
+email := ziva.NewInputTask("Email", "Введите адрес:").
+    WithInputType(ziva.InputTypeEmail).
     WithValidator(v.Email())
 ```
 
@@ -35,13 +35,13 @@ type Validator interface {
 ## Подключение встроенных валидаторов
 
 ```go
-v := termos.DefaultValidators
+v := ziva.DefaultValidators
 
-username := termos.NewInputTask("Имя", "3-20 символов, латиница")
+username := ziva.NewInputTask("Имя", "3-20 символов, латиница")
 username.WithValidator(v.Username())
 
-port := termos.NewInputTask("Порт", "1..65535").
-    WithInputType(termos.InputTypeNumber).
+port := ziva.NewInputTask("Порт", "1..65535").
+    WithInputType(ziva.InputTypeNumber).
     WithValidator(v.Port())
 ```
 
@@ -52,7 +52,7 @@ port := termos.NewInputTask("Порт", "1..65535").
 Если значение может быть пустым:
 
 ```go
-phone := termos.NewInputTask("Телефон", "Необязательно")
+phone := ziva.NewInputTask("Телефон", "Необязательно")
 phone.WithAllowEmpty(true)
 phone.WithValidator(funcValidator)
 ```
@@ -79,8 +79,8 @@ func (evenNumber) Description() string {
     return "Чётное целое число"
 }
 
-code := termos.NewInputTask("Чётный ID", "Введите значение:")
-code.WithInputType(termos.InputTypeNumber)
+code := ziva.NewInputTask("Чётный ID", "Введите значение:")
+code.WithInputType(ziva.InputTypeNumber)
 code.WithValidator(evenNumber{})
 ```
 
@@ -91,7 +91,7 @@ code.WithValidator(evenNumber{})
 Часто нужно объединять условия:
 
 ```go
-v := termos.DefaultValidators
+v := ziva.DefaultValidators
 
 validationChain := []interface {
     Validate(string) error
@@ -105,7 +105,7 @@ validationChain := []interface {
 
 validator := compositeValidator(validationChain)
 
-login := termos.NewInputTask("Логин", "3-20 латинских символов")
+login := ziva.NewInputTask("Логин", "3-20 латинских символов")
 login.WithValidator(validator)
 ```
 
@@ -116,7 +116,7 @@ login.WithValidator(validator)
 Даже если поле прошло валидацию, дополнительно проверяйте его после `queue.Run()` — особенно если требуется обращение к внешним сервисам или БД.
 
 ```go
-queue := termos.NewQueue("Регистрация")
+queue := ziva.NewQueue("Регистрация")
 queue.AddTasks(login, email)
 if err := queue.Run(); err != nil {
     return err
@@ -131,7 +131,7 @@ if exists(login.GetValue()) {
 ## Лучшие практики
 
 - Формулируйте сообщения об ошибке так, чтобы пользователь понимал, как исправить ввод.
-- Для сложных правил описывайте требования через `Description()` — Termos покажет их как подсказку.
+- Для сложных правил описывайте требования через `Description()` — Ziva покажет их как подсказку.
 - Комбинируйте InputTask с FuncTask, если нужно выполнить длительную проверку (например, запрос к API) и показать подробный результат.
 - Учитывайте локаль: если используете числа, не забудьте обрезать пробелы и заменить запятые на точки (в случае необходимости — сделайте собственный валидатор).
 

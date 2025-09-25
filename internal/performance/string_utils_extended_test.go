@@ -130,7 +130,7 @@ func TestByteBufferPool(t *testing.T) {
 	// Тестируем возврат слишком большого буфера
 	largeBuf := &bytes.Buffer{}
 	largeBuf.Grow(3000) // Больше лимита в 2048
-	pool.Put(largeBuf) // Должен быть отброшен
+	pool.Put(largeBuf)  // Должен быть отброшен
 }
 
 func TestGlobalByteBufferPool(t *testing.T) {
@@ -304,7 +304,7 @@ func isASCII(s string) bool {
 func TestContainsAnyEfficientLongChars(t *testing.T) {
 	// Тестируем длинную строку chars (>8 символов) для покрытия map-based пути
 	longChars := "abcdefghijklmnop"
-	
+
 	assert.True(t, ContainsAnyEfficient("hello", longChars))
 	assert.False(t, ContainsAnyEfficient("xyz", longChars))
 	assert.False(t, ContainsAnyEfficient("", longChars))
@@ -316,10 +316,10 @@ func TestRepeatEfficientEdgeCases(t *testing.T) {
 	result := RepeatEfficient("very long string that exceeds limit", 1000)
 	assert.NotEmpty(t, result)
 	assert.Less(t, len(result), 3000, "Результат должен быть ограничен")
-	
+
 	// Тестируем нулевое повторение
 	assert.Equal(t, "", RepeatEfficient("test", 0))
-	
+
 	// Тестируем отрицательное повторение
 	assert.Equal(t, "", RepeatEfficient("test", -1))
 }
@@ -330,16 +330,16 @@ func TestStringPoolGetWhenEmpty(t *testing.T) {
 	buf1 := pool.Get()
 	buf2 := pool.Get()
 	buf3 := pool.Get() // Этот должен создать новый буфер
-	
+
 	assert.NotNil(t, buf1)
 	assert.NotNil(t, buf2)
 	assert.NotNil(t, buf3)
-	
+
 	// Проверяем, что все буферы независимые
 	buf1.WriteString("1")
 	buf2.WriteString("2")
 	buf3.WriteString("3")
-	
+
 	assert.Equal(t, "1", buf1.String())
 	assert.Equal(t, "2", buf2.String())
 	assert.Equal(t, "3", buf3.String())

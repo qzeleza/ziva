@@ -1,11 +1,11 @@
 ---
 title: "Базовые примеры"
-description: "Простые примеры использования Termos для создания TUI приложений"
+description: "Простые примеры использования Ziva для создания TUI приложений"
 ---
 
 # Базовые примеры использования
 
-Эта страница содержит практические примеры создания TUI приложений с помощью Termos. Все примеры готовы к запуску и демонстрируют основные возможности библиотеки.
+Эта страница содержит практические примеры создания TUI приложений с помощью Ziva. Все примеры готовы к запуску и демонстрируют основные возможности библиотеки.
 
 ## Пример 1: Простое подтверждение
 
@@ -17,18 +17,18 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
     // Создаем задачу подтверждения
-    confirm := termos.NewYesNoTask(
+    confirm := ziva.NewYesNoTask(
         "Подтверждение действия",
         "Удалить все временные файлы?",
     )
 
     // Создаем очередь и добавляем задачу
-    queue := termos.NewQueue("Очистка системы")
+    queue := ziva.NewQueue("Очистка системы")
     queue.AddTasks(confirm)
 
     // Запускаем
@@ -55,7 +55,7 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
@@ -67,13 +67,13 @@ func main() {
     }
 
     // Создаем задачу выбора
-    envTask := termos.NewSingleSelectTask(
+    envTask := ziva.NewSingleSelectTask(
         "Выбор среды развертывания",
         environments,
     ).WithDefaultItem("staging")
 
     // Настраиваем и запускаем очередь
-    queue := termos.NewQueue("Развертывание приложения")
+    queue := ziva.NewQueue("Развертывание приложения")
     queue.WithAppName("DeployTool")
     queue.AddTasks(envTask)
 
@@ -98,7 +98,7 @@ import (
     "fmt"
     "log"
     "strings"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
@@ -113,13 +113,13 @@ func main() {
     }
 
     // Создаем задачу множественного выбора
-    compTask := termos.NewMultiSelectTask(
+    compTask := ziva.NewMultiSelectTask(
         "Выберите компоненты для установки",
         components,
     ).WithSelectAll("Установить все").
       WithDefaultItems([]string{"web", "api"})
 
-    queue := termos.NewQueue("Установка системы")
+    queue := ziva.NewQueue("Установка системы")
     queue.AddTasks(compTask)
 
     if err := queue.Run(); err != nil {
@@ -147,25 +147,25 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
-    v := termos.DefaultValidators
+    v := ziva.DefaultValidators
 
     // Создаем поля ввода с валидацией
-    name := termos.NewInputTask("Имя", "Введите ваше имя:").
+    name := ziva.NewInputTask("Имя", "Введите ваше имя:").
         WithValidator(v.Required())
 
-    email := termos.NewInputTask("Email", "Введите email:").
-        WithInputType(termos.InputTypeEmail).
+    email := ziva.NewInputTask("Email", "Введите email:").
+        WithInputType(ziva.InputTypeEmail).
         WithValidator(v.Email())
 
-    website := termos.NewInputTask("Сайт", "URL сайта (опционально):").
+    website := ziva.NewInputTask("Сайт", "URL сайта (опционально):").
         WithValidator(v.OptionalURL())
 
     // Создаем очередь
-    queue := termos.NewQueue("Регистрация пользователя")
+    queue := ziva.NewQueue("Регистрация пользователя")
     queue.WithAppName("UserReg")
     queue.AddTasks(name, email, website)
 
@@ -194,7 +194,7 @@ import (
     "log"
     "math/rand"
     "time"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
@@ -206,7 +206,7 @@ func main() {
     }
 
     // Создаем функциональную задачу
-    processTask := termos.NewFuncTask(
+    processTask := ziva.NewFuncTask(
         "Обработка файлов",
         func() error {
             start := time.Now()
@@ -226,7 +226,7 @@ func main() {
             return nil
         },
         // Функция сводки результатов
-        termos.WithSummaryFunction(func() []string {
+        ziva.WithSummaryFunction(func() []string {
             return []string{
                 fmt.Sprintf("Обработано файлов: %d", stats.FilesProcessed),
                 fmt.Sprintf("Ошибок: %d", stats.Errors),
@@ -235,7 +235,7 @@ func main() {
         }),
     )
 
-    queue := termos.NewQueue("Пакетная обработка")
+    queue := ziva.NewQueue("Пакетная обработка")
     queue.AddTasks(processTask)
 
     if err := queue.Run(); err != nil {
@@ -256,7 +256,7 @@ import (
     "log"
     "strconv"
     "time"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 type ServerConfig struct {
@@ -274,10 +274,10 @@ func main() {
     tasks := createConfigTasks(config)
 
     // Настраиваем очередь
-    queue := termos.NewQueue("Настройка веб-сервера")
+    queue := ziva.NewQueue("Настройка веб-сервера")
     queue.WithAppName("WebServerSetup").
           WithTasksNumbered(true, "[%02d]").
-          WithTitleColor(termos.BlueBright, true)
+          WithTitleColor(ziva.BlueBright, true)
 
     queue.AddTasks(tasks...)
 
@@ -289,22 +289,22 @@ func main() {
     printConfig(config)
 }
 
-func createConfigTasks(config *ServerConfig) []termos.Task {
-    v := termos.DefaultValidators
+func createConfigTasks(config *ServerConfig) []ziva.Task {
+    v := ziva.DefaultValidators
 
     // 1. Хост
-    hostTask := termos.NewInputTask("Хост сервера", "IP адрес или домен:").
+    hostTask := ziva.NewInputTask("Хост сервера", "IP адрес или домен:").
         WithValidator(v.Required()).
         WithTimeout(30*time.Second, "localhost")
 
     // 2. Порт
-    portTask := termos.NewInputTask("Порт", "Порт сервера (1-65535):").
-        WithInputType(termos.InputTypeNumber).
+    portTask := ziva.NewInputTask("Порт", "Порт сервера (1-65535):").
+        WithInputType(ziva.InputTypeNumber).
         WithValidator(v.Port()).
         WithTimeout(15*time.Second, "8080")
 
     // 3. SSL
-    sslTask := termos.NewYesNoTask("SSL", "Включить HTTPS?").
+    sslTask := ziva.NewYesNoTask("SSL", "Включить HTTPS?").
         WithDefaultItem("Да")
 
     // 4. Модули
@@ -317,12 +317,12 @@ func createConfigTasks(config *ServerConfig) []termos.Task {
         "cache||Кеширование",
     }
 
-    moduleTask := termos.NewMultiSelectTask("Модули", modules).
+    moduleTask := ziva.NewMultiSelectTask("Модули", modules).
         WithSelectAll("Включить все модули").
         WithDefaultItems([]string{"auth", "static"})
 
     // 5. Функциональная задача применения конфигурации
-    applyTask := termos.NewFuncTask(
+    applyTask := ziva.NewFuncTask(
         "Применение конфигурации",
         func() error {
             // Собираем конфигурацию
@@ -337,7 +337,7 @@ func createConfigTasks(config *ServerConfig) []termos.Task {
             time.Sleep(2 * time.Second)
             return nil
         },
-        termos.WithSummaryFunction(func() []string {
+        ziva.WithSummaryFunction(func() []string {
             return []string{
                 "Конфигурация применена",
                 "Сервер готов к запуску",
@@ -345,7 +345,7 @@ func createConfigTasks(config *ServerConfig) []termos.Task {
         }),
     )
 
-    return []termos.Task{hostTask, portTask, sslTask, moduleTask, applyTask}
+    return []ziva.Task{hostTask, portTask, sslTask, moduleTask, applyTask}
 }
 
 func printConfig(config *ServerConfig) {
@@ -371,15 +371,15 @@ func printConfig(config *ServerConfig) {
 
 ```go
 // Группа аутентификации
-authTasks := []termos.Task{
-    termos.NewInputTask("Username", "Логин:"),
-    termos.NewInputTask("Password", "Пароль:").WithInputType(termos.InputTypePassword),
+authTasks := []ziva.Task{
+    ziva.NewInputTask("Username", "Логин:"),
+    ziva.NewInputTask("Password", "Пароль:").WithInputType(ziva.InputTypePassword),
 }
 
 // Группа настроек
-configTasks := []termos.Task{
-    termos.NewSingleSelectTask("Theme", themes),
-    termos.NewYesNoTask("Notifications", "Включить уведомления?"),
+configTasks := []ziva.Task{
+    ziva.NewSingleSelectTask("Theme", themes),
+    ziva.NewYesNoTask("Notifications", "Включить уведомления?"),
 }
 
 queue.AddTasks(authTasks...)
@@ -389,7 +389,7 @@ queue.AddTasks(configTasks...)
 ### 2. Обработка отмены
 
 ```go
-queue := termos.NewQueue("Setup")
+queue := ziva.NewQueue("Setup")
 if err := queue.Run(); err != nil {
     if err == context.Canceled {
         fmt.Println("❌ Настройка отменена пользователем")

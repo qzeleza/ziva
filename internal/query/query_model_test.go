@@ -9,8 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/defaults"
+	"github.com/qzeleza/ziva/internal/common"
+	"github.com/qzeleza/ziva/internal/defaults"
 )
 
 // mockTask - мок задачи для тестирования модели Query.

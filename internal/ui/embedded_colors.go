@@ -92,15 +92,15 @@ func refreshIconsForEmbedded() {
 
 // EnableASCIIMode включает максимально совместимый ASCII-набор иконок
 func EnableASCIIMode() {
-    // Устанавливаем простые ASCII-иконки без цвета
-    IconDone = "*"
-    IconError = "x"
-    IconCancelled = "!"
-    IconQuestion = "?"
-    IconSelected = ">"
-    IconRadioOn = "(x)"
-    IconCursor = ">"
-    IconUndone = "."
+	// Устанавливаем простые ASCII-иконки без цвета
+	IconDone = "*"
+	IconError = "x"
+	IconCancelled = "!"
+	IconQuestion = "?"
+	IconSelected = ">"
+	IconRadioOn = "(x)"
+	IconCursor = ">"
+	IconUndone = "."
 }
 
 // IsEmbeddedColorMode возвращает true если включен embedded режим

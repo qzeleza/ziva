@@ -10,20 +10,20 @@ description: "İki seçenek arasında ikili seçim görevi"
 ## Görev Oluşturma
 
 ```go
-task := termos.NewYesNoTask("Başlık", "Kullanıcıya soru?")
+task := ziva.NewYesNoTask("Başlık", "Kullanıcıya soru?")
 ```
 
 ## Ana Metodlar
 
 ```go
 // Ayarlarla oluşturma
-task := termos.NewYesNoTask("Onay", "Kuruluma devam et?").
+task := ziva.NewYesNoTask("Onay", "Kuruluma devam et?").
     WithDefaultItem("Evet").                         // varsayılan değer
     WithTimeout(10*time.Second, "Hayır").            // zaman aşımı ile fallback
     WithCustomLabels("Devam Et", "İptal Et")         // özel etiketler
 
 // Sonuç alma
-selected := task.GetSelectedOption() // termos.YesNoOption
+selected := task.GetSelectedOption() // ziva.YesNoOption
 isYes := task.IsYes()                // bool
 isNo := task.IsNo()                  // bool
 ```
@@ -42,12 +42,12 @@ task.WithCustomLabels("✓ Evet", "✗ Hayır")
 
 ```go
 func confirmAction() bool {
-    task := termos.NewYesNoTask(
+    task := ziva.NewYesNoTask(
         "Onay",
         "Dosyayı silmek istediğinizden emin misiniz?",
     )
 
-    queue := termos.NewQueue("Dosya Silme")
+    queue := ziva.NewQueue("Dosya Silme")
     queue.AddTasks(task)
     queue.Run()
 

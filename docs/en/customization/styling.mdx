@@ -1,46 +1,46 @@
 ---
 title: "Styling and Themes"
-description: "Customizing appearance of Termos applications"
+description: "Customizing appearance of Ziva applications"
 ---
 
 # Styling and Themes
 
-Termos provides extensive styling capabilities for customizing the appearance of your TUI applications.
+Ziva provides extensive styling capabilities for customizing the appearance of your TUI applications.
 
 ## Global Styles
 
 ```go
 // Available global styles
-termos.ErrorStatusStyle   // Error status display
-termos.ErrorMessageStyle  // Error messages
-termos.CancelStyle        // Cancellation messages
-termos.SubtleStyle        // Subtle text
-termos.SelectionStyle     // Selected items
-termos.ActiveStyle        // Active elements
-termos.InputStyle         // Input fields
-termos.SpinnerStyle       // Loading spinner
+ziva.ErrorStatusStyle   // Error status display
+ziva.ErrorMessageStyle  // Error messages
+ziva.CancelStyle        // Cancellation messages
+ziva.SubtleStyle        // Subtle text
+ziva.SelectionStyle     // Selected items
+ziva.ActiveStyle        // Active elements
+ziva.InputStyle         // Input fields
+ziva.SpinnerStyle       // Loading spinner
 ```
 
 ## Colors
 
 ```go
 // Available colors
-termos.GreenBright
-termos.RedBright
-termos.BlueBright
-termos.YellowBright
-termos.CyanBright
-termos.MagentaBright
-termos.WhiteBright
-termos.GrayBright
+ziva.GreenBright
+ziva.RedBright
+ziva.BlueBright
+ziva.YellowBright
+ziva.CyanBright
+ziva.MagentaBright
+ziva.WhiteBright
+ziva.GrayBright
 ```
 
 ## Queue Styling
 
 ```go
-queue := termos.NewQueue("Styled Application")
-queue.WithAppNameColor(termos.BlueBright, true)     // app name: blue, bold
-queue.WithTitleColor(termos.GreenBright, false)     // title: green, normal
+queue := ziva.NewQueue("Styled Application")
+queue.WithAppNameColor(ziva.BlueBright, true)     // app name: blue, bold
+queue.WithTitleColor(ziva.GreenBright, false)     // title: green, normal
 ```
 
 ## Task Numbering Styles

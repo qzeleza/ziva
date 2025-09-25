@@ -1,6 +1,6 @@
-package termos
+package ziva
 
-import "github.com/qzeleza/termos/internal/defaults"
+import "github.com/qzeleza/ziva/internal/defaults"
 
 // SetLanguage задаёт язык интерфейса и возвращает фактически установленное значение (например, "ru" или "en").
 func SetLanguage(lang string) string {

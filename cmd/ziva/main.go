@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/qzeleza/termos"
+	"github.com/qzeleza/ziva"
 )
 
 // pingResult представляет результат проверки подключения
@@ -26,16 +26,16 @@ func main() {
 	// Настраиваем язык интерфейса и предупреждаем о возможных ограничениях терминала
 	activeLang := configureLanguage()
 	warnTerminalCapabilities(activeLang)
-	termos.SetDefaultLanguage("ru")
+	ziva.SetDefaultLanguage("ru")
 	// Используем собственный разделитель для подсказок в пунктах меню
-	termos.SetChoiceHelpDelimiter("||")
+	ziva.SetDescriptionSeparator("||")
 
 	// Заголовок и краткое описание для TUI
-	header := "Демонстрация всех типов задач Termos"
+	header := "Демонстрация всех типов задач Ziva"
 
 	// Создаем очередь и добавляем задачи
-	queue := termos.NewQueue(header)
-	queue.WithAppName("Термос")
+	queue := ziva.NewQueue(header)
+	queue.WithAppName("Жива")
 	// queue.WithOutResultLine()
 	// queue.WithOutSummary()
 	// queue.WithTasksNumbered(false, "[%d]")
@@ -65,13 +65,13 @@ func main() {
 	}
 	// 1) Задачи мультивыбора (без и с пунктом "Выбрать все")
 	//    Пример без "Выбрать все"
-	ms1 := termos.NewMultiSelectTask("Выберите компоненты установки", msel).
+	ms1 := ziva.NewMultiSelectTask("Выберите компоненты установки", msel).
 		WithViewport(5, false).
 		WithTimeout(3*time.Second, []string{msel[0], msel[1]}).
 		WithItemsDisabled([]string{msel[2], msel[3]})
 
 	// //    Пример с пунктом "Выбрать все"
-	// ms2 := termos.NewMultiSelectTask("Выберите модули для сборки", ssel).
+	// ms2 := ziva.NewMultiSelectTask("Выберите модули для сборки", ssel).
 	// 	WithViewport(3, false).
 	// 	WithSelectAll("Выбрать все").
 	// 	WithTimeout(10*time.Second, []string{ssel[0], ssel[1]}).
@@ -79,7 +79,7 @@ func main() {
 	// 	WithItemsDisabled([]string{ssel[2], ssel[3]})
 
 	// 2) Одиночный выбор
-	ss := termos.NewSingleSelectTask(
+	ss := ziva.NewSingleSelectTask(
 		"Выберите среду развертывания",
 		ssel,
 	).WithViewport(3).
@@ -88,7 +88,7 @@ func main() {
 
 	// 3) Ввод с использованием всех стандартных валидаторов
 	//    Валидация будет происходить в момент подтверждения (Enter)
-	// v := termos.DefaultValidators
+	// v := ziva.DefaultValidators
 
 	// inPath := task.NewInputTaskNew("Путь к файлу/директории", "Введите путь:").
 	// 	WithValidator(v.Path())
@@ -104,32 +104,32 @@ func main() {
 	// 4) Задача-выполнение функции (FuncTask)
 	//    Выполняет полезную работу и выводит результат в финальном представлении задачи (без fmt.Print)
 	errorTaskRun := false
-	var fn *termos.FuncTask
+	var fn *ziva.FuncTask
 	if errorTaskRun {
 		data := pingResult{}
-		fn = termos.NewFuncTask(
+		fn = ziva.NewFuncTask(
 			"Проверка соединения",
 			func() error {
 				// return checkConnection(&data)
 				return errors.New("симуляция ошибки в середине выполнения очереди\nне ясная причина стимуляции проблемы\nдополнительная информация")
 			},
 			// Выводим краткую сводку под заголовком после успеха
-			termos.WithSummaryFunction(func() []string {
+			ziva.WithSummaryFunction(func() []string {
 				return []string{
 					"Пинг: " + data.Ping,
 					"Потери пакетов: " + data.Loss,
 				}
 			}),
 			// Не останавливать очередь при ошибке (для демонстрации поведения)
-			termos.WithStopOnError(true),
+			ziva.WithStopOnError(true),
 		)
 		queue.AddTasks(fn)
 	}
 	// 5) Подтверждение Да/Нет (например, для сохранения настроек)
 	// Используем языко-независимый метод вместо строки "Да"
-	ys := termos.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeoutYes(2 * time.Second)
+	ys := ziva.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeoutYes(2 * time.Second)
 
-	// inUsername := termos.NewInputTask("Имя пользователя", "Введите username:").
+	// inUsername := ziva.NewInputTask("Имя пользователя", "Введите username:").
 	// 	WithValidator(v.Username()).
 	// 	WithTimeout(10*time.Second, "Alex")
 
@@ -243,15 +243,15 @@ func checkConnection(result *pingResult) error {
 
 // configureLanguage разбирает язык из CLI/конфига, проверяет доступность локали и применяет его.
 func configureLanguage() string {
-	if defLang := strings.TrimSpace(os.Getenv("TERMOS_DEFAULT_LANG")); defLang != "" {
-		termos.SetDefaultLanguage(defLang)
+	if defLang := strings.TrimSpace(os.Getenv("ZIVA_DEFAULT_LANG")); defLang != "" {
+		ziva.SetDefaultLanguage(defLang)
 	}
-	langFlag := flag.String("lang", "", "язык интерфейса Termos (например, ru или en)")
+	langFlag := flag.String("lang", "", "язык интерфейса Ziva (например, ru или en)")
 	flag.Parse()
 
 	lang := strings.TrimSpace(*langFlag)
 	if lang == "" {
-		lang = strings.TrimSpace(os.Getenv("TERMOS_LANG"))
+		lang = strings.TrimSpace(os.Getenv("ZIVA_LANG"))
 	}
 	if lang == "" {
 		lang = "ru"
@@ -263,7 +263,7 @@ func configureLanguage() string {
 		lang = "en"
 	}
 
-	return termos.SetLanguage(lang)
+	return ziva.SetLanguage(lang)
 }
 
 // localeAvailable проверяет присутствие заданной локали в системе.

@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/performance"
-	"github.com/qzeleza/termos/internal/ui"
+	"github.com/qzeleza/ziva/internal/common"
+	"github.com/qzeleza/ziva/internal/performance"
+	"github.com/qzeleza/ziva/internal/ui"
 )
 
 // numberedMockTask расширяет mockTask, добавляя поддержку установки префикса завершения.

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/qzeleza/termos/internal/defaults"
-	terrors "github.com/qzeleza/termos/internal/errors"
-	"github.com/qzeleza/termos/internal/performance"
-	"github.com/qzeleza/termos/internal/ui"
-	"github.com/qzeleza/termos/internal/validation"
+	"github.com/qzeleza/ziva/internal/defaults"
+	terrors "github.com/qzeleza/ziva/internal/errors"
+	"github.com/qzeleza/ziva/internal/performance"
+	"github.com/qzeleza/ziva/internal/ui"
+	"github.com/qzeleza/ziva/internal/validation"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"

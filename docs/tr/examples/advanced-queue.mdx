@@ -5,13 +5,13 @@ description: "Koşullu akışlar, dinamik görev üretimi ve dayanıklı yeniden
 
 # Gelişmiş Kuyruk Rehberi
 
-Aşağıdaki örnekler Termos ile karmaşık iş akışlarını nasıl düzenleyebileceğinizi gösterir:
+Aşağıdaki örnekler Ziva ile karmaşık iş akışlarını nasıl düzenleyebileceğinizi gösterir:
 - süreci aşamalara bölmek ve görevleri dinamik olarak eklemek;
 - kullanıcı seçimlerine ve görev sonuçlarına tepki vermek;
 - TUI'dan çıkmadan hatalardan toparlanmak.
 
 <Info>
-Tüm kod parçaları `termos` paketinin herkese açık API'sini kullanır. Bunları `examples` paketine koyabilir ve davranışı göstermek istediğinizde çağırabilirsiniz.
+Tüm kod parçaları `ziva` paketinin herkese açık API'sini kullanır. Bunları `examples` paketine koyabilir ve davranışı göstermek istediğinizde çağırabilirsiniz.
 </Info>
 
 ## Çok aşamalı kurulum şablonu
@@ -20,16 +20,16 @@ Tüm kod parçaları `termos` paketinin herkese açık API'sini kullanır. Bunla
 // DeployCluster, kullanıcının yanıtlarını toplayan, ilerlemeyi gösteren
 // ve sonraki adımlar için sonuçları saklayan sıralı bir kurulumu organize eder.
 func DeployCluster() error {
-    summary := termos.NewFuncTask(
+    summary := ziva.NewFuncTask(
         "Ön kontroller",
         runPreflightChecks,
-        termos.WithSummaryFunction(func() []string {
+        ziva.WithSummaryFunction(func() []string {
             return []string{"DNS: ok", "Ağ: ok"}
         }),
-        termos.WithStopOnError(true),
+        ziva.WithStopOnError(true),
     )
 
-    topology := termos.NewSingleSelectTask(
+    topology := ziva.NewSingleSelectTask(
         "Topoloji",
         []string{
             "single-node::Tek düğüm",
@@ -38,16 +38,16 @@ func DeployCluster() error {
         },
     ).WithDefaultItem("multi-node")
 
-    nodes := termos.NewInputTask(
+    nodes := ziva.NewInputTask(
         "Düğüm sayısı",
         "Kaç işçi düğümü kurulacak?",
     ).
-        WithInputType(termos.InputTypeNumber).
-        WithValidator(termos.DefaultValidators.Range(1, 20)).
+        WithInputType(ziva.InputTypeNumber).
+        WithValidator(ziva.DefaultValidators.Range(1, 20)).
         WithTimeout(30*time.Second, "3")
 
-    queue := termos.NewQueue("Termos Dağıtımı").
-        WithAppName("Termos CLI").
+    queue := ziva.NewQueue("Ziva Dağıtımı").
+        WithAppName("Ziva CLI").
         WithTasksNumbered(true, "[%02d]")
 
     queue.AddTasks(summary, topology, nodes)
@@ -56,7 +56,7 @@ func DeployCluster() error {
     }
 
     // Seçilen topolojiye göre ek görevler ekleyelim.
-    followUp := termos.NewQueue("Takip görevleri")
+    followUp := ziva.NewQueue("Takip görevleri")
 
     switch topology.GetSelected() {
     case "single-node":
@@ -84,13 +84,13 @@ func RunWithRetries(label string, fn func() error, maxAttempts int) error {
     attempt := 1
 
     for {
-        task := termos.NewFuncTask(
+        task := ziva.NewFuncTask(
             fmt.Sprintf("%s · deneme %d", label, attempt),
             fn,
-            termos.WithStopOnError(false),
+            ziva.WithStopOnError(false),
         )
 
-        queue := termos.NewQueue(label)
+        queue := ziva.NewQueue(label)
         queue.AddTasks(task)
 
         if err := queue.Run(); err == nil {
@@ -101,12 +101,12 @@ func RunWithRetries(label string, fn func() error, maxAttempts int) error {
             return fmt.Errorf("deneme limiti aşıldı (%d)", maxAttempts)
         }
 
-        retry := termos.NewYesNoTask(
+        retry := ziva.NewYesNoTask(
             "Tekrar dene",
             fmt.Sprintf("%d. deneme başarısız oldu. Tekrar denensin mi?", attempt),
         ).WithDefaultYesAndTimeout(10 * time.Second)
 
-        confirmation := termos.NewQueue("Tekrar kararı")
+        confirmation := ziva.NewQueue("Tekrar kararı")
         confirmation.AddTasks(retry)
         confirmation.Run()
 
@@ -129,11 +129,11 @@ func RunWithRetries(label string, fn func() error, maxAttempts int) error {
 
 ```go
 func ConfigureServers() error {
-    count := termos.NewInputTask("Sunucu sayısı", "Kaç sunucu yapılandırılacak?").
-        WithInputType(termos.InputTypeNumber).
-        WithValidator(termos.DefaultValidators.Range(1, 8))
+    count := ziva.NewInputTask("Sunucu sayısı", "Kaç sunucu yapılandırılacak?").
+        WithInputType(ziva.InputTypeNumber).
+        WithValidator(ziva.DefaultValidators.Range(1, 8))
 
-    baseQueue := termos.NewQueue("Yapılandırma parametreleri")
+    baseQueue := ziva.NewQueue("Yapılandırma parametreleri")
     baseQueue.AddTasks(count)
     if err := baseQueue.Run(); err != nil {
         return err
@@ -141,21 +141,21 @@ func ConfigureServers() error {
 
     n, _ := strconv.Atoi(count.GetValue())
 
-    var tasks []termos.Task
+    var tasks []ziva.Task
     for i := 1; i <= n; i++ {
         prefix := fmt.Sprintf("Sunucu %d", i)
 
-        host := termos.NewInputTask(prefix+" · host", "FQDN girin")
-        host.WithValidator(termos.DefaultValidators.Domain())
+        host := ziva.NewInputTask(prefix+" · host", "FQDN girin")
+        host.WithValidator(ziva.DefaultValidators.Domain())
 
-        port := termos.NewInputTask(prefix+" · port", "Port girin")
-        port.WithInputType(termos.InputTypeNumber).
-            WithValidator(termos.DefaultValidators.Port())
+        port := ziva.NewInputTask(prefix+" · port", "Port girin")
+        port.WithInputType(ziva.InputTypeNumber).
+            WithValidator(ziva.DefaultValidators.Port())
 
         tasks = append(tasks, host, port)
     }
 
-    servers := termos.NewQueue("Sunucu yapılandırması").
+    servers := ziva.NewQueue("Sunucu yapılandırması").
         WithTasksNumbered(true, "[%02d]")
     servers.AddTasks(tasks...)
     return servers.Run()
@@ -170,7 +170,7 @@ Yüzlerce görev üretebilecek bir akışınız varsa yürütmeyi birkaç kuyru�
 
 - Sonuçlarına daha sonra ihtiyaç duyacağınız görevlerin referanslarını saklayın.
 - Farklı aşamalar için ayrı kuyruklar kullanın — bu, mantığı ve test yazmayı kolaylaştırır.
-- Termos'un hedef sistemi otomatik ayarlaması için başlangıçta `AutoConfigure()` çağırın.
+- Ziva'un hedef sistemi otomatik ayarlaması için başlangıçta `AutoConfigure()` çağırın.
 - Kısıtlı cihazlarda çıktıyı kompakt tutmak için `EnableEmbeddedMode()` ile `WithOutResultLine()` kombinasyonunu tercih edin.
 - Kuyruk sırayla çalışır; sözde paralellik gerekiyorsa ek kuyrukları `FuncTask` içinden başlatın.
 

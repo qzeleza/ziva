@@ -1,18 +1,18 @@
 ---
 title: "Best Practices"
-description: "Battle-tested guidelines for building TUIs with Termos"
+description: "Battle-tested guidelines for building TUIs with Ziva"
 ---
 
-# Termos Best Practices
+# Ziva Best Practices
 
-Use this checklist when integrating Termos into production systems. It covers structure, validation, styling, performance and testing.
+Use this checklist when integrating Ziva into production systems. It covers structure, validation, styling, performance and testing.
 
 ## Architecture & code organisation
 
 - Keep task creation in factories/helpers so queues stay readable.
 - Group tasks by stage and spin up separate queues for each stage (collect → validate → apply). This makes testing and reuse easier.
 - Store references to tasks whose values you need after `queue.Run()`; their state persists.
-- Call `termos.AutoConfigure()` plus language setup (`SetDefaultLanguage`, `SetLanguage`) in `main()` before you start creating queues.
+- Call `ziva.AutoConfigure()` plus language setup (`SetDefaultLanguage`, `SetLanguage`) in `main()` before you start creating queues.
 
 ## Queue management
 
@@ -23,21 +23,21 @@ Use this checklist when integrating Termos into production systems. It covers st
 
 ## Validation & input
 
-- Keep `Description()` messages user-friendly — Termos renders them under the field.
+- Keep `Description()` messages user-friendly — Ziva renders them under the field.
 - Mix built-in validators from `DefaultValidators` with custom types. Compose them for complex rules and cover them with tests.
 - Combine `WithAllowEmpty(true)` with validators that tolerate empty strings (for example `OptionalEmail`).
 - Add a `FuncTask` right after the input when you need a network check (duplicate email in CRM, external API) and show the outcome to the operator.
 
 ## Styling & localisation
 
-- Customise error colours with `termos.SetErrorColor` to match brand requirements; call `ResetErrorColors()` after experiments.
+- Customise error colours with `ziva.SetErrorColor` to match brand requirements; call `ResetErrorColors()` after experiments.
 - On constrained terminals combine `EnableEmbeddedMode()` and `EnableASCIIMode()` so the output stays legible.
 - Maintain labels in multiple languages. `SetChoiceHelpDelimiter()` helps add inline explanations (`"prod::Production"`).
 
 ## Performance & embedded targets
 
-- Limit completed-task history with the `TERMOS_MAX_COMPLETED_TASKS` environment variable.
-- Monitor memory via `TERMOS_MEMORY_PRESSURE_THRESHOLD` and periodically purge the string intern cache using `termos.ClearInternCache()` for long-lived CLIs.
+- Limit completed-task history with the `ZIVA_MAX_COMPLETED_TASKS` environment variable.
+- Monitor memory via `ZIVA_MEMORY_PRESSURE_THRESHOLD` and periodically purge the string intern cache using `ziva.ClearInternCache()` for long-lived CLIs.
 - Use `WithViewport(...)` for large lists — it keeps the UI responsive and prevents long jumps.
 - Split heavy work into smaller `FuncTask` steps so users see progress more often.
 
@@ -45,7 +45,7 @@ Use this checklist when integrating Termos into production systems. It covers st
 
 - Unit-test task factories: create the task, simulate messages via `Update`, and verify the final state/result.
 - Maintain demo queues under `examples/` and run them manually. Capture screenshots/GIFs by disabling `WithClearScreen(true)` when recording.
-- Log critical failures outside of Termos (e.g. `log`/`zap`), especially when queues halt due to `WithStopOnError(true)`.
+- Log critical failures outside of Ziva (e.g. `log`/`zap`), especially when queues halt due to `WithStopOnError(true)`.
 
 ## Release-ready checklist
 
@@ -55,4 +55,4 @@ Use this checklist when integrating Termos into production systems. It covers st
 - [ ] Colour scheme and localisation conform to product requirements.
 - [ ] Embedded devices verified with `AutoConfigure()` and embedded mode.
 
-Pair these guidelines with the examples section to build reliable and friendly TUIs with Termos.
+Pair these guidelines with the examples section to build reliable and friendly TUIs with Ziva.

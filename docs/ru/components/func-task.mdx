@@ -10,7 +10,7 @@ description: "Выполнение произвольного кода внут�
 ## Создание
 
 ```go
-task := termos.NewFuncTask("Сборка", func() error {
+task := ziva.NewFuncTask("Сборка", func() error {
     return buildArtifacts()
 })
 ```
@@ -22,8 +22,8 @@ task := termos.NewFuncTask("Сборка", func() error {
 ### `WithStopOnError`
 
 ```go
-task := termos.NewFuncTask("Развертывание", deploy,
-    termos.WithStopOnError(true),
+task := ziva.NewFuncTask("Развертывание", deploy,
+    ziva.WithStopOnError(true),
 )
 ```
 
@@ -37,13 +37,13 @@ var stats struct {
     Hosts    int
 }
 
-task := termos.NewFuncTask("Проверка кластера", func() error {
+task := ziva.NewFuncTask("Проверка кластера", func() error {
     start := time.Now()
     hosts, err := pingAll()
     stats.Duration = time.Since(start)
     stats.Hosts = hosts
     return err
-}, termos.WithSummaryFunction(func() []string {
+}, ziva.WithSummaryFunction(func() []string {
     return []string{
         fmt.Sprintf("Время: %s", stats.Duration),
         fmt.Sprintf("Узлов доступно: %d", stats.Hosts),
@@ -56,11 +56,11 @@ task := termos.NewFuncTask("Проверка кластера", func() error {
 ## Комбинирование с другими задачами
 
 ```go
-confirm := termos.NewYesNoTask("Подтверждение", "Запустить развёртывание?")
-deploy := termos.NewFuncTask("Развёртывание", runDeployment, termos.WithStopOnError(true))
-verify := termos.NewFuncTask("Проверка", verifySetup)
+confirm := ziva.NewYesNoTask("Подтверждение", "Запустить развёртывание?")
+deploy := ziva.NewFuncTask("Развёртывание", runDeployment, ziva.WithStopOnError(true))
+verify := ziva.NewFuncTask("Проверка", verifySetup)
 
-queue := termos.NewQueue("CI/CD")
+queue := ziva.NewQueue("CI/CD")
 queue.AddTasks(confirm, deploy, verify)
 _ = queue.Run()
 ```

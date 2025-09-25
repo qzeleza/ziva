@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/qzeleza/termos/internal/defaults"
-	"github.com/qzeleza/termos/internal/performance"
+	"github.com/qzeleza/ziva/internal/defaults"
+	"github.com/qzeleza/ziva/internal/performance"
 )
 
 // ValidatorFactory предоставляет удобные методы для создания часто используемых валидаторов

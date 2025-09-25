@@ -1,9 +1,9 @@
 ---
 title: "Kurulum"
-description: "Termos'u Go projenizde nasıl kuracağınız ve yapılandıracağınız"
+description: "Ziva'u Go projenizde nasıl kuracağınız ve yapılandıracağınız"
 ---
 
-# Termos Kurulumu
+# Ziva Kurulumu
 
 ## Gereksinimler
 
@@ -16,7 +16,7 @@ description: "Termos'u Go projenizde nasıl kuracağınız ve yapılandıracağ�
 ### go get ile
 
 ```bash
-go get github.com/qzeleza/termos
+go get github.com/qzeleza/ziva
 ```
 
 ### go mod ile
@@ -24,7 +24,7 @@ go get github.com/qzeleza/termos
 `go.mod` dosyanıza ekleyin:
 
 ```go
-require github.com/qzeleza/termos latest
+require github.com/qzeleza/ziva latest
 ```
 
 Sonra çalıştırın:
@@ -43,15 +43,15 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
     // Basit görev oluştur
-    task := termos.NewYesNoTask("Test", "Termos doğru kuruldu mu?")
+    task := ziva.NewYesNoTask("Test", "Ziva doğru kuruldu mu?")
 
     // Kuyruk oluştur ve görev ekle
-    queue := termos.NewQueue("Termos Kurulum Kontrolü")
+    queue := ziva.NewQueue("Ziva Kurulum Kontrolü")
     queue.AddTasks(task)
 
     // Çalıştır
@@ -61,7 +61,7 @@ func main() {
 
     // Sonucu kontrol et
     if task.IsYes() {
-        fmt.Println("✅ Harika! Termos çalışmaya hazır.")
+        fmt.Println("✅ Harika! Ziva çalışmaya hazır.")
     } else {
         fmt.Println("❌ Kurulumu kontrol etmek gerekiyor.")
     }
@@ -106,16 +106,16 @@ setterm -font ter-116n  # Turkish character support
 
 ### Ortam Değişkenleri
 
-Termos, ortam değişkenleri ile yapılandırmayı destekler:
+Ziva, ortam değişkenleri ile yapılandırmayı destekler:
 
 ```bash
 # Arayüz dili
-export TERMOS_LANG=tr
-export TERMOS_DEFAULT_LANG=tr
+export ZIVA_LANG=tr
+export ZIVA_DEFAULT_LANG=tr
 
 # Gömülü sistemler için
-export TERMOS_MEMORY_PRESSURE_THRESHOLD=50M
-export TERMOS_MAX_COMPLETED_TASKS=10
+export ZIVA_MEMORY_PRESSURE_THRESHOLD=50M
+export ZIVA_MAX_COMPLETED_TASKS=10
 
 # Terminal renkleri
 export COLORTERM=truecolor
@@ -124,7 +124,7 @@ export TERM=xterm-256color
 
 ## Proje Yapısı
 
-Termos ile önerilen Go projesi yapısı:
+Ziva ile önerilen Go projesi yapısı:
 
 ```
 uygulamam/
@@ -144,7 +144,7 @@ uygulamam/
 
 ## Bağımlılıklar
 
-Termos şu ana bağımlılıkları kullanır:
+Ziva şu ana bağımlılıkları kullanır:
 
 - **Bubble Tea** - TUI için temel
 - **Lip Gloss** - stil ve renkler

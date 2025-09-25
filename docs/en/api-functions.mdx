@@ -1,29 +1,29 @@
 ---
 title: "API Functions"
-description: "Complete reference for global API functions of the Termos library for configuration, optimization and advanced usage"
+description: "Complete reference for global API functions of the Ziva library for configuration, optimization and advanced usage"
 ---
 
 # API Functions
 
-Termos provides a rich set of global functions for configuring library behavior, optimizing performance, and advanced usage.
+Ziva provides a rich set of global functions for configuring library behavior, optimizing performance, and advanced usage.
 
 <Info>
-These functions complement the core library components and allow fine-tuning Termos behavior for your specific application requirements.
+These functions complement the core library components and allow fine-tuning Ziva behavior for your specific application requirements.
 </Info>
 
 ## Auto-configuration
 
 ### AutoConfigure()
 
-Automatically configures Termos for optimal performance on the current system.
+Automatically configures Ziva for optimal performance on the current system.
 
 ```go
 func main() {
     // Recommended to call at the beginning of the program
-    termos.AutoConfigure()
+    ziva.AutoConfigure()
 
     // Your application code
-    queue := termos.NewQueue("Application Name")
+    queue := ziva.NewQueue("Application Name")
 }
 ```
 
@@ -38,7 +38,7 @@ This function:
 Determines system architecture for optimal algorithm selection.
 
 ```go
-if termos.Is64Bit() {
+if ziva.Is64Bit() {
     // Use algorithms for 64-bit systems
     fmt.Println("64-bit architecture")
 } else {
@@ -55,11 +55,11 @@ Creates a string by efficiently repeating the base string.
 
 ```go
 // Create a separator of 50 "-" characters
-separator := termos.RepeatEfficient("-", 50)
+separator := ziva.RepeatEfficient("-", 50)
 fmt.Println(separator)
 
 // Indentation for formatting
-indent := termos.RepeatEfficient(" ", 4)
+indent := ziva.RepeatEfficient(" ", 4)
 ```
 
 ### JoinEfficient(parts []string, separator string) string
@@ -68,7 +68,7 @@ Joins strings with minimal memory allocations.
 
 ```go
 items := []string{"apple", "banana", "cherry"}
-result := termos.JoinEfficient(items, ", ")
+result := ziva.JoinEfficient(items, ", ")
 // Result: "apple, banana, cherry"
 ```
 
@@ -77,7 +77,7 @@ result := termos.JoinEfficient(items, ", ")
 Fast concatenation of arbitrary number of strings.
 
 ```go
-message := termos.FastConcat(
+message := ziva.FastConcat(
     "User ", username,
     " performed ", action,
     " at ", timestamp,
@@ -90,7 +90,7 @@ Cleans string from excessive whitespace characters.
 
 ```go
 text := "  Too    many\t\tspaces\n\nand\nlines  "
-clean := termos.CleanWhitespaceEfficient(text)
+clean := ziva.CleanWhitespaceEfficient(text)
 // Result: "Too many spaces and lines"
 ```
 
@@ -104,7 +104,7 @@ Configures color scheme for error display.
 import "github.com/charmbracelet/lipgloss"
 
 // Red errors with yellow statuses
-termos.SetErrorColor(
+ziva.SetErrorColor(
     lipgloss.Color("#FF0000"), // red for error text
     lipgloss.Color("#FFFF00"), // yellow for statuses
 )
@@ -116,7 +116,7 @@ Resets error colors to default values.
 
 ```go
 // After experimenting with colors
-termos.ResetErrorColors()
+ziva.ResetErrorColors()
 ```
 
 ### EnableEmbeddedMode()
@@ -125,7 +125,7 @@ Enables embedded system mode with simplified color palette.
 
 ```go
 // For routers, IoT devices
-termos.EnableEmbeddedMode()
+ziva.EnableEmbeddedMode()
 ```
 
 ### EnableASCIIMode()
@@ -134,7 +134,7 @@ Switches to ASCII mode for legacy terminals.
 
 ```go
 // For terminals without Unicode support
-termos.EnableASCIIMode()
+ziva.EnableASCIIMode()
 ```
 
 ### IsEmbeddedColorMode() bool
@@ -142,7 +142,7 @@ termos.EnableASCIIMode()
 Checks if embedded system mode is enabled.
 
 ```go
-if termos.IsEmbeddedColorMode() {
+if ziva.IsEmbeddedColorMode() {
     fmt.Println("Running in embedded system mode")
 }
 ```
@@ -155,10 +155,10 @@ Creates validator for password complexity checking.
 
 ```go
 // Password minimum 8 characters
-passwordValidator := termos.NewPasswordValidator(8)
+passwordValidator := ziva.NewPasswordValidator(8)
 
-input := termos.NewInputTask("Password", "Enter password:").
-    WithInputType(termos.InputTypePassword).
+input := ziva.NewInputTask("Password", "Enter password:").
+    WithInputType(ziva.InputTypePassword).
     WithValidator(passwordValidator)
 ```
 
@@ -167,10 +167,10 @@ input := termos.NewInputTask("Password", "Enter password:").
 Email address validator according to RFC standards.
 
 ```go
-emailValidator := termos.NewEmailValidator()
+emailValidator := ziva.NewEmailValidator()
 
-email := termos.NewInputTask("Email", "Enter email:").
-    WithInputType(termos.InputTypeEmail).
+email := ziva.NewInputTask("Email", "Enter email:").
+    WithInputType(ziva.InputTypeEmail).
     WithValidator(emailValidator)
 ```
 
@@ -180,13 +180,13 @@ Configurable IP address validator.
 
 ```go
 // IPv4 only
-ipv4Validator := termos.NewIPValidator(true, false)
+ipv4Validator := ziva.NewIPValidator(true, false)
 
 // IPv6 only
-ipv6Validator := termos.NewIPValidator(false, true)
+ipv6Validator := ziva.NewIPValidator(false, true)
 
 // Any IP
-anyIPValidator := termos.NewIPValidator(true, true)
+anyIPValidator := ziva.NewIPValidator(true, true)
 ```
 
 ### NewIPv4Validator() / NewIPv6Validator() Validator
@@ -194,8 +194,8 @@ anyIPValidator := termos.NewIPValidator(true, true)
 Specialized validators for specific IP versions.
 
 ```go
-ipv4 := termos.NewIPv4Validator()
-ipv6 := termos.NewIPv6Validator()
+ipv4 := ziva.NewIPv4Validator()
+ipv6 := ziva.NewIPv6Validator()
 ```
 
 ### NewDomainValidator() Validator
@@ -203,9 +203,9 @@ ipv6 := termos.NewIPv6Validator()
 Domain name validator.
 
 ```go
-domainValidator := termos.NewDomainValidator()
+domainValidator := ziva.NewDomainValidator()
 
-domain := termos.NewInputTask("Domain", "Enter domain:").
+domain := ziva.NewInputTask("Domain", "Enter domain:").
     WithValidator(domainValidator)
 ```
 
@@ -215,13 +215,13 @@ Text validator with length constraints.
 
 ```go
 // 3 to 50 characters
-textValidator := termos.NewTextValidator(3, 50)
+textValidator := ziva.NewTextValidator(3, 50)
 
 // Minimum only (no maximum limit)
-minValidator := termos.NewTextValidator(5, 0)
+minValidator := ziva.NewTextValidator(5, 0)
 
 // Maximum only (no minimum limit)
-maxValidator := termos.NewTextValidator(0, 100)
+maxValidator := ziva.NewTextValidator(0, 100)
 ```
 
 ## Memory Optimization
@@ -232,8 +232,8 @@ String interning for memory efficiency.
 
 ```go
 // For frequently repeated strings in UI
-label1 := termos.InternString("Done")
-label2 := termos.InternString("Done") // References same object
+label1 := ziva.InternString("Done")
+label2 := ziva.InternString("Done") // References same object
 ```
 
 ### GetCacheStats() (size, capacity int)
@@ -241,7 +241,7 @@ label2 := termos.InternString("Done") // References same object
 Get statistics of interned string cache.
 
 ```go
-size, capacity := termos.GetCacheStats()
+size, capacity := ziva.GetCacheStats()
 fmt.Printf("Cache: %d/%d strings\n", size, capacity)
 ```
 
@@ -251,7 +251,7 @@ Clear interned string cache.
 
 ```go
 // Periodic cleanup in long-running applications
-termos.ClearInternCache()
+ziva.ClearInternCache()
 ```
 
 ## Layout Utilities
@@ -262,10 +262,10 @@ Calculates optimal layout width.
 
 ```go
 screenWidth := 120
-layoutWidth := termos.CalculateLayoutWidth(screenWidth)
+layoutWidth := ziva.CalculateLayoutWidth(screenWidth)
 
 // Use in custom UI
-queue := termos.NewQueue("Application")
+queue := ziva.NewQueue("Application")
 // layout will be optimized for calculated width
 ```
 
@@ -276,20 +276,20 @@ queue := termos.NewQueue("Application")
 ```go
 func setupForEmbedded() {
     // Auto-configuration for optimization
-    termos.AutoConfigure()
+    ziva.AutoConfigure()
 
     // Embedded system mode
-    termos.EnableEmbeddedMode()
+    ziva.EnableEmbeddedMode()
 
     // For very old terminals
     if needASCII {
-        termos.EnableASCIIMode()
+        ziva.EnableASCIIMode()
     }
 
     // Memory monitoring
-    size, capacity := termos.GetCacheStats()
+    size, capacity := ziva.GetCacheStats()
     if size > capacity*0.8 {
-        termos.ClearInternCache()
+        ziva.ClearInternCache()
     }
 }
 ```
@@ -298,20 +298,20 @@ func setupForEmbedded() {
 
 ```go
 func createRegistrationForm() {
-    queue := termos.NewQueue("Registration")
+    queue := ziva.NewQueue("Registration")
 
     // Email with validation
-    email := termos.NewInputTask("Email", "Your email:").
-        WithValidator(termos.NewEmailValidator())
+    email := ziva.NewInputTask("Email", "Your email:").
+        WithValidator(ziva.NewEmailValidator())
 
     // Password with security requirements
-    password := termos.NewInputTask("Password", "Password (min. 8 chars):").
-        WithInputType(termos.InputTypePassword).
-        WithValidator(termos.NewPasswordValidator(8))
+    password := ziva.NewInputTask("Password", "Password (min. 8 chars):").
+        WithInputType(ziva.InputTypePassword).
+        WithValidator(ziva.NewPasswordValidator(8))
 
     // Username with constraints
-    username := termos.NewInputTask("Username", "Username:").
-        WithValidator(termos.NewTextValidator(3, 20))
+    username := ziva.NewInputTask("Username", "Username:").
+        WithValidator(ziva.NewTextValidator(3, 20))
 
     queue.AddTasks(email, password, username)
 }
@@ -326,16 +326,16 @@ func processLargeDataset(items []string) string {
 
     for _, item := range items {
         // Data cleaning
-        cleaned := termos.CleanWhitespaceEfficient(item)
+        cleaned := ziva.CleanWhitespaceEfficient(item)
 
         // Interning for memory efficiency
-        interned := termos.InternString(cleaned)
+        interned := ziva.InternString(cleaned)
 
         results = append(results, interned)
     }
 
     // Efficient result joining
-    return termos.JoinEfficient(results, "\n")
+    return ziva.JoinEfficient(results, "\n")
 }
 ```
 

@@ -5,11 +5,11 @@ description: "Какие проверки доступны из коробки �
 
 # Встроенные валидаторы
 
-Termos поставляется с фабрикой валидаторов `termos.DefaultValidators`. Все методы возвращают готовый объект, который можно передать в `InputTask.WithValidator()`.
+Ziva поставляется с фабрикой валидаторов `ziva.DefaultValidators`. Все методы возвращают готовый объект, который можно передать в `InputTask.WithValidator()`.
 
 ```go
-v := termos.DefaultValidators
-input := termos.NewInputTask("Email", "Укажите адрес:").
+v := ziva.DefaultValidators
+input := ziva.NewInputTask("Email", "Укажите адрес:").
     WithValidator(v.Email())
 ```
 
@@ -55,20 +55,20 @@ input := termos.NewInputTask("Email", "Укажите адрес:").
 ## Примеры
 
 ```go
-v := termos.DefaultValidators
+v := ziva.DefaultValidators
 
 // Имя пользователя: обязательно, 3-20 символов, допустимые символы — как в `Username`
-login := termos.NewInputTask("Логин", "Введите имя:").
+login := ziva.NewInputTask("Логин", "Введите имя:").
     WithValidator(v.Username())
 
 // Опциональный email
-supportEmail := termos.NewInputTask("Доп. email", "Можно пропустить")
+supportEmail := ziva.NewInputTask("Доп. email", "Можно пропустить")
    .WithAllowEmpty(true)
    .WithValidator(v.OptionalEmail())
 
 // Номер порта
-port := termos.NewInputTask("Порт", "1-65535:").
-    WithInputType(termos.InputTypeNumber).
+port := ziva.NewInputTask("Порт", "1-65535:").
+    WithInputType(ziva.InputTypeNumber).
     WithValidator(v.Port())
 ```
 
@@ -98,7 +98,7 @@ func (c composite) Description() string {
     return strings.Join(parts, "; ")
 }
 
-value := termos.NewInputTask("Сервисный ID", "Введите код:")
+value := ziva.NewInputTask("Сервисный ID", "Введите код:")
 value.WithValidator(composite{validators: []interface{
     Validate(string) error
     Description() string

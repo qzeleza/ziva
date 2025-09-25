@@ -1,11 +1,11 @@
 ---
 title: "Task Types Overview"
-description: "All task types in Termos and their key capabilities"
+description: "All task types in Ziva and their key capabilities"
 ---
 
-# Task Types in Termos
+# Task Types in Ziva
 
-Termos provides five main task types for creating interactive TUI applications. Each task has unique capabilities and use cases.
+Ziva provides five main task types for creating interactive TUI applications. Each task has unique capabilities and use cases.
 
 ## Task Types
 
@@ -29,7 +29,7 @@ Termos provides five main task types for creating interactive TUI applications. 
 
 ## Common Features
 
-All tasks in Termos share a common set of basic capabilities:
+All tasks in Ziva share a common set of basic capabilities:
 
 ### Task Interface
 
@@ -72,7 +72,7 @@ options := []string{
 }
 
 // Configure custom delimiter
-termos.SetChoiceHelpDelimiter("||")
+ziva.SetChoiceHelpDelimiter("||")
 options := []string{
     "api||REST API server",
     "web||Web interface",
@@ -86,19 +86,19 @@ options := []string{
 
 ```go
 // YesNo task
-yesno := termos.NewYesNoTask("Title", "Question?")
+yesno := ziva.NewYesNoTask("Title", "Question?")
 
 // Single select task
-single := termos.NewSingleSelectTask("Title", []string{"opt1", "opt2"})
+single := ziva.NewSingleSelectTask("Title", []string{"opt1", "opt2"})
 
 // Multi select task
-multi := termos.NewMultiSelectTask("Title", []string{"item1", "item2"})
+multi := ziva.NewMultiSelectTask("Title", []string{"item1", "item2"})
 
 // Input task
-input := termos.NewInputTask("Title", "Prompt:")
+input := ziva.NewInputTask("Title", "Prompt:")
 
 // Function task
-fn := termos.NewFuncTask("Title", func() error {
+fn := ziva.NewFuncTask("Title", func() error {
     // perform work
     return nil
 })
@@ -109,7 +109,7 @@ fn := termos.NewFuncTask("Title", func() error {
 All tasks support method chaining configuration:
 
 ```go
-task := termos.NewSingleSelectTask("Selection", options).
+task := ziva.NewSingleSelectTask("Selection", options).
     WithDefaultItem("option2").
     WithTimeout(10*time.Second, "option1").
     WithViewport(5, true)
@@ -121,10 +121,10 @@ task := termos.NewSingleSelectTask("Selection", options).
 
 ```go
 // Save task references
-yesnoTask := termos.NewYesNoTask("Confirm", "Continue?")
-selectTask := termos.NewSingleSelectTask("Choose", options)
+yesnoTask := ziva.NewYesNoTask("Confirm", "Continue?")
+selectTask := ziva.NewSingleSelectTask("Choose", options)
 
-queue := termos.NewQueue("Demo")
+queue := ziva.NewQueue("Demo")
 queue.AddTasks(yesnoTask, selectTask)
 queue.Run()
 
@@ -158,7 +158,7 @@ value := task.GetValue()                // string
 ### Viewport for Long Lists
 
 ```go
-task := termos.NewSingleSelectTask("Choose", longList).
+task := ziva.NewSingleSelectTask("Choose", longList).
     WithViewport(5, true) // show 5 items, show counters
 ```
 
@@ -189,8 +189,8 @@ task.WithDefaultItems([]int{0, 2}) // by indices
 ### Validation in InputTask
 
 ```go
-input := termos.NewInputTask("Email", "Enter email:").
-    WithValidator(termos.DefaultValidators.Email())
+input := ziva.NewInputTask("Email", "Enter email:").
+    WithValidator(ziva.DefaultValidators.Email())
 
 // After execution
 if input.GetValue() != "" {
@@ -201,7 +201,7 @@ if input.GetValue() != "" {
 ### Errors in FuncTask
 
 ```go
-funcTask := termos.NewFuncTask("Process", func() error {
+funcTask := ziva.NewFuncTask("Process", func() error {
     // May return error
     return errors.New("processing failed")
 }).WithStopOnError(true) // stop queue on error
@@ -213,10 +213,10 @@ funcTask := termos.NewFuncTask("Process", func() error {
 
 ```go
 // Configuration task group
-configTasks := []termos.Task{
-    termos.NewInputTask("Host", "Enter hostname:"),
-    termos.NewInputTask("Port", "Enter port:"),
-    termos.NewYesNoTask("SSL", "Enable SSL?"),
+configTasks := []ziva.Task{
+    ziva.NewInputTask("Host", "Enter hostname:"),
+    ziva.NewInputTask("Port", "Enter port:"),
+    ziva.NewYesNoTask("SSL", "Enable SSL?"),
 }
 queue.AddTasks(configTasks...)
 ```
@@ -233,11 +233,11 @@ type Config struct {
 func setupConfig() *Config {
     var config Config
 
-    hostTask := termos.NewInputTask("Host", "Enter hostname:")
-    portTask := termos.NewInputTask("Port", "Enter port:")
-    sslTask := termos.NewYesNoTask("SSL", "Enable SSL?")
+    hostTask := ziva.NewInputTask("Host", "Enter hostname:")
+    portTask := ziva.NewInputTask("Port", "Enter port:")
+    sslTask := ziva.NewYesNoTask("SSL", "Enable SSL?")
 
-    queue := termos.NewQueue("Configuration")
+    queue := ziva.NewQueue("Configuration")
     queue.AddTasks(hostTask, portTask, sslTask)
     queue.Run()
 
@@ -252,8 +252,8 @@ func setupConfig() *Config {
 ### 3. Validate Results
 
 ```go
-task := termos.NewInputTask("Port", "Enter port (1-65535):").
-    WithValidator(termos.DefaultValidators.Port())
+task := ziva.NewInputTask("Port", "Enter port (1-65535):").
+    WithValidator(ziva.DefaultValidators.Port())
 
 // Additional check after execution
 if task.GetValue() != "" {

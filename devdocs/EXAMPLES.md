@@ -1,4 +1,4 @@
-# Примеры Термос
+# Примеры Жива
 
 Практические примеры для встроенных задач. Все примеры соответствуют текущему API и привязкам клавиш.
 
@@ -37,8 +37,8 @@ package main
 import (
     "fmt"
     tea "github.com/charmbracelet/bubbletea"
-    "github.com/qzeleza/termos/common"
-    "github.com/qzeleza/termos/task"
+    "github.com/qzeleza/ziva/common"
+    "github.com/qzeleza/ziva/task"
 )
 
 type model struct {
@@ -179,9 +179,9 @@ fn := task.NewFuncTaskWithOptions(
 ```go
 import (
     tea "github.com/charmbracelet/bubbletea"
-    "github.com/qzeleza/termos/common"
-    "github.com/qzeleza/termos/query"
-    "github.com/qzeleza/termos/task"
+    "github.com/qzeleza/ziva/common"
+    "github.com/qzeleza/ziva/query"
+    "github.com/qzeleza/ziva/task"
 )
 
 // Создаем очередь задач
@@ -205,8 +205,8 @@ if _, err := tea.NewProgram(queue).Run(); err != nil {
 `WithTasksNumbered(enable, keepFirstSymbol, format)` позволяет заменить стандартные маркеры `○/●` на числовую нумерацию.
 
 ```go
-queue := termos.NewQueue("CI Pipeline").
-    WithAppName("Termos").
+queue := ziva.NewQueue("CI Pipeline").
+    WithAppName("Ziva").
     WithSummary(true).
     // Используем квадратные скобки и лидирующие нули: [01], [02], ...
     WithTasksNumbered(true, false, "[%02d]")
@@ -227,7 +227,7 @@ queue.WithTasksNumbered(true, true, "(%d)")
 
 ### Локализация интерфейса
 
-- Язык задаётся флагом `--lang` или переменной окружения `TERMOS_LANG` (поддерживаются `ru`, `en`, `tr`, `be`, `uk`).
+- Язык задаётся флагом `--lang` или переменной окружения `ZIVA_LANG` (поддерживаются `ru`, `en`, `tr`, `be`, `uk`).
 - При отсутствии нужной локали (например, `ru_RU.UTF-8`) TUI автоматически переключится на английский и подскажет команды для установки.
 - Для Entware/BusyBox пригодится установка пакетов `locale-full`, `glibc-binary-locales` и настройка шрифтов (`setterm -reset && setterm -store`).
 
@@ -237,18 +237,18 @@ queue.WithTasksNumbered(true, true, "(%d)")
 
 Полезные переменные окружения для управления поведением автодетекции:
 
-- `TERMOS_EMBEDDED` — принудительно включает/выключает режим embedded (`true`/`1` или пусто/`0`).
-- `TERMOS_MEMORY_LIMIT` — задаёт порог памяти для эвристики (например: `64MB`, `128KB`, `1GB`).
-- `TERMOS_ASCII_ONLY` — форсирует ASCII-режим (значение `true`).
+- `ZIVA_EMBEDDED` — принудительно включает/выключает режим embedded (`true`/`1` или пусто/`0`).
+- `ZIVA_MEMORY_LIMIT` — задаёт порог памяти для эвристики (например: `64MB`, `128KB`, `1GB`).
+- `ZIVA_ASCII_ONLY` — форсирует ASCII-режим (значение `true`).
 
 Примеры запуска с переменными окружения:
 
 ```bash
 # Принудительно включить embedded-режим
-TERMOS_EMBEDDED=1 go run ./cmd/tui_full
+ZIVA_EMBEDDED=1 go run ./cmd/tui_full
 
 # Считать систему «малопамятной» при m.Sys < 64MB
-TERMOS_MEMORY_LIMIT=64MB go run ./cmd/tui_full
+ZIVA_MEMORY_LIMIT=64MB go run ./cmd/tui_full
 
 # Отключить UTF-8 и использовать максимально совместимый вывод
-TERMOS_ASCII_ONLY=true go run ./cmd/tui_full
+ZIVA_ASCII_ONLY=true go run ./cmd/tui_full

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/qzeleza/termos/internal/defaults"
-	"github.com/qzeleza/termos/internal/performance"
-	"github.com/qzeleza/termos/internal/ui"
+	"github.com/qzeleza/ziva/internal/defaults"
+	"github.com/qzeleza/ziva/internal/performance"
+	"github.com/qzeleza/ziva/internal/ui"
 )
 
 // YesNoOption представляет варианты выбора для YesNoTask

@@ -1,6 +1,6 @@
 ---
 title: "Custom Validators"
-description: "Creating custom validators in Termos"
+description: "Creating custom validators in Ziva"
 ---
 
 # Custom Validators
@@ -31,7 +31,7 @@ func (v *PasswordValidator) Validate(input string) error {
 
 // Usage
 validator := &PasswordValidator{MinLength: 10}
-input := termos.NewInputTask("Password", "Enter password:").
+input := ziva.NewInputTask("Password", "Enter password:").
     WithValidator(validator)
 ```
 

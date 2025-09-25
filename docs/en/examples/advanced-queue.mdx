@@ -5,13 +5,13 @@ description: "Conditional flows, dynamic task generation, and resilient retries"
 
 # Advanced Queue Playbook
 
-These examples illustrate how to orchestrate non-trivial workflows with Termos:
+These examples illustrate how to orchestrate non-trivial workflows with Ziva:
 - split a process into multiple stages and append tasks dynamically;
 - react to user choices and task outcomes;
 - recover from errors without leaving the TUI.
 
 <Info>
-All snippets rely on the public `termos` API. Keep them in an `examples` package and call the helpers when you need to demonstrate behaviour.
+All snippets rely on the public `ziva` API. Keep them in an `examples` package and call the helpers when you need to demonstrate behaviour.
 </Info>
 
 ## Multi-stage deployment template
@@ -20,16 +20,16 @@ All snippets rely on the public `termos` API. Keep them in an `examples` package
 // DeployCluster orchestrates a sequential setup that gathers user input,
 // displays progress, and stores intermediate results for later stages.
 func DeployCluster() error {
-    summary := termos.NewFuncTask(
+    summary := ziva.NewFuncTask(
         "Preflight checks",
         runPreflightChecks,
-        termos.WithSummaryFunction(func() []string {
+        ziva.WithSummaryFunction(func() []string {
             return []string{"DNS: ok", "Network: ok"}
         }),
-        termos.WithStopOnError(true),
+        ziva.WithStopOnError(true),
     )
 
-    topology := termos.NewSingleSelectTask(
+    topology := ziva.NewSingleSelectTask(
         "Topology",
         []string{
             "single-node::Single node",
@@ -38,16 +38,16 @@ func DeployCluster() error {
         },
     ).WithDefaultItem("multi-node")
 
-    nodes := termos.NewInputTask(
+    nodes := ziva.NewInputTask(
         "Node count",
         "How many worker nodes do we provision?",
     ).
-        WithInputType(termos.InputTypeNumber).
-        WithValidator(termos.DefaultValidators.Range(1, 20)).
+        WithInputType(ziva.InputTypeNumber).
+        WithValidator(ziva.DefaultValidators.Range(1, 20)).
         WithTimeout(30*time.Second, "3")
 
-    queue := termos.NewQueue("Termos Deployment").
-        WithAppName("Termos CLI").
+    queue := ziva.NewQueue("Ziva Deployment").
+        WithAppName("Ziva CLI").
         WithTasksNumbered(true, "[%02d]")
 
     queue.AddTasks(summary, topology, nodes)
@@ -56,7 +56,7 @@ func DeployCluster() error {
     }
 
     // Add context-aware tasks based on the selected topology.
-    followUp := termos.NewQueue("Follow-up tasks")
+    followUp := ziva.NewQueue("Follow-up tasks")
 
     switch topology.GetSelected() {
     case "single-node":
@@ -84,13 +84,13 @@ func RunWithRetries(label string, fn func() error, maxAttempts int) error {
     attempt := 1
 
     for {
-        task := termos.NewFuncTask(
+        task := ziva.NewFuncTask(
             fmt.Sprintf("%s · attempt %d", label, attempt),
             fn,
-            termos.WithStopOnError(false),
+            ziva.WithStopOnError(false),
         )
 
-        queue := termos.NewQueue(label)
+        queue := ziva.NewQueue(label)
         queue.AddTasks(task)
 
         if err := queue.Run(); err == nil {
@@ -101,12 +101,12 @@ func RunWithRetries(label string, fn func() error, maxAttempts int) error {
             return fmt.Errorf("reached max attempts (%d)", maxAttempts)
         }
 
-        retry := termos.NewYesNoTask(
+        retry := ziva.NewYesNoTask(
             "Retry",
             fmt.Sprintf("Attempt %d failed. Retry?", attempt),
         ).WithDefaultYesAndTimeout(10 * time.Second)
 
-        confirmation := termos.NewQueue("Retry decision")
+        confirmation := ziva.NewQueue("Retry decision")
         confirmation.AddTasks(retry)
         confirmation.Run()
 
@@ -129,11 +129,11 @@ func RunWithRetries(label string, fn func() error, maxAttempts int) error {
 
 ```go
 func ConfigureServers() error {
-    count := termos.NewInputTask("Server count", "How many servers do we configure?").
-        WithInputType(termos.InputTypeNumber).
-        WithValidator(termos.DefaultValidators.Range(1, 8))
+    count := ziva.NewInputTask("Server count", "How many servers do we configure?").
+        WithInputType(ziva.InputTypeNumber).
+        WithValidator(ziva.DefaultValidators.Range(1, 8))
 
-    baseQueue := termos.NewQueue("Configuration parameters")
+    baseQueue := ziva.NewQueue("Configuration parameters")
     baseQueue.AddTasks(count)
     if err := baseQueue.Run(); err != nil {
         return err
@@ -141,21 +141,21 @@ func ConfigureServers() error {
 
     n, _ := strconv.Atoi(count.GetValue())
 
-    var tasks []termos.Task
+    var tasks []ziva.Task
     for i := 1; i <= n; i++ {
         prefix := fmt.Sprintf("Server %d", i)
 
-        host := termos.NewInputTask(prefix+" · host", "Enter FQDN")
-        host.WithValidator(termos.DefaultValidators.Domain())
+        host := ziva.NewInputTask(prefix+" · host", "Enter FQDN")
+        host.WithValidator(ziva.DefaultValidators.Domain())
 
-        port := termos.NewInputTask(prefix+" · port", "Enter port")
-        port.WithInputType(termos.InputTypeNumber).
-            WithValidator(termos.DefaultValidators.Port())
+        port := ziva.NewInputTask(prefix+" · port", "Enter port")
+        port.WithInputType(ziva.InputTypeNumber).
+            WithValidator(ziva.DefaultValidators.Port())
 
         tasks = append(tasks, host, port)
     }
 
-    servers := termos.NewQueue("Server configuration").
+    servers := ziva.NewQueue("Server configuration").
         WithTasksNumbered(true, "[%02d]")
     servers.AddTasks(tasks...)
     return servers.Run()
@@ -170,7 +170,7 @@ If a workflow can generate hundreds of tasks, split the execution into several q
 
 - Keep references to tasks whose results you need later.
 - Use separate queues for distinct stages — it simplifies reasoning and module tests.
-- Call `AutoConfigure()` on startup so Termos tunes itself for the target environment.
+- Call `AutoConfigure()` on startup so Ziva tunes itself for the target environment.
 - Combine `EnableEmbeddedMode()` with `WithOutResultLine()` on constrained devices to keep the output compact.
 - Remember that the queue is sequential; if you need pseudo-parallel work, launch extra queues from `FuncTask` handlers.
 

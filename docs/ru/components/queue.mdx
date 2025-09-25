@@ -1,20 +1,20 @@
 ---
 title: "Очередь задач (Queue)"
-description: "Как управлять последовательностью задач в Termos и настраивать поведение очереди"
+description: "Как управлять последовательностью задач в Ziva и настраивать поведение очереди"
 ---
 
 # Очередь задач (Queue)
 
-`Queue` — центральный оркестратор Termos. Он последовательно запускает задачи, управляет отображением статусов и обеспечивает единый цикл ввода/вывода в терминале.
+`Queue` — центральный оркестратор Ziva. Он последовательно запускает задачи, управляет отображением статусов и обеспечивает единый цикл ввода/вывода в терминале.
 
 ## Создание и запуск
 
 ```go
-queue := termos.NewQueue("Развертывание MyApp")
+queue := ziva.NewQueue("Развертывание MyApp")
 
 queue.AddTasks(
-    termos.NewYesNoTask("Подтверждение", "Начать установку?"),
-    termos.NewSingleSelectTask("Выбор среды", []string{"dev", "staging", "prod"}),
+    ziva.NewYesNoTask("Подтверждение", "Начать установку?"),
+    ziva.NewSingleSelectTask("Выбор среды", []string{"dev", "staging", "prod"}),
 )
 
 if err := queue.Run(); err != nil {
@@ -45,11 +45,11 @@ queue.AddTasks(task1).AddTasks(task2) // цепочка вызовов
 ```go
 queue.
   WithAppName("Deploy CLI").              // надпись в шапке
-  WithAppNameColor(termos.BlueBright, true).
-  WithTitleColor(termos.GreenBright, false)
+  WithAppNameColor(ziva.BlueBright, true).
+  WithTitleColor(ziva.GreenBright, false)
 ```
 
-Для цветов используйте функции `lipgloss.Color()` либо готовые константы Termos (`termos.BlueBright`, `termos.GrayDark` и т.д.).
+Для цветов используйте функции `lipgloss.Color()` либо готовые константы Ziva (`ziva.BlueBright`, `ziva.GrayDark` и т.д.).
 
 ### Нумерация задач
 
@@ -80,10 +80,10 @@ queue.WithClearScreen(true) // очистка терминала перед за
 ## Чтение результатов задач
 
 ```go
-yesno := termos.NewYesNoTask("Подтверждение", "Продолжить?")
-choice := termos.NewSingleSelectTask("Выберите среду", envs)
+yesno := ziva.NewYesNoTask("Подтверждение", "Продолжить?")
+choice := ziva.NewSingleSelectTask("Выберите среду", envs)
 
-queue := termos.NewQueue("Демо")
+queue := ziva.NewQueue("Демо")
 queue.AddTasks(yesno, choice)
 _ = queue.Run()
 
@@ -98,22 +98,22 @@ if yesno.IsYes() {
 
 - Пользователь может прервать очередь (`Ctrl+C`). В этом случае `Run()` вернёт ошибку, которую можно обработать.
 - Используйте `FuncTask.WithStopOnError(true)`, чтобы оборвать очередь при сбое важной операции.
-- Для дружелюбного вывода сообщений об ошибке изменяйте глобальные цвета через `termos.SetErrorColor()`.
+- Для дружелюбного вывода сообщений об ошибке изменяйте глобальные цвета через `ziva.SetErrorColor()`.
 
 ## Производительность и ресурсы
 
-Termos содержит встроенные механизмы контроля памяти. Их удобно конфигурировать через переменные окружения:
+Ziva содержит встроенные механизмы контроля памяти. Их удобно конфигурировать через переменные окружения:
 
 ```bash
-export TERMOS_MAX_COMPLETED_TASKS=10          # лимит хранения завершённых задач
-export TERMOS_MEMORY_PRESSURE_THRESHOLD=80M  # порог очистки кэша
+export ZIVA_MAX_COMPLETED_TASKS=10          # лимит хранения завершённых задач
+export ZIVA_MEMORY_PRESSURE_THRESHOLD=80M  # порог очистки кэша
 ```
 
 Для сред с ограниченными ресурсами:
 
 ```go
-termos.AutoConfigure()     // единоразовая автоконфигурация
-termos.EnableEmbeddedMode() // упрощённая цветовая схема и макет
+ziva.AutoConfigure()     // единоразовая автоконфигурация
+ziva.EnableEmbeddedMode() // упрощённая цветовая схема и макет
 ```
 
 ## Лучшие практики

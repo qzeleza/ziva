@@ -1,11 +1,11 @@
 ---
 title: "Basic Examples"
-description: "Simple examples of using Termos for creating TUI applications"
+description: "Simple examples of using Ziva for creating TUI applications"
 ---
 
 # Basic Usage Examples
 
-This page contains practical examples of creating TUI applications with Termos. All examples are ready to run and demonstrate the main features of the library.
+This page contains practical examples of creating TUI applications with Ziva. All examples are ready to run and demonstrate the main features of the library.
 
 ## Example 1: Simple Confirmation
 
@@ -17,18 +17,18 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
     // Create confirmation task
-    confirm := termos.NewYesNoTask(
+    confirm := ziva.NewYesNoTask(
         "Action Confirmation",
         "Delete all temporary files?",
     )
 
     // Create queue and add task
-    queue := termos.NewQueue("System Cleanup")
+    queue := ziva.NewQueue("System Cleanup")
     queue.AddTasks(confirm)
 
     // Run
@@ -55,7 +55,7 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
@@ -67,13 +67,13 @@ func main() {
     }
 
     // Create selection task
-    envTask := termos.NewSingleSelectTask(
+    envTask := ziva.NewSingleSelectTask(
         "Deployment Environment Selection",
         environments,
     ).WithDefaultItem("staging")
 
     // Configure and run queue
-    queue := termos.NewQueue("Application Deployment")
+    queue := ziva.NewQueue("Application Deployment")
     queue.WithAppName("DeployTool")
     queue.AddTasks(envTask)
 
@@ -98,7 +98,7 @@ import (
     "fmt"
     "log"
     "strings"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
@@ -113,13 +113,13 @@ func main() {
     }
 
     // Create multi-selection task
-    compTask := termos.NewMultiSelectTask(
+    compTask := ziva.NewMultiSelectTask(
         "Select components to install",
         components,
     ).WithSelectAll("Install all").
       WithDefaultItems([]string{"web", "api"})
 
-    queue := termos.NewQueue("System Installation")
+    queue := ziva.NewQueue("System Installation")
     queue.AddTasks(compTask)
 
     if err := queue.Run(); err != nil {
@@ -147,25 +147,25 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
-    v := termos.DefaultValidators
+    v := ziva.DefaultValidators
 
     // Create input fields with validation
-    name := termos.NewInputTask("Name", "Enter your name:").
+    name := ziva.NewInputTask("Name", "Enter your name:").
         WithValidator(v.Required())
 
-    email := termos.NewInputTask("Email", "Enter email:").
-        WithInputType(termos.InputTypeEmail).
+    email := ziva.NewInputTask("Email", "Enter email:").
+        WithInputType(ziva.InputTypeEmail).
         WithValidator(v.Email())
 
-    website := termos.NewInputTask("Website", "Website URL (optional):").
+    website := ziva.NewInputTask("Website", "Website URL (optional):").
         WithValidator(v.OptionalURL())
 
     // Create queue
-    queue := termos.NewQueue("User Registration")
+    queue := ziva.NewQueue("User Registration")
     queue.WithAppName("UserReg")
     queue.AddTasks(name, email, website)
 
@@ -194,7 +194,7 @@ import (
     "log"
     "math/rand"
     "time"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
@@ -206,7 +206,7 @@ func main() {
     }
 
     // Create functional task
-    processTask := termos.NewFuncTask(
+    processTask := ziva.NewFuncTask(
         "File Processing",
         func() error {
             start := time.Now()
@@ -226,7 +226,7 @@ func main() {
             return nil
         },
         // Results summary function
-        termos.WithSummaryFunction(func() []string {
+        ziva.WithSummaryFunction(func() []string {
             return []string{
                 fmt.Sprintf("Files processed: %d", stats.FilesProcessed),
                 fmt.Sprintf("Errors: %d", stats.Errors),
@@ -235,7 +235,7 @@ func main() {
         }),
     )
 
-    queue := termos.NewQueue("Batch Processing")
+    queue := ziva.NewQueue("Batch Processing")
     queue.AddTasks(processTask)
 
     if err := queue.Run(); err != nil {
@@ -252,15 +252,15 @@ Logically group related tasks:
 
 ```go
 // Authentication group
-authTasks := []termos.Task{
-    termos.NewInputTask("Username", "Login:"),
-    termos.NewInputTask("Password", "Password:").WithInputType(termos.InputTypePassword),
+authTasks := []ziva.Task{
+    ziva.NewInputTask("Username", "Login:"),
+    ziva.NewInputTask("Password", "Password:").WithInputType(ziva.InputTypePassword),
 }
 
 // Settings group
-configTasks := []termos.Task{
-    termos.NewSingleSelectTask("Theme", themes),
-    termos.NewYesNoTask("Notifications", "Enable notifications?"),
+configTasks := []ziva.Task{
+    ziva.NewSingleSelectTask("Theme", themes),
+    ziva.NewYesNoTask("Notifications", "Enable notifications?"),
 }
 
 queue.AddTasks(authTasks...)
@@ -270,7 +270,7 @@ queue.AddTasks(configTasks...)
 ### 2. Cancellation Handling
 
 ```go
-queue := termos.NewQueue("Setup")
+queue := ziva.NewQueue("Setup")
 if err := queue.Run(); err != nil {
     if err == context.Canceled {
         fmt.Println("❌ Setup canceled by user")

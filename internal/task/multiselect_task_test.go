@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/qzeleza/termos/internal/defaults"
+	"github.com/qzeleza/ziva/internal/defaults"
 	"github.com/stretchr/testify/assert"
 )
 

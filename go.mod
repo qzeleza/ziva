@@ -1,4 +1,4 @@
-module github.com/qzeleza/termos
+module github.com/qzeleza/ziva
 
 go 1.23.0
 

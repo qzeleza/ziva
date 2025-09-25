@@ -1,5 +1,5 @@
-// Package termos — корневой пакет. Подключает автоконфигурацию по умолчанию.
-package termos
+// Package ziva — корневой пакет. Подключает автоконфигурацию по умолчанию.
+package ziva
 
-// Пустой импорт internal/autoconfig, чтобы сработал его init() при импорте termos
-import _ "github.com/qzeleza/termos/internal/autoconfig"
+// Пустой импорт internal/autoconfig, чтобы сработал его init() при импорте ziva
+import _ "github.com/qzeleza/ziva/internal/autoconfig"

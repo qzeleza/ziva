@@ -1,4 +1,4 @@
-// Package termos предоставляет Terminal Multitask Orchestrator System - библиотеку для создания интерактивных TUI приложений.
+// Package ziva предоставляет библиотеку для создания интерактивных TUI приложений.
 // Эта библиотека позволяет создавать разнообразные задачи пользовательского интерфейса такие как:
 // - Задачи выбора Да/Нет
 // - Задачи одиночного выбора из списка
@@ -9,14 +9,14 @@
 //
 // Пример использования:
 //
-//	queue := termos.NewQueue("Пример использования Termos")
+//	queue := ziva.NewQueue("Пример использования Ziva")
 //
 //	// Создаем задачу выбора Да/Нет
-//	confirm := termos.NewYesNoTask("Подтверждение", "Продолжить выполнение?")
+//	confirm := ziva.NewYesNoTask("Подтверждение", "Продолжить выполнение?")
 //
 //	// Создаем задачу выбора из списка
 //	options := []string{"development", "staging", "production"}
-//	env := termos.NewSingleSelectTask("Выбор среды", options)
+//	env := ziva.NewSingleSelectTask("Выбор среды", options)
 //
 //	// Добавляем задачи в очередь
 //	queue.AddTasks(confirm, env)
@@ -26,19 +26,19 @@
 //	if err != nil {
 //		log.Fatal(err)
 //	}
-package termos
+package ziva
 
 import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/qzeleza/termos/internal/autoconfig"
-	"github.com/qzeleza/termos/internal/common"
-	"github.com/qzeleza/termos/internal/performance"
-	"github.com/qzeleza/termos/internal/query"
-	"github.com/qzeleza/termos/internal/task"
-	"github.com/qzeleza/termos/internal/ui"
-	"github.com/qzeleza/termos/internal/validation"
+	"github.com/qzeleza/ziva/internal/autoconfig"
+	"github.com/qzeleza/ziva/internal/common"
+	"github.com/qzeleza/ziva/internal/performance"
+	"github.com/qzeleza/ziva/internal/query"
+	"github.com/qzeleza/ziva/internal/task"
+	"github.com/qzeleza/ziva/internal/ui"
+	"github.com/qzeleza/ziva/internal/validation"
 )
 
 // Task представляет собой интерфейс для выполнения задач в очереди.
@@ -82,6 +82,9 @@ func (q *Queue) AddTasks(tasks ...Task) *Queue {
 	q.model.AddTasks(tasks)
 	return q
 }
+
+// TODO: добавить в функцию WithAppName возможность отображения текущей версии приложения
+// при помощи еще одного необязательного параметра version string
 
 // WithAppName устанавливает название приложения в заголовке
 //
@@ -571,7 +574,7 @@ var (
 // Автоконфигурация для встроенных систем
 // ----------------------------------------------------------------------------
 
-// AutoConfigure автоматически настраивает Termos для оптимальной работы
+// AutoConfigure автоматически настраивает Ziva для оптимальной работы
 // на текущей системе. Анализирует доступную память, архитектуру процессора
 // и характеристики терминала для выбора наилучших настроек производительности.
 //

@@ -1,9 +1,9 @@
 ---
 title: "About"
-description: "Termos - a powerful Go library for creating interactive terminal user interfaces (TUI). Built on top of Bubble Tea, it provides high-level components for quickly building console applications."
+description: "Ziva - a powerful Go library for creating interactive terminal user interfaces (TUI). Built on top of Bubble Tea, it provides high-level components for quickly building console applications."
 ---
 
-# Welcome to Termos
+# Welcome to Ziva
 
 
 <img
@@ -39,19 +39,19 @@ package main
 
 import (
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
     // Create a task queue
-    queue := termos.NewQueue("My TUI Application")
+    queue := ziva.NewQueue("My TUI Application")
 
     // Add confirmation task
-    confirm := termos.NewYesNoTask("Confirmation", "Continue?")
+    confirm := ziva.NewYesNoTask("Confirmation", "Continue?")
 
     // Add selection task
     options := []string{"development", "staging", "production"}
-    env := termos.NewSingleSelectTask("Select environment", options)
+    env := ziva.NewSingleSelectTask("Select environment", options)
 
     // Add tasks to queue and run
     queue.AddTasks(confirm, env)
@@ -63,14 +63,14 @@ func main() {
 
 ## Optimized for Embedded Systems
 
-Termos automatically detects and optimizes for embedded systems:
+Ziva automatically detects and optimizes for embedded systems:
 
 - **Memory Management** - load monitoring and string interning
 - **Adaptive Color Schemes** - simplified colors for limited terminals
 - **Auto-configuration** - router and IoT device detection with parameter tuning
 
 <Card title="Get Started" icon="rocket" href="/en/installation">
-  Install Termos and create your first TUI application
+  Install Ziva and create your first TUI application
 </Card>
 
 ---
@@ -78,10 +78,10 @@ Termos automatically detects and optimizes for embedded systems:
 ## Community and Support
 
 <CardGroup cols={3}>
-  <Card title="GitHub" icon="github" href="https://github.com/qzeleza/termos">
+  <Card title="GitHub" icon="github" href="https://github.com/qzeleza/ziva">
     Source code, issue tracker, and releases
   </Card>
-  <Card title="Go Package" icon="golang" href="https://pkg.go.dev/github.com/qzeleza/termos">
+  <Card title="Go Package" icon="golang" href="https://pkg.go.dev/github.com/qzeleza/ziva">
     API documentation and usage examples
   </Card>
   <Card title="Examples" icon="code" href="/en/examples/basic-usage">

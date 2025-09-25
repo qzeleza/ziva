@@ -1,23 +1,23 @@
 ---
 title: "Quick Start"
-description: "Create your first TUI application with Termos in 5 minutes"
+description: "Create your first TUI application with Ziva in 5 minutes"
 ---
 
 # Quick Start
 
-In this guide, we'll create a simple TUI application demonstrating the main features of Termos.
+In this guide, we'll create a simple TUI application demonstrating the main features of Ziva.
 
-![Screenshot: basic Termos queue](/images/pic_1.png)
+![Screenshot: basic Ziva queue](/images/pic_1.png)
 
 ## Step 1: Create Project
 
 Create a new Go project:
 
 ```bash
-mkdir termos-demo
-cd termos-demo
-go mod init termos-demo
-go get github.com/qzeleza/termos
+mkdir ziva-demo
+cd ziva-demo
+go mod init ziva-demo
+go get github.com/qzeleza/ziva
 ```
 
 ## Step 2: Basic Application
@@ -31,12 +31,12 @@ import (
     "fmt"
     "log"
     "time"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
     // Create task queue with title
-    queue := termos.NewQueue("Termos Demo Application")
+    queue := ziva.NewQueue("Ziva Demo Application")
 
     // Configure appearance
     queue.WithAppName("MyApp")
@@ -54,9 +54,9 @@ func main() {
     printResults()
 }
 
-func createTasks(queue *termos.Queue) {
+func createTasks(queue *ziva.Queue) {
     // 1. Confirmation task with timeout
-    confirm := termos.NewYesNoTask("Confirmation", "Start setup?").
+    confirm := ziva.NewYesNoTask("Confirmation", "Start setup?").
         WithTimeout(5*time.Second, "Yes")
 
     // 2. Environment selection
@@ -65,7 +65,7 @@ func createTasks(queue *termos.Queue) {
         "staging||Testing environment",
         "production||Production environment",
     }
-    env := termos.NewSingleSelectTask("Environment Selection", environments).
+    env := ziva.NewSingleSelectTask("Environment Selection", environments).
         WithDefaultItem("staging")
 
     // 3. Component selection
@@ -75,19 +75,19 @@ func createTasks(queue *termos.Queue) {
         "cli||Command line",
         "docs||Documentation",
     }
-    comp := termos.NewMultiSelectTask("Components", components).
+    comp := ziva.NewMultiSelectTask("Components", components).
         WithSelectAll("Select all").
         WithDefaultItems([]string{"api", "cli"})
 
     // 4. Project name input with validation
-    name := termos.NewInputTask("Project Name", "Enter name:").
-        WithValidator(termos.DefaultValidators.Required())
+    name := ziva.NewInputTask("Project Name", "Enter name:").
+        WithValidator(ziva.DefaultValidators.Required())
 
     // 5. Functional task
-    setup := termos.NewFuncTask("Setup", func() error {
+    setup := ziva.NewFuncTask("Setup", func() error {
         time.Sleep(2 * time.Second) // Work simulation
         return nil
-    }, termos.WithSummaryFunction(func() []string {
+    }, ziva.WithSummaryFunction(func() []string {
         return []string{"Configuration created", "Project ready"}
     }))
 
@@ -116,8 +116,8 @@ You'll see an interactive interface with different types of tasks.
 Extend the example to work with results:
 
 ```go
-func printResults(confirm *termos.YesNoTask, env *termos.SingleSelectTask,
-                 comp *termos.MultiSelectTask, name *termos.InputTask) {
+func printResults(confirm *ziva.YesNoTask, env *ziva.SingleSelectTask,
+                 comp *ziva.MultiSelectTask, name *ziva.InputTask) {
     fmt.Println("\n📋 Configuration Results:")
     fmt.Printf("Confirmation: %v\n", confirm.IsYes())
     fmt.Printf("Environment: %s\n", env.GetSelected())
@@ -130,7 +130,7 @@ And update main:
 
 ```go
 func main() {
-    queue := termos.NewQueue("Termos Demo Application")
+    queue := ziva.NewQueue("Ziva Demo Application")
 
     // Create tasks with preserved references
     confirm, env, comp, name := createTasksWithReferences(queue)
@@ -151,7 +151,7 @@ func main() {
 The central component that manages sequential task execution:
 
 ```go
-queue := termos.NewQueue("Title")
+queue := ziva.NewQueue("Title")
 queue.WithAppName("MyApp")                    // Application name
 queue.WithClearScreen(true)                   // Screen clearing
 queue.WithTasksNumbered(true, "[%02d]")       // Task numbering
@@ -178,7 +178,7 @@ task.WithTimeout(10*time.Second, defaultValue)
 Built-in validators for various data types:
 
 ```go
-v := termos.DefaultValidators
+v := ziva.DefaultValidators
 inputTask.WithValidator(v.Email())        // Email
 inputTask.WithValidator(v.IP())           // IP address
 inputTask.WithValidator(v.MinLength(5))   // Minimum length

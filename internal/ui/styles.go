@@ -7,7 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/qzeleza/termos/internal/performance"
+	"github.com/qzeleza/ziva/internal/performance"
 )
 
 var (

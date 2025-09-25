@@ -30,8 +30,8 @@ func TestPasswordValidator(t *testing.T) {
 
 	// Тест невалидных паролей
 	invalidPasswords := []string{
-		"short",  // слишком короткий
-		"",       // пустой
+		"short", // слишком короткий
+		"",      // пустой
 	}
 	for _, password := range invalidPasswords {
 		err := validator.Validate(password)
@@ -89,12 +89,12 @@ func TestNumberValidator(t *testing.T) {
 
 	// Невалидные числа
 	invalidNumbers := []string{
-		"0",     // меньше минимума
-		"101",   // больше максимума
-		"abc",   // не число
-		"",      // пустое
-		"50.5",  // дробное
-		"-10",   // отрицательное
+		"0",    // меньше минимума
+		"101",  // больше максимума
+		"abc",  // не число
+		"",     // пустое
+		"50.5", // дробное
+		"-10",  // отрицательное
 	}
 	for _, number := range invalidNumbers {
 		err := validator.Validate(number)
@@ -110,10 +110,10 @@ func TestIPValidator(t *testing.T) {
 
 	// Валидные IP адреса
 	validIPs := []string{
-		"192.168.1.1",    // IPv4
-		"10.0.0.1",       // IPv4
-		"::1",            // IPv6
-		"2001:db8::1",    // IPv6
+		"192.168.1.1", // IPv4
+		"10.0.0.1",    // IPv4
+		"::1",         // IPv6
+		"2001:db8::1", // IPv6
 	}
 	for _, ip := range validIPs {
 		err := ipValidator.Validate(ip)
@@ -172,10 +172,10 @@ func TestDomainValidator(t *testing.T) {
 
 	// Невалидные домены
 	invalidDomains := []string{
-		"",              // пустой
-		"domain..com",   // двойные точки
-		".domain.com",   // начинается с точки
-		"domain.com.",   // заканчивается точкой
+		"",            // пустой
+		"domain..com", // двойные точки
+		".domain.com", // начинается с точки
+		"domain.com.", // заканчивается точкой
 	}
 	for _, domain := range invalidDomains {
 		err := validator.Validate(domain)
@@ -201,8 +201,8 @@ func TestTextValidator(t *testing.T) {
 
 	// Невалидные тексты
 	invalidTexts := []string{
-		"abc",                        // слишком короткий
-		"",                          // пустой
+		"abc",                         // слишком короткий
+		"",                            // пустой
 		"Very long text that exceeds", // слишком длинный
 	}
 	for _, text := range invalidTexts {
@@ -282,8 +282,8 @@ func TestEdgeCases(t *testing.T) {
 	// Просто проверяем, что не паникует
 	assert.NotPanics(t, func() {
 		if err := domainValidator.Validate("special-domain.com"); err != nil {
-				t.Errorf("Ошибка валидации домена: %v", err)
-			}
+			t.Errorf("Ошибка валидации домена: %v", err)
+		}
 	})
 }
 

@@ -11,7 +11,7 @@ description: "Multiple option selection task from a list"
 
 ```go
 options := []string{"item1", "item2", "item3"}
-task := termos.NewMultiSelectTask("Select components", options)
+task := ziva.NewMultiSelectTask("Select components", options)
 ```
 
 ![Screenshot: multi-select task](/images/pic_3.png)
@@ -38,11 +38,11 @@ components := []string{
     "db::Database",
 }
 
-task := termos.NewMultiSelectTask("Components", components).
+task := ziva.NewMultiSelectTask("Components", components).
     WithSelectAll("Install all").
     WithDefaultItems([]string{"web", "api"})
 
-queue := termos.NewQueue("Setup")
+queue := ziva.NewQueue("Setup")
 queue.AddTasks(task)
 queue.Run()
 

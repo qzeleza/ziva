@@ -2,7 +2,7 @@
 package task
 
 import (
-	"github.com/qzeleza/termos/internal/common"
+	"github.com/qzeleza/ziva/internal/common"
 )
 
 // WithNewLinesInErrors реализация для SingleSelectTask

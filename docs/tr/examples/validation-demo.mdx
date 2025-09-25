@@ -5,66 +5,66 @@ description: "Yerleşik ve özel doğrulayıcılarla zengin giriş akışları"
 
 # Doğrulama Vitirini
 
-Bu rehber Termos ile güvenilir formlar kurmayı gösterir: tüm yerleşik doğrulayıcıları kapsar, zincirler oluşturur ve harici kontroller ekler.
+Bu rehber Ziva ile güvenilir formlar kurmayı gösterir: tüm yerleşik doğrulayıcıları kapsar, zincirler oluşturur ve harici kontroller ekler.
 
 ## Tüm yerleşik doğrulayıcılarla kuyruk
 
 ```go
 func ShowBuiltInValidators() {
-    v := termos.DefaultValidators
+    v := ziva.DefaultValidators
 
-    tasks := []termos.Task{
-        termos.NewInputTask("Ad", "Zorunlu alan:").
+    tasks := []ziva.Task{
+        ziva.NewInputTask("Ad", "Zorunlu alan:").
             WithValidator(v.Required()),
 
-        termos.NewInputTask("Kullanıcı adı", "3-20 karakter, latin/rakam:").
+        ziva.NewInputTask("Kullanıcı adı", "3-20 karakter, latin/rakam:").
             WithValidator(v.Username()),
 
-        termos.NewInputTask("Kısa açıklama", "En fazla 40 karakter:").
+        ziva.NewInputTask("Kısa açıklama", "En fazla 40 karakter:").
             WithValidator(v.MaxLength(40)),
 
-        termos.NewInputTask("Yorum", "En az 5 karakter:").
+        ziva.NewInputTask("Yorum", "En az 5 karakter:").
             WithValidator(v.MinLength(5)),
 
-        termos.NewInputTask("Kod", "Tam 8 karakter:").
+        ziva.NewInputTask("Kod", "Tam 8 karakter:").
             WithValidator(v.Length(8)),
 
-        termos.NewInputTask("Email", "E-posta adresi:").
-            WithInputType(termos.InputTypeEmail).
+        ziva.NewInputTask("Email", "E-posta adresi:").
+            WithInputType(ziva.InputTypeEmail).
             WithValidator(v.Email()),
 
-        termos.NewInputTask("Site", "URL (opsiyonel):").
+        ziva.NewInputTask("Site", "URL (opsiyonel):").
             WithValidator(v.OptionalURL()),
 
-        termos.NewInputTask("IP", "IPv4 veya IPv6:").
-            WithInputType(termos.InputTypeIP).
+        ziva.NewInputTask("IP", "IPv4 veya IPv6:").
+            WithInputType(ziva.InputTypeIP).
             WithValidator(v.IP()),
 
-        termos.NewInputTask("Alan adı", "Domain:").
-            WithInputType(termos.InputTypeDomain).
+        ziva.NewInputTask("Alan adı", "Domain:").
+            WithInputType(ziva.InputTypeDomain).
             WithValidator(v.Domain()),
 
-        termos.NewInputTask("Port", "1-65535 arası:").
-            WithInputType(termos.InputTypeNumber).
+        ziva.NewInputTask("Port", "1-65535 arası:").
+            WithInputType(ziva.InputTypeNumber).
             WithValidator(v.Port()),
 
-        termos.NewInputTask("Sayı", "1-100 arası:").
-            WithInputType(termos.InputTypeNumber).
+        ziva.NewInputTask("Sayı", "1-100 arası:").
+            WithInputType(ziva.InputTypeNumber).
             WithValidator(v.Range(1, 100)),
 
-        termos.NewInputTask("Alfasayısal", "Sadece harf ve rakam:").
+        ziva.NewInputTask("Alfasayısal", "Sadece harf ve rakam:").
             WithValidator(v.AlphaNumeric()),
 
-        termos.NewInputTask("Parola", "En az 8 karakter:").
-            WithInputType(termos.InputTypePassword).
+        ziva.NewInputTask("Parola", "En az 8 karakter:").
+            WithInputType(ziva.InputTypePassword).
             WithValidator(v.StandardPassword()),
 
-        termos.NewInputTask("Güçlü parola", "En az 12 karakter, karışık set:").
-            WithInputType(termos.InputTypePassword).
+        ziva.NewInputTask("Güçlü parola", "En az 12 karakter, karışık set:").
+            WithInputType(ziva.InputTypePassword).
             WithValidator(v.StrongPassword()),
     }
 
-    queue := termos.NewQueue("Doğrulama turu").
+    queue := ziva.NewQueue("Doğrulama turu").
         WithTasksNumbered(true, "[%02d]")
     queue.AddTasks(tasks...)
     _ = queue.Run()
@@ -79,7 +79,7 @@ Her görev, kullanıcı <kbd>Enter</kbd>'a bastığında doğrulayıcıyı tetik
 
 ```go
 type Chain struct {
-    validators []termos.Validator
+    validators []ziva.Validator
 }
 
 func (c Chain) Validate(input string) error {
@@ -100,13 +100,13 @@ func (c Chain) Description() string {
 }
 
 func AskSecureToken() {
-    v := termos.DefaultValidators
+    v := ziva.DefaultValidators
 
-    token := termos.NewInputTask(
+    token := ziva.NewInputTask(
         "API token",
         "Zorunlu, 16-64 karakter, alfasayısal",
     ).WithValidator(Chain{
-        validators: []termos.Validator{
+        validators: []ziva.Validator{
             v.Required(),
             v.MinLength(16),
             v.MaxLength(64),
@@ -114,7 +114,7 @@ func AskSecureToken() {
         },
     })
 
-    queue := termos.NewQueue("Token doğrulama")
+    queue := ziva.NewQueue("Token doğrulama")
     queue.AddTasks(token)
     _ = queue.Run()
 
@@ -144,34 +144,34 @@ func (UniqueEmail) Description() string {
 }
 
 func SignUpForm() error {
-    v := termos.DefaultValidators
+    v := ziva.DefaultValidators
 
-    email := termos.NewInputTask("Email", "Çalışma e-postası girin:").
-        WithInputType(termos.InputTypeEmail).
+    email := ziva.NewInputTask("Email", "Çalışma e-postası girin:").
+        WithInputType(ziva.InputTypeEmail).
         WithValidator(v.Email())
 
-    password := termos.NewInputTask(
+    password := ziva.NewInputTask(
         "Parola",
         "En az 12 karakter, harf/rakam/sembol",
-    ).WithInputType(termos.InputTypePassword).
+    ).WithInputType(ziva.InputTypePassword).
         WithValidator(v.StrongPassword())
 
-    confirm := termos.NewYesNoTask(
+    confirm := ziva.NewYesNoTask(
         "Onay",
         "Verileri CRM'e gönder?")
     confirm.WithDefaultYes()
 
-    queue := termos.NewQueue("Kullanıcı kaydı")
+    queue := ziva.NewQueue("Kullanıcı kaydı")
     queue.AddTasks(email, password, confirm)
     if err := queue.Run(); err != nil {
         return err
     }
 
-    check := termos.NewInputTask("Benzersizlik kontrolü", "Email benzersiz olmalı:").
-        WithInputType(termos.InputTypeEmail).
+    check := ziva.NewInputTask("Benzersizlik kontrolü", "Email benzersiz olmalı:").
+        WithInputType(ziva.InputTypeEmail).
         WithValidator(UniqueEmail{})
 
-    followUp := termos.NewQueue("CRM kontrolü")
+    followUp := ziva.NewQueue("CRM kontrolü")
     followUp.AddTasks(check)
     return followUp.Run()
 }
@@ -183,7 +183,7 @@ Girdi topladıktan sonra harici bir servisi çağırmanız gerekiyorsa `FuncTask
 
 ## Hızlı ipuçları
 
-- `Description()` değerini kullanıcı dostu tutun — Termos bu metni giriş alanının yanında gösterir.
+- `Description()` değerini kullanıcı dostu tutun — Ziva bu metni giriş alanının yanında gösterir.
 - Boş değerleri kabul eden doğrulayıcılarla `WithAllowEmpty(true)` kombinasyonunu kullanın.
 - Uzun formları birkaç kuyruğa bölün; yanlış alanlara geri dönmek daha kolay olur.
 - Karmaşık doğrulayıcılar için birim testleri yazın — sonuçta bunlar sıradan Go kodu.

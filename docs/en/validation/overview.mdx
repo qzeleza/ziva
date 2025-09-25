@@ -1,11 +1,11 @@
 ---
 title: "Validation Overview"
-description: "Input data validation system in Termos"
+description: "Input data validation system in Ziva"
 ---
 
 # Validation System
 
-Termos provides a powerful and flexible validation system for checking user input in `InputTask`. The system includes built-in validators for common cases and the ability to create custom validators.
+Ziva provides a powerful and flexible validation system for checking user input in `InputTask`. The system includes built-in validators for common cases and the ability to create custom validators.
 
 ## Core Concepts
 
@@ -22,20 +22,20 @@ The validator receives an input string and returns an error if the input doesn't
 ### Applying Validation
 
 ```go
-input := termos.NewInputTask("Email", "Enter email:").
-    WithValidator(termos.DefaultValidators.Email())
+input := ziva.NewInputTask("Email", "Enter email:").
+    WithValidator(ziva.DefaultValidators.Email())
 ```
 
 Validation is performed when confirming input (pressing Enter). If validation fails, the user is shown an error and prompted to enter data again.
 
 ## Built-in Validators
 
-Termos provides a validator factory through `termos.DefaultValidators`:
+Ziva provides a validator factory through `ziva.DefaultValidators`:
 
 ### Basic Validators
 
 ```go
-v := termos.DefaultValidators
+v := ziva.DefaultValidators
 
 // Required field (not empty)
 validator := v.Required()
@@ -109,10 +109,10 @@ validator = v.StrongPassword()
 ### Email Validation
 
 ```go
-emailTask := termos.NewInputTask("Email", "Enter your email:").
-    WithValidator(termos.DefaultValidators.Email())
+emailTask := ziva.NewInputTask("Email", "Enter your email:").
+    WithValidator(ziva.DefaultValidators.Email())
 
-queue := termos.NewQueue("Registration")
+queue := ziva.NewQueue("Registration")
 queue.AddTasks(emailTask)
 queue.Run()
 
@@ -122,11 +122,11 @@ fmt.Printf("Email: %s\n", emailTask.GetValue())
 ### Port Validation
 
 ```go
-portTask := termos.NewInputTask("Port", "Enter port (1-65535):").
-    WithInputType(termos.InputTypeNumber).
-    WithValidator(termos.DefaultValidators.Port())
+portTask := ziva.NewInputTask("Port", "Enter port (1-65535):").
+    WithInputType(ziva.InputTypeNumber).
+    WithValidator(ziva.DefaultValidators.Port())
 
-queue := termos.NewQueue("Server Setup")
+queue := ziva.NewQueue("Server Setup")
 queue.AddTasks(portTask)
 queue.Run()
 
@@ -137,11 +137,11 @@ fmt.Printf("Port: %d\n", port)
 ### Password Validation
 
 ```go
-passwordTask := termos.NewInputTask("Password", "Enter password:").
-    WithInputType(termos.InputTypePassword).
-    WithValidator(termos.DefaultValidators.StrongPassword())
+passwordTask := ziva.NewInputTask("Password", "Enter password:").
+    WithInputType(ziva.InputTypePassword).
+    WithValidator(ziva.DefaultValidators.StrongPassword())
 
-queue := termos.NewQueue("Security")
+queue := ziva.NewQueue("Security")
 queue.AddTasks(passwordTask)
 queue.Run()
 
@@ -152,22 +152,22 @@ fmt.Println("Password set")
 
 ```go
 func createUserForm() {
-    v := termos.DefaultValidators
+    v := ziva.DefaultValidators
 
-    username := termos.NewInputTask("Username", "Login (3-20 characters):").
+    username := ziva.NewInputTask("Username", "Login (3-20 characters):").
         WithValidator(v.Username())
 
-    email := termos.NewInputTask("Email", "Email address:").
+    email := ziva.NewInputTask("Email", "Email address:").
         WithValidator(v.Email())
 
-    password := termos.NewInputTask("Password", "Password (min 8 characters):").
-        WithInputType(termos.InputTypePassword).
+    password := ziva.NewInputTask("Password", "Password (min 8 characters):").
+        WithInputType(ziva.InputTypePassword).
         WithValidator(v.StandardPassword())
 
-    website := termos.NewInputTask("Website", "Website (optional):").
+    website := ziva.NewInputTask("Website", "Website (optional):").
         WithValidator(v.OptionalURL())
 
-    queue := termos.NewQueue("User Registration")
+    queue := ziva.NewQueue("User Registration")
     queue.AddTasks(username, email, password, website)
 
     if err := queue.Run(); err != nil {
@@ -187,15 +187,15 @@ func createUserForm() {
 
 ```go
 // For numbers
-task.WithInputType(termos.InputTypeNumber).
+task.WithInputType(ziva.InputTypeNumber).
      WithValidator(v.Range(1, 100))
 
 // For passwords
-task.WithInputType(termos.InputTypePassword).
+task.WithInputType(ziva.InputTypePassword).
      WithValidator(v.StrongPassword())
 
 // For email
-task.WithInputType(termos.InputTypeEmail).
+task.WithInputType(ziva.InputTypeEmail).
      WithValidator(v.Email())
 ```
 
@@ -222,11 +222,11 @@ func (v *ClearValidator) Validate(input string) error {
 func createPasswordValidator(env string) validation.Validator {
     switch env {
     case "production":
-        return termos.DefaultValidators.StrongPassword()
+        return ziva.DefaultValidators.StrongPassword()
     case "development":
-        return termos.DefaultValidators.StandardPassword()
+        return ziva.DefaultValidators.StandardPassword()
     default:
-        return termos.DefaultValidators.Required()
+        return ziva.DefaultValidators.Required()
     }
 }
 ```

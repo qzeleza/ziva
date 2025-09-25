@@ -1,7 +1,7 @@
 # Основные переменные для управления сборкой
-BINARY_NAME:=termos
+BINARY_NAME:=ziva
 BUILD_DIR:=bin
-MAIN_PKG:=./cmd/termos
+MAIN_PKG:=./cmd/ziva
 
 .PHONY: help run build test test-coverage clean deps fmt lint cache
 

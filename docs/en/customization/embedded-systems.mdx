@@ -1,15 +1,15 @@
 ---
 title: "Embedded Systems Optimization"
-description: "Optimizing Termos for embedded and IoT devices"
+description: "Optimizing Ziva for embedded and IoT devices"
 ---
 
 # Embedded Systems Optimization
 
-Termos automatically detects and optimizes for embedded systems like routers, IoT devices, and resource-constrained environments.
+Ziva automatically detects and optimizes for embedded systems like routers, IoT devices, and resource-constrained environments.
 
 ## Automatic Detection
 
-Termos detects embedded systems by:
+Ziva detects embedded systems by:
 
 - **Memory constraints** - available RAM and swap
 - **CPU architecture** - ARM, MIPS detection  
@@ -20,15 +20,15 @@ Termos detects embedded systems by:
 
 ```bash
 # Configure memory thresholds
-export TERMOS_MEMORY_PRESSURE_THRESHOLD=50M
-export TERMOS_MAX_COMPLETED_TASKS=5
+export ZIVA_MEMORY_PRESSURE_THRESHOLD=50M
+export ZIVA_MAX_COMPLETED_TASKS=5
 ```
 
 ## Simplified UI Mode
 
 ```go
 // Embedded-friendly configuration
-queue := termos.NewQueue("IoT Setup")
+queue := ziva.NewQueue("IoT Setup")
 queue.WithOutSummary(true).        // disable summary
       WithOutResultLine().         // disable result lines
       WithTasksNumbered(false, ""). // disable numbering
@@ -41,8 +41,8 @@ For limited terminals:
 
 ```go
 // Use simplified colors
-queue.WithAppNameColor(termos.WhiteBright, false).
-      WithTitleColor(termos.GrayBright, false)
+queue.WithAppNameColor(ziva.WhiteBright, false).
+      WithTitleColor(ziva.GrayBright, false)
 ```
 
 ## Performance Tips
@@ -56,7 +56,7 @@ queue.WithAppNameColor(termos.WhiteBright, false).
 
 ```go
 // Check if running on embedded system
-if termos.IsEmbeddedSystem() {
+if ziva.IsEmbeddedSystem() {
     // Apply embedded optimizations
     queue.WithOutSummary(true)
 }

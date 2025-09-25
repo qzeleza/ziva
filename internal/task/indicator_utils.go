@@ -3,7 +3,7 @@ package task
 import (
 	"strings"
 
-	"github.com/qzeleza/termos/internal/ui"
+	"github.com/qzeleza/ziva/internal/ui"
 )
 
 func appendIndicatorWithPlainPipe(sb *strings.Builder, indicator string) {

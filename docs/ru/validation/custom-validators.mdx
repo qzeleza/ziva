@@ -32,14 +32,14 @@ var skuPattern = regexp.MustCompile(`^[A-Z]{3}-\d{6}$`)
 Использование:
 
 ```go
-sku := termos.NewInputTask("SKU", "Введите код товара:")
+sku := ziva.NewInputTask("SKU", "Введите код товара:")
 sku.WithValidator(skuValidator{})
 ```
 
 ## Сообщения об ошибках
 
 - `Validate` — короткое сообщение о проблеме (например, «Нужен чётный номер»).
-- `Description` — общие требования. Termos показывает его под полем ввода, чтобы пользователь сразу видел формат.
+- `Description` — общие требования. Ziva показывает его под полем ввода, чтобы пользователь сразу видел формат.
 
 ## Повторное использование
 
@@ -74,7 +74,7 @@ func (c chainValidator) Description() string {
 Теперь можно комбинировать встроенные проверки и свои собственные:
 
 ```go
-v := termos.DefaultValidators
+v := ziva.DefaultValidators
 
 validator := chainValidator{validators: []interface {
     Validate(string) error
@@ -84,7 +84,7 @@ validator := chainValidator{validators: []interface {
     skuValidator{},
 }}
 
-sku := termos.NewInputTask("SKU", "Введите код:").
+sku := ziva.NewInputTask("SKU", "Введите код:").
     WithValidator(validator)
 ```
 
@@ -93,15 +93,15 @@ sku := termos.NewInputTask("SKU", "Введите код:").
 Если проверка требует обращения к API или базе данных, используйте `FuncTask` сразу после `InputTask`:
 
 ```go
-email := termos.NewInputTask("Email", "Введите адрес:").
+email := ziva.NewInputTask("Email", "Введите адрес:").
     WithValidator(v.Email())
 
-check := termos.NewFuncTask("Проверка email", func() error {
+check := ziva.NewFuncTask("Проверка email", func() error {
     if existsInCRM(email.GetValue()) {
         return fmt.Errorf("адрес %s уже зарегистрирован", email.GetValue())
     }
     return nil
-}, termos.WithStopOnError(true))
+}, ziva.WithStopOnError(true))
 
 queue.AddTasks(email, check)
 ```

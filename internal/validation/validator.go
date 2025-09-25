@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/qzeleza/termos/internal/defaults"
-	"github.com/qzeleza/termos/internal/performance"
+	"github.com/qzeleza/ziva/internal/defaults"
+	"github.com/qzeleza/ziva/internal/performance"
 )
 
 // Validator определяет интерфейс для валидации входных данных

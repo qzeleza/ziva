@@ -1,11 +1,11 @@
 ---
 title: "Görev Türleri"
-description: "Termos'taki tüm görev türleri ve ana özellikleri"
+description: "Ziva'taki tüm görev türleri ve ana özellikleri"
 ---
 
-# Termos'ta Görev Türleri
+# Ziva'ta Görev Türleri
 
-Termos, etkileşimli TUI uygulamaları oluşturmak için beş ana görev türü sağlar.
+Ziva, etkileşimli TUI uygulamaları oluşturmak için beş ana görev türü sağlar.
 
 <CardGroup cols={2}>
   <Card title="YesNoTask" icon="check-circle" href="/tr/components/yesno-task">
@@ -46,9 +46,9 @@ completed := task.IsCompleted() // bool
 
 ```go
 // Fabrika metodları
-yesno := termos.NewYesNoTask("Başlık", "Soru?")
-single := termos.NewSingleSelectTask("Başlık", []string{"opt1", "opt2"})
-multi := termos.NewMultiSelectTask("Başlık", []string{"item1", "item2"})
-input := termos.NewInputTask("Başlık", "İpucu:")
-fn := termos.NewFuncTask("Başlık", func() error { return nil })
+yesno := ziva.NewYesNoTask("Başlık", "Soru?")
+single := ziva.NewSingleSelectTask("Başlık", []string{"opt1", "opt2"})
+multi := ziva.NewMultiSelectTask("Başlık", []string{"item1", "item2"})
+input := ziva.NewInputTask("Başlık", "İpucu:")
+fn := ziva.NewFuncTask("Başlık", func() error { return nil })
 ```

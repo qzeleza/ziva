@@ -6,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/qzeleza/termos/internal/ui"
+	"github.com/qzeleza/ziva/internal/ui"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,11 +1,11 @@
 ---
 title: "Обзор задач"
-description: "Какие типы задач доступны в Termos и как с ними работать"
+description: "Какие типы задач доступны в Ziva и как с ними работать"
 ---
 
-# Типы задач Termos
+# Типы задач Ziva
 
-Termos предоставляет пять готовых типов задач. Каждая из них решает конкретный сценарий пользовательского ввода и интегрируется в очередь без ручного управления состоянием.
+Ziva предоставляет пять готовых типов задач. Каждая из них решает конкретный сценарий пользовательского ввода и интегрируется в очередь без ручного управления состоянием.
 
 <CardGroup cols={2}>
   <Card title="YesNoTask" icon="check-circle" href="/ru/components/yesno-task">
@@ -42,7 +42,7 @@ task.WithTimeout(5*time.Second, fallbackValue)
 В списковых задачах можно добавлять вспомогательный текст через разделитель (по умолчанию `::`). Новый разделитель задаётся глобально:
 
 ```go
-termos.SetChoiceHelpDelimiter(" → ")
+ziva.SetChoiceHelpDelimiter(" → ")
 ```
 
 ### Отключение элементов
@@ -78,7 +78,7 @@ inputValue := inputTask.GetValue()
 
 ## Реализация собственного типа задачи
 
-`termos.Task` — это алиас интерфейса `common.Task`. Если встроенных типов недостаточно, можно реализовать его самостоятельно:
+`ziva.Task` — это алиас интерфейса `common.Task`. Если встроенных типов недостаточно, можно реализовать его самостоятельно:
 
 ```go
 type customTask struct {
@@ -87,7 +87,7 @@ type customTask struct {
 
 func (t *customTask) Title() string                 { return "Моя задача" }
 func (t *customTask) Run() tea.Cmd                  { return nil }
-func (t *customTask) Update(msg tea.Msg) (termos.Task, tea.Cmd) { return t, nil }
+func (t *customTask) Update(msg tea.Msg) (ziva.Task, tea.Cmd) { return t, nil }
 func (t *customTask) View(width int) string         { return "" }
 func (t *customTask) IsDone() bool                  { return true }
 func (t *customTask) FinalView(width int) string    { return t.View(width) }
@@ -95,7 +95,7 @@ func (t *customTask) HasError() bool                { return false }
 func (t *customTask) Error() error                  { return nil }
 func (t *customTask) StopOnError() bool             { return false }
 func (t *customTask) SetStopOnError(bool)           {}
-func (t *customTask) WithNewLinesInErrors(bool) termos.Task { return t }
+func (t *customTask) WithNewLinesInErrors(bool) ziva.Task { return t }
 ```
 
 Практика показывает, что в большинстве случаев достаточно комбинации стандартных задач и `FuncTask` для побочных действий.
@@ -103,13 +103,13 @@ func (t *customTask) WithNewLinesInErrors(bool) termos.Task { return t }
 ## Шаблон структуры приложения
 
 ```go
-queue := termos.NewQueue("Настройка кластера")
+queue := ziva.NewQueue("Настройка кластера")
 
-confirm := termos.NewYesNoTask("Подтверждение", "Продолжить?")
-mode    := termos.NewSingleSelectTask("Режим", modes)
-features := termos.NewMultiSelectTask("Фичи", featureList)
-name     := termos.NewInputTask("Имя", "Введите имя кластера")
-build    := termos.NewFuncTask("Сборка", assembleCluster)
+confirm := ziva.NewYesNoTask("Подтверждение", "Продолжить?")
+mode    := ziva.NewSingleSelectTask("Режим", modes)
+features := ziva.NewMultiSelectTask("Фичи", featureList)
+name     := ziva.NewInputTask("Имя", "Введите имя кластера")
+build    := ziva.NewFuncTask("Сборка", assembleCluster)
 
 queue.AddTasks(confirm, mode, features, name, build)
 if err := queue.Run(); err != nil {
@@ -126,7 +126,7 @@ if confirm.IsYes() {
 - **Группируйте задачи по смыслу.** Пользователю проще пройти несколько небольших очередей, чем одну огромную.
 - **Используйте таймауты аккуратно.** Всегда выбирайте fallback, безопасный для вашей системы.
 - **Показывайте подсказки.** Разделитель помогает объяснить значения вроде `prod`, `staging`, `cli`.
-- **Не дублируйте вывод.** Termos сам управляет TUI-рендерингом; избегайте `fmt.Println` внутри задач.
+- **Не дублируйте вывод.** Ziva сам управляет TUI-рендерингом; избегайте `fmt.Println` внутри задач.
 - **Сохраняйте ссылки на задачи.** Это единственный способ получить результаты после завершения очереди.
 
 Продолжайте с подробным описанием конкретных задач в соответствующих разделах.

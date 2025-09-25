@@ -10,7 +10,7 @@ description: "Text input task with validation"
 ## Creating
 
 ```go
-task := termos.NewInputTask("Username", "Enter name:")
+task := ziva.NewInputTask("Username", "Enter name:")
 ```
 
 ![Screenshot: input with validation](/images/pic_4.png)
@@ -19,8 +19,8 @@ task := termos.NewInputTask("Username", "Enter name:")
 
 ```go
 // Settings
-task.WithValidator(termos.DefaultValidators.Email())  // validator
-task.WithInputType(termos.InputTypePassword)         // field type
+task.WithValidator(ziva.DefaultValidators.Email())  // validator
+task.WithInputType(ziva.InputTypePassword)         // field type
 task.WithTimeout(30*time.Second, "default")          // timeout
 
 // Get result
@@ -31,29 +31,29 @@ value := task.GetValue() // string
 
 ```go
 const (
-    InputTypeText     = termos.InputTypeText     // regular text
-    InputTypePassword = termos.InputTypePassword // password (hidden)
-    InputTypeEmail    = termos.InputTypeEmail    // email
-    InputTypeNumber   = termos.InputTypeNumber   // number
-    InputTypeIP       = termos.InputTypeIP       // IP address
-    InputTypeDomain   = termos.InputTypeDomain   // domain
+    InputTypeText     = ziva.InputTypeText     // regular text
+    InputTypePassword = ziva.InputTypePassword // password (hidden)
+    InputTypeEmail    = ziva.InputTypeEmail    // email
+    InputTypeNumber   = ziva.InputTypeNumber   // number
+    InputTypeIP       = ziva.InputTypeIP       // IP address
+    InputTypeDomain   = ziva.InputTypeDomain   // domain
 )
 ```
 
 ## Example with Validation
 
 ```go
-v := termos.DefaultValidators
+v := ziva.DefaultValidators
 
-email := termos.NewInputTask("Email", "Enter email:").
-    WithInputType(termos.InputTypeEmail).
+email := ziva.NewInputTask("Email", "Enter email:").
+    WithInputType(ziva.InputTypeEmail).
     WithValidator(v.Email())
 
-password := termos.NewInputTask("Password", "Enter password:").
-    WithInputType(termos.InputTypePassword).
+password := ziva.NewInputTask("Password", "Enter password:").
+    WithInputType(ziva.InputTypePassword).
     WithValidator(v.StrongPassword())
 
-queue := termos.NewQueue("Registration")
+queue := ziva.NewQueue("Registration")
 queue.AddTasks(email, password)
 queue.Run()
 

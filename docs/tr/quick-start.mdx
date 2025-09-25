@@ -1,23 +1,23 @@
 ---
 title: "Hızlı Başlangıç"
-description: "Termos ile 5 dakikada ilk TUI uygulamanızı oluşturun"
+description: "Ziva ile 5 dakikada ilk TUI uygulamanızı oluşturun"
 ---
 
 # Hızlı Başlangıç
 
-Bu kılavuzda Termos'un ana özelliklerini gösteren basit bir TUI uygulaması oluşturacağız.
+Bu kılavuzda Ziva'un ana özelliklerini gösteren basit bir TUI uygulaması oluşturacağız.
 
-![Ekran görüntüsü: temel Termos kuyruğu](/images/pic_1.png)
+![Ekran görüntüsü: temel Ziva kuyruğu](/images/pic_1.png)
 
 ## Adım 1: Proje Oluşturma
 
 Yeni bir Go projesi oluşturun:
 
 ```bash
-mkdir termos-demo
-cd termos-demo
-go mod init termos-demo
-go get github.com/qzeleza/termos
+mkdir ziva-demo
+cd ziva-demo
+go mod init ziva-demo
+go get github.com/qzeleza/ziva
 ```
 
 ## Adım 2: Temel Uygulama
@@ -31,12 +31,12 @@ import (
     "fmt"
     "log"
     "time"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
     // Başlık ile görev kuyruğu oluştur
-    queue := termos.NewQueue("Termos Demo Uygulaması")
+    queue := ziva.NewQueue("Ziva Demo Uygulaması")
 
     // Görünümü yapılandır
     queue.WithAppName("BenimUygulamam")
@@ -54,9 +54,9 @@ func main() {
     printResults()
 }
 
-func createTasks(queue *termos.Queue) {
+func createTasks(queue *ziva.Queue) {
     // 1. Zaman aşımı ile onay görevi
-    confirm := termos.NewYesNoTask("Onay", "Kuruluma başlansın mı?").
+    confirm := ziva.NewYesNoTask("Onay", "Kuruluma başlansın mı?").
         WithTimeout(5*time.Second, "Evet")
 
     // 2. Ortam seçimi
@@ -65,7 +65,7 @@ func createTasks(queue *termos.Queue) {
         "staging||Test ortamı",
         "production||Canlı ortam",
     }
-    env := termos.NewSingleSelectTask("Ortam Seçimi", environments).
+    env := ziva.NewSingleSelectTask("Ortam Seçimi", environments).
         WithDefaultItem("staging")
 
     // 3. Bileşen seçimi
@@ -75,19 +75,19 @@ func createTasks(queue *termos.Queue) {
         "cli||Komut satırı",
         "docs||Belgeler",
     }
-    comp := termos.NewMultiSelectTask("Bileşenler", components).
+    comp := ziva.NewMultiSelectTask("Bileşenler", components).
         WithSelectAll("Tümünü seç").
         WithDefaultItems([]string{"api", "cli"})
 
     // 4. Doğrulama ile proje adı girişi
-    name := termos.NewInputTask("Proje Adı", "Adı girin:").
-        WithValidator(termos.DefaultValidators.Required())
+    name := ziva.NewInputTask("Proje Adı", "Adı girin:").
+        WithValidator(ziva.DefaultValidators.Required())
 
     // 5. Fonksiyonel görev
-    setup := termos.NewFuncTask("Kurulum", func() error {
+    setup := ziva.NewFuncTask("Kurulum", func() error {
         time.Sleep(2 * time.Second) // İş simülasyonu
         return nil
-    }, termos.WithSummaryFunction(func() []string {
+    }, ziva.WithSummaryFunction(func() []string {
         return []string{"Yapılandırma oluşturuldu", "Proje hazır"}
     }))
 
@@ -116,8 +116,8 @@ Farklı türde görevlerle etkileşimli arayüzü göreceksiniz.
 Sonuçlarla çalışmak için örneği genişletelim:
 
 ```go
-func printResults(confirm *termos.YesNoTask, env *termos.SingleSelectTask,
-                 comp *termos.MultiSelectTask, name *termos.InputTask) {
+func printResults(confirm *ziva.YesNoTask, env *ziva.SingleSelectTask,
+                 comp *ziva.MultiSelectTask, name *ziva.InputTask) {
     fmt.Println("\n📋 Yapılandırma Sonuçları:")
     fmt.Printf("Onay: %v\n", confirm.IsYes())
     fmt.Printf("Ortam: %s\n", env.GetSelected())
@@ -130,7 +130,7 @@ Ve main'i güncelleyin:
 
 ```go
 func main() {
-    queue := termos.NewQueue("Termos Demo Uygulaması")
+    queue := ziva.NewQueue("Ziva Demo Uygulaması")
 
     // Referansları koruyarak görevleri oluştur
     confirm, env, comp, name := createTasksWithReferences(queue)
@@ -151,7 +151,7 @@ func main() {
 Görevlerin sıralı yürütülmesini yöneten merkezi bileşen:
 
 ```go
-queue := termos.NewQueue("Başlık")
+queue := ziva.NewQueue("Başlık")
 queue.WithAppName("BenimUygulamam")      // Uygulama adı
 queue.WithClearScreen(true)              // Ekran temizleme
 queue.WithTasksNumbered(true, "[%02d]")  // Görev numaralandırma
@@ -178,7 +178,7 @@ task.WithTimeout(10*time.Second, defaultValue)
 Çeşitli veri türleri için yerleşik doğrulayıcılar:
 
 ```go
-v := termos.DefaultValidators
+v := ziva.DefaultValidators
 inputTask.WithValidator(v.Email())        // Email
 inputTask.WithValidator(v.IP())           // IP adresi
 inputTask.WithValidator(v.MinLength(5))   // Minimum uzunluk

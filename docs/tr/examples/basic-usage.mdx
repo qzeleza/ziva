@@ -1,11 +1,11 @@
 ---
 title: "Temel Örnekler"
-description: "TUI uygulamaları oluşturmak için Termos'un basit kullanım örnekleri"
+description: "TUI uygulamaları oluşturmak için Ziva'un basit kullanım örnekleri"
 ---
 
 # Temel Kullanım Örnekleri
 
-Bu sayfa Termos ile TUI uygulamaları oluşturmanın pratik örneklerini içerir. Tüm örnekler çalıştırılmaya hazırdır ve kütüphanenin ana özelliklerini gösterir.
+Bu sayfa Ziva ile TUI uygulamaları oluşturmanın pratik örneklerini içerir. Tüm örnekler çalıştırılmaya hazırdır ve kütüphanenin ana özelliklerini gösterir.
 
 ## Örnek 1: Basit Onay
 
@@ -17,18 +17,18 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
     // Onay görevi oluştur
-    confirm := termos.NewYesNoTask(
+    confirm := ziva.NewYesNoTask(
         "Eylem Onayı",
         "Tüm geçici dosyalar silinsin mi?",
     )
 
     // Kuyruk oluştur ve görev ekle
-    queue := termos.NewQueue("Sistem Temizliği")
+    queue := ziva.NewQueue("Sistem Temizliği")
     queue.AddTasks(confirm)
 
     // Çalıştır
@@ -55,7 +55,7 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
@@ -67,13 +67,13 @@ func main() {
     }
 
     // Seçim görevi oluştur
-    envTask := termos.NewSingleSelectTask(
+    envTask := ziva.NewSingleSelectTask(
         "Dağıtım Ortamı Seçimi",
         environments,
     ).WithDefaultItem("staging")
 
     // Kuyruğu yapılandır ve çalıştır
-    queue := termos.NewQueue("Uygulama Dağıtımı")
+    queue := ziva.NewQueue("Uygulama Dağıtımı")
     queue.WithAppName("DeployTool")
     queue.AddTasks(envTask)
 
@@ -98,7 +98,7 @@ import (
     "fmt"
     "log"
     "strings"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
@@ -113,13 +113,13 @@ func main() {
     }
 
     // Çoklu seçim görevi oluştur
-    compTask := termos.NewMultiSelectTask(
+    compTask := ziva.NewMultiSelectTask(
         "Kurulacak bileşenleri seçin",
         components,
     ).WithSelectAll("Tümünü kur").
       WithDefaultItems([]string{"web", "api"})
 
-    queue := termos.NewQueue("Sistem Kurulumu")
+    queue := ziva.NewQueue("Sistem Kurulumu")
     queue.AddTasks(compTask)
 
     if err := queue.Run(); err != nil {
@@ -147,25 +147,25 @@ package main
 import (
     "fmt"
     "log"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
-    v := termos.DefaultValidators
+    v := ziva.DefaultValidators
 
     // Doğrulama ile giriş alanları oluştur
-    name := termos.NewInputTask("İsim", "Adınızı girin:").
+    name := ziva.NewInputTask("İsim", "Adınızı girin:").
         WithValidator(v.Required())
 
-    email := termos.NewInputTask("Email", "Email adresinizi girin:").
-        WithInputType(termos.InputTypeEmail).
+    email := ziva.NewInputTask("Email", "Email adresinizi girin:").
+        WithInputType(ziva.InputTypeEmail).
         WithValidator(v.Email())
 
-    website := termos.NewInputTask("Site", "Website URL (opsiyonel):").
+    website := ziva.NewInputTask("Site", "Website URL (opsiyonel):").
         WithValidator(v.OptionalURL())
 
     // Kuyruk oluştur
-    queue := termos.NewQueue("Kullanıcı Kaydı")
+    queue := ziva.NewQueue("Kullanıcı Kaydı")
     queue.WithAppName("UserReg")
     queue.AddTasks(name, email, website)
 
@@ -194,7 +194,7 @@ import (
     "log"
     "math/rand"
     "time"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 func main() {
@@ -206,7 +206,7 @@ func main() {
     }
 
     // Fonksiyonel görev oluştur
-    processTask := termos.NewFuncTask(
+    processTask := ziva.NewFuncTask(
         "Dosya İşleme",
         func() error {
             start := time.Now()
@@ -226,7 +226,7 @@ func main() {
             return nil
         },
         // Sonuç özeti fonksiyonu
-        termos.WithSummaryFunction(func() []string {
+        ziva.WithSummaryFunction(func() []string {
             return []string{
                 fmt.Sprintf("İşlenen dosya: %d", stats.FilesProcessed),
                 fmt.Sprintf("Hata: %d", stats.Errors),
@@ -235,7 +235,7 @@ func main() {
         }),
     )
 
-    queue := termos.NewQueue("Toplu İşlem")
+    queue := ziva.NewQueue("Toplu İşlem")
     queue.AddTasks(processTask)
 
     if err := queue.Run(); err != nil {
@@ -256,7 +256,7 @@ import (
     "log"
     "strconv"
     "time"
-    "github.com/qzeleza/termos"
+    "github.com/qzeleza/ziva"
 )
 
 type ServerConfig struct {
@@ -274,10 +274,10 @@ func main() {
     tasks := createConfigTasks(config)
 
     // Kuyruğu yapılandır
-    queue := termos.NewQueue("Web Sunucusu Yapılandırması")
+    queue := ziva.NewQueue("Web Sunucusu Yapılandırması")
     queue.WithAppName("WebServerSetup").
           WithTasksNumbered(true, "[%02d]").
-          WithTitleColor(termos.BlueBright, true)
+          WithTitleColor(ziva.BlueBright, true)
 
     queue.AddTasks(tasks...)
 
@@ -289,22 +289,22 @@ func main() {
     printConfig(config)
 }
 
-func createConfigTasks(config *ServerConfig) []termos.Task {
-    v := termos.DefaultValidators
+func createConfigTasks(config *ServerConfig) []ziva.Task {
+    v := ziva.DefaultValidators
 
     // 1. Host
-    hostTask := termos.NewInputTask("Sunucu Host", "IP adresi veya domain:").
+    hostTask := ziva.NewInputTask("Sunucu Host", "IP adresi veya domain:").
         WithValidator(v.Required()).
         WithTimeout(30*time.Second, "localhost")
 
     // 2. Port
-    portTask := termos.NewInputTask("Port", "Sunucu portu (1-65535):").
-        WithInputType(termos.InputTypeNumber).
+    portTask := ziva.NewInputTask("Port", "Sunucu portu (1-65535):").
+        WithInputType(ziva.InputTypeNumber).
         WithValidator(v.Port()).
         WithTimeout(15*time.Second, "8080")
 
     // 3. SSL
-    sslTask := termos.NewYesNoTask("SSL", "HTTPS etkinleştirilsin mi?").
+    sslTask := ziva.NewYesNoTask("SSL", "HTTPS etkinleştirilsin mi?").
         WithDefaultItem("Evet")
 
     // 4. Modüller
@@ -317,12 +317,12 @@ func createConfigTasks(config *ServerConfig) []termos.Task {
         "cache||Önbellek",
     }
 
-    moduleTask := termos.NewMultiSelectTask("Modüller", modules).
+    moduleTask := ziva.NewMultiSelectTask("Modüller", modules).
         WithSelectAll("Tüm modülleri etkinleştir").
         WithDefaultItems([]string{"auth", "static"})
 
     // 5. Yapılandırma uygulama fonksiyonel görevi
-    applyTask := termos.NewFuncTask(
+    applyTask := ziva.NewFuncTask(
         "Yapılandırma Uygulama",
         func() error {
             // Yapılandırmayı topla
@@ -337,7 +337,7 @@ func createConfigTasks(config *ServerConfig) []termos.Task {
             time.Sleep(2 * time.Second)
             return nil
         },
-        termos.WithSummaryFunction(func() []string {
+        ziva.WithSummaryFunction(func() []string {
             return []string{
                 "Yapılandırma uygulandı",
                 "Sunucu başlatılmaya hazır",
@@ -345,7 +345,7 @@ func createConfigTasks(config *ServerConfig) []termos.Task {
         }),
     )
 
-    return []termos.Task{hostTask, portTask, sslTask, moduleTask, applyTask}
+    return []ziva.Task{hostTask, portTask, sslTask, moduleTask, applyTask}
 }
 
 func printConfig(config *ServerConfig) {
@@ -371,15 +371,15 @@ func printConfig(config *ServerConfig) {
 
 ```go
 // Kimlik doğrulama grubu
-authTasks := []termos.Task{
-    termos.NewInputTask("Username", "Kullanıcı adı:"),
-    termos.NewInputTask("Password", "Şifre:").WithInputType(termos.InputTypePassword),
+authTasks := []ziva.Task{
+    ziva.NewInputTask("Username", "Kullanıcı adı:"),
+    ziva.NewInputTask("Password", "Şifre:").WithInputType(ziva.InputTypePassword),
 }
 
 // Ayarlar grubu
-configTasks := []termos.Task{
-    termos.NewSingleSelectTask("Theme", themes),
-    termos.NewYesNoTask("Notifications", "Bildirimler etkinleştirilsin mi?"),
+configTasks := []ziva.Task{
+    ziva.NewSingleSelectTask("Theme", themes),
+    ziva.NewYesNoTask("Notifications", "Bildirimler etkinleştirilsin mi?"),
 }
 
 queue.AddTasks(authTasks...)
@@ -389,7 +389,7 @@ queue.AddTasks(configTasks...)
 ### 2. İptal İşleme
 
 ```go
-queue := termos.NewQueue("Kurulum")
+queue := ziva.NewQueue("Kurulum")
 if err := queue.Run(); err != nil {
     if err == context.Canceled {
         fmt.Println("❌ Kurulum kullanıcı tarafından iptal edildi")

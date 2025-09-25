@@ -1,50 +1,50 @@
 ---
 title: "Color Customization"
-description: "Working with colors and themes in Termos"
+description: "Working with colors and themes in Ziva"
 ---
 
 # Color Customization
 
-Termos provides a rich color system for creating visually appealing TUI applications.
+Ziva provides a rich color system for creating visually appealing TUI applications.
 
 ## Available Colors
 
 ```go
 // Bright colors
-termos.GreenBright
-termos.RedBright
-termos.BlueBright
-termos.YellowBright
-termos.OrangeBright
-termos.CyanBright
-termos.MagentaBright
-termos.WhiteBright
+ziva.GreenBright
+ziva.RedBright
+ziva.BlueBright
+ziva.YellowBright
+ziva.OrangeBright
+ziva.CyanBright
+ziva.MagentaBright
+ziva.WhiteBright
 
 // Dark colors
-termos.RedDark
-termos.YellowDark
-termos.OrangeDark
-termos.BlueDark
-termos.CyanDark
-termos.GrayDark
-termos.DarkGreen
+ziva.RedDark
+ziva.YellowDark
+ziva.OrangeDark
+ziva.BlueDark
+ziva.CyanDark
+ziva.GrayDark
+ziva.DarkGreen
 
 // Special colors
-termos.LightBlue
-termos.GrayBright
-termos.Black
+ziva.LightBlue
+ziva.GrayBright
+ziva.Black
 ```
 
 ## Queue Color Configuration
 
 ```go
-queue := termos.NewQueue("Colorful App")
+queue := ziva.NewQueue("Colorful App")
 
 // Application name styling
-queue.WithAppNameColor(termos.BlueBright, true)  // blue and bold
+queue.WithAppNameColor(ziva.BlueBright, true)  // blue and bold
 
 // Title styling
-queue.WithTitleColor(termos.GreenBright, false) // green, normal weight
+queue.WithTitleColor(ziva.GreenBright, false) // green, normal weight
 
 // Error colors
 queue.SetErrorColor(query.ErrorColorRed)        // red errors
@@ -52,7 +52,7 @@ queue.SetErrorColor(query.ErrorColorRed)        // red errors
 
 ## Terminal Compatibility
 
-Termos automatically adapts colors based on terminal capabilities:
+Ziva automatically adapts colors based on terminal capabilities:
 
 - **True color terminals** - full color palette
 - **256-color terminals** - optimized color mapping
