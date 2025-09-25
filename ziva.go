@@ -83,15 +83,13 @@ func (q *Queue) AddTasks(tasks ...Task) *Queue {
 	return q
 }
 
-// TODO: добавить в функцию WithAppName возможность отображения текущей версии приложения
-// при помощи еще одного необязательного параметра version string
-
 // WithAppName устанавливает название приложения в заголовке
 //
 // @param appName Название приложения
+// @param version Необязательная строка версии приложения
 // @return Указатель на очередь задач
-func (q *Queue) WithAppName(appName string) *Queue {
-	q.model.WithAppName(appName)
+func (q *Queue) WithAppName(appName string, version ...string) *Queue {
+	q.model.WithAppName(appName, version...)
 	return q
 }
 

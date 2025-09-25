@@ -101,13 +101,15 @@ type Model struct {
 	titleStyle lipgloss.Style // Стиль заголовка.
 	summary    string         // Сводка по выполненным задачам.
 	// summaryStyle   lipgloss.Style // Стиль сводки.
-	width          int            // Ширина экрана.
-	quitting       bool           // Флаг завершения работы.
-	stoppedOnError bool           // Флаг прерывания очереди из-за ошибки.
-	appName        string         // Название приложения.
-	appNameStyle   lipgloss.Style // Стиль названия приложения.
-	errorTask      common.Task    // Задача, вызвавшая прерывание очереди.
-	clearScreen    bool           // Флаг очистки экрана перед запуском
+	width           int            // Ширина экрана.
+	quitting        bool           // Флаг завершения работы.
+	stoppedOnError  bool           // Флаг прерывания очереди из-за ошибки.
+	appName         string         // Название приложения.
+	appVersion      string         // Версия приложения.
+	appNameStyle    lipgloss.Style // Стиль названия приложения.
+	appVersionStyle lipgloss.Style // Стиль версии приложения.
+	errorTask       common.Task    // Задача, вызвавшая прерывание очереди.
+	clearScreen     bool           // Флаг очистки экрана перед запуском
 
 	// Счетчики для подсчета результатов выполнения
 	successCount int  // Количество успешно выполненных задач
@@ -130,13 +132,15 @@ const defauiltNumberFormat = "[%02d]" // формат по умолчанию д
 // New создает новую модель очереди с заданным заголовком и задачами.
 func New(title string) *Model {
 	return &Model{
-		title:        title,
-		summary:      defaults.SummaryCompleted,
-		width:        common.DefaultWidth, // Начальная ширина
-		showSummary:  true,                // По умолчанию сводка отображается
-		clearScreen:  false,               // По умолчанию экран не очищается
-		appNameStyle: lipgloss.NewStyle().Foreground(ui.ColorDarkGray).Background(ui.ColorBrightWhite).Bold(false),
-		numberFormat: defauiltNumberFormat,
+		title:           title,
+		summary:         defaults.SummaryCompleted,
+		width:           common.DefaultWidth, // Начальная ширина
+		showSummary:     true,                // По умолчанию сводка отображается
+		clearScreen:     false,               // По умолчанию экран не очищается
+		titleStyle:      lipgloss.NewStyle().Foreground(ui.ColorBrightWhite).Bold(true),
+		appNameStyle:    lipgloss.NewStyle().Foreground(ui.ColorDarkGray).Background(ui.ColorBrightWhite).Bold(false),
+		appVersionStyle: lipgloss.NewStyle().Foreground(ui.ColorBrightGray).Bold(false),
+		numberFormat:    defauiltNumberFormat,
 		// Инициализация параметров форматирования результатов
 		resultFormattingEnabled: true,                           // По умолчанию отключено
 		resultLinePrefix:        "  │  ",                        // Префикс по умолчанию с символом │
@@ -252,8 +256,20 @@ func (m *Model) WithTitleColor(titleColor lipgloss.TerminalColor, bold bool) *Mo
 }
 
 // WithAppName устанавливает название приложения.
-func (m *Model) WithAppName(appName string) *Model {
+func (m *Model) WithAppName(appName string, version ...string) *Model {
 	m.appName = "  " + appName + "  "
+
+	if len(version) > 0 {
+		trimmedVersion := strings.TrimSpace(version[0])
+		if trimmedVersion != "" {
+			m.appVersion = trimmedVersion
+		} else {
+			m.appVersion = ""
+		}
+	} else {
+		m.appVersion = ""
+	}
+
 	return m
 }
 
@@ -317,9 +333,13 @@ func (m *Model) Init() tea.Cmd {
 func (m *Model) setTitle(width int) string {
 	var result string
 	if m.appName != "" {
-		appName := m.appNameStyle.Render(m.appName)
+		rightParts := []string{m.appNameStyle.Render(m.appName)}
+		if m.appVersion != "" {
+			rightParts = append(rightParts, performance.FastConcat(" ", m.appVersionStyle.Render(m.appVersion)))
+		}
+		right := performance.FastConcat(rightParts...)
 		title := m.titleStyle.Render(m.title)
-		result = ui.AlignTextToRight("  "+title, appName, width) + "\n"
+		result = ui.AlignTextToRight(" "+title, right, width) + "\n"
 	} else {
 		result = "  " + m.title + "\n"
 	}
