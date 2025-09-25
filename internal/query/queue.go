@@ -492,24 +492,42 @@ func (m *Model) View() string {
 				summaryStyle = ui.SubtleStyle
 			}
 
+			// Формируем разделитель перед итоговой строкой с учётом задач без строки результата
+			// separator := performance.FastConcat(
+			// 	// "\n",
+			// 	"  ", ui.VerticalLineSymbol,
+			// 	"\n",
+			// )
+			separator := ""
+			if hasHiddenResultLine(m.tasks) {
+				separator = performance.FastConcat(
+					"  ", ui.VerticalLineSymbol,
+					"\n",
+					"  ", ui.VerticalLineSymbol,
+					"\n",
+				)
+			}
+
 			// Создаем левую часть футера
-			summaryPrefix := performance.FastConcat(
-				performance.RepeatEfficient(" ", ui.MainLeftIndent),
-				ui.VerticalLineSymbol, "\n", "  ", // лишняя строка при выводе результатов выполнения задач
-			)
 			leftPart := performance.FastConcat(
-				summaryPrefix,
+				"  ",
 				ui.FinishedLabelStyle.Render(ui.TaskCompletedSymbol),
 				"  ",
-				summaryStyle.Render(leftSummary),
+				summaryStyle.Render(leftSummary), "  ",
 			)
 
 			// Создаем правую часть футера
 			rightPart := rightStyle.Render(rightStatus)
 
-			// Выравниваем по ширине макета
-			footer := ui.AlignTextToRight(leftPart, rightPart, layoutWidth) + "\n\n"
-			footer += ui.DrawLine(layoutWidth) + "\n"
+			// Выравниваем по ширине макета и добавляем финальные линии
+			footerLine := ui.AlignTextToRight(leftPart, rightPart, layoutWidth)
+			footer := performance.FastConcat(
+				separator,
+				footerLine,
+				"\n\n",
+				ui.DrawLine(layoutWidth),
+				"\n",
+			)
 			sb.WriteString(footer)
 		} else {
 			// Заменяем вертикальные линии перед символами задач ПЕРЕД добавлением финальных элементов
@@ -659,6 +677,25 @@ func (m *Model) formatTaskResult(task common.Task, width int) string {
 	}
 
 	return result.String()
+}
+
+/**
+ * hasHiddenResultLine проверяет, есть ли среди задач завершённые элементы без строки результата.
+ *
+ * @param tasks Список задач очереди.
+ * @return true, если найдена хотя бы одна завершённая задача с отключённой строкой результата.
+ */
+func hasHiddenResultLine(tasks []common.Task) bool {
+	for _, task := range tasks {
+		visibleProvider, ok := task.(interface{ ResultLineVisible() bool })
+		if !ok {
+			continue
+		}
+		if !visibleProvider.ResultLineVisible() && task.IsDone() {
+			return true
+		}
+	}
+	return false
 }
 
 // buildCompletedPrefix возвращает префикс завершённой задачи, учитывая формат номера.

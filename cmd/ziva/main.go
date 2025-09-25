@@ -127,7 +127,10 @@ func main() {
 	}
 	// 5) Подтверждение Да/Нет (например, для сохранения настроек)
 	// Используем языко-независимый метод вместо строки "Да"
-	ys := ziva.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").WithTimeoutYes(2 * time.Second)
+	ys := ziva.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").
+		WithTimeoutYes(2 * time.Second).
+		WithoutResultLine()
+	// WithNoAsError()
 
 	// inUsername := ziva.NewInputTask("Имя пользователя", "Введите username:").
 	// 	WithValidator(v.Username()).

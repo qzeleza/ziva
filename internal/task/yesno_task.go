@@ -23,10 +23,12 @@ const (
 // Это обертка над SingleSelectTask для консистентности UI
 type YesNoTask struct {
 	*SingleSelectTask
-	question       string
-	yesLabel       string
-	noLabel        string
-	selectedOption YesNoOption
+	question        string
+	yesLabel        string
+	noLabel         string
+	selectedOption  YesNoOption
+	showResultLine  bool
+	noCountsAsError bool
 }
 
 // NewYesNoTask создает новую задачу выбора с двумя опциями
@@ -43,6 +45,8 @@ func NewYesNoTask(title, question string) *YesNoTask {
 		yesLabel:         defaults.DefaultYes,
 		noLabel:          defaults.DefaultNo,
 		selectedOption:   YesOption,
+		showResultLine:   true,
+		noCountsAsError:  true,
 	}
 }
 
@@ -104,9 +108,11 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			t.selectedOption = YesOption
 		case 1:
 			t.selectedOption = NoOption
-			// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-			t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
-			t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+			if t.noCountsAsError {
+				// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
+				t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
+				t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+			}
 		}
 	}
 
@@ -144,9 +150,11 @@ func (t *YesNoTask) applyDefaultValue() {
 					t.selectedOption = YesOption
 				case 1: // Нет
 					t.selectedOption = NoOption
-					// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-					t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
-					t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+					if t.noCountsAsError {
+						// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
+						t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
+						t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+					}
 				}
 			}
 		case string:
@@ -172,9 +180,11 @@ func (t *YesNoTask) applyDefaultValue() {
 					t.selectedOption = YesOption
 				case 1: // Нет
 					t.selectedOption = NoOption
-					// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-					t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
-					t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+					if t.noCountsAsError {
+						// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
+						t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
+						t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
+					}
 				}
 			}
 		}
@@ -196,8 +206,8 @@ func (t *YesNoTask) View(width int) string {
 // оформление выбранной опции.
 func (t *YesNoTask) FinalView(width int) string {
 	// Используем новый префикс завершённой задачи
-	// Успешной считается только выбор "Да" и отсутствие других ошибок
-	success := t.selectedOption == YesOption && !t.HasError()
+	// Успешной считается выбор без ошибок и ("Да" или "Нет", если она не считается ошибкой)
+	success := !t.HasError() && (t.selectedOption == YesOption || !t.noCountsAsError)
 	prefix := t.CompletedPrefix()
 	if prefix == "" {
 		prefix = ui.GetCompletedTaskPrefix(success)
@@ -220,20 +230,52 @@ func (t *YesNoTask) FinalView(width int) string {
 	case YesOption:
 		right = ui.TaskStatusSuccessStyle.Render(defaults.DefaultYesLabel)
 	case NoOption:
-		// Для "Нет" выводим слово ОТКАЗ стилем ошибки
-		right = ui.GetErrorStatusStyle().Render(defaults.DefaultNoLabel)
+		if t.noCountsAsError {
+			// Для "Нет" выводим слово ОТКАЗ стилем ошибки
+			right = ui.GetErrorStatusStyle().Render(defaults.DefaultNoLabel)
+		} else {
+			right = ui.TaskStatusSuccessStyle.Render(defaults.DefaultNoLabel)
+		}
 	}
 
 	// Сформируем строку результата
 	var result string
 	// Если задача завершилась успешно и есть дополнительные строки для вывода
-	if t.icon == ui.IconDone && len(t.choices) > 0 {
+	if t.showResultLine && t.icon == ui.IconDone && len(t.choices) > 0 {
 		result = "\n" + ui.DrawSummaryLine(t.choices[t.cursor]) +
 			performance.RepeatEfficient(" ", ui.MainLeftIndent) + ui.VerticalLineSymbol
 	}
 
 	// Выравниваем по ширине макета
 	return ui.AlignTextToRight(left, right, width) + result
+}
+
+// WithResultLine управляет отображением итоговой строки результата (совместимость)
+func (t *YesNoTask) WithResultLine(show bool) *YesNoTask {
+	t.showResultLine = show
+	return t
+}
+
+/**
+ * WithNoAsError включает интерпретацию ответа "Нет" как успешного результата.
+ *
+ * @return Указатель на задачу для цепочки вызовов.
+ */
+func (t *YesNoTask) WithNoAsError() *YesNoTask {
+	t.noCountsAsError = false
+	if t.selectedOption == NoOption && t.HasError() {
+		t.SetError(nil)
+	}
+	return t
+}
+
+/**
+ * ResultLineVisible сообщает, отображается ли итоговая строка результата.
+ *
+ * @return true, если строка результата включена.
+ */
+func (t *YesNoTask) ResultLineVisible() bool {
+	return t.showResultLine
 }
 
 // WithCustomLabels позволяет изменить текст опций (перегрузка для 2 параметров)

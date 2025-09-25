@@ -278,6 +278,27 @@ func (t *YesNoTask) IsNo() bool {
 	return t.YesNoTask.IsNo()
 }
 
+/**
+ * WithResultLine управляет отображением строки итогового результата.
+ *
+ * @param show Флаг, указывающий, нужно ли показывать строку результата.
+ * @return Указатель на задачу для цепочки вызовов.
+ */
+func (t *YesNoTask) WithoutResultLine() *YesNoTask {
+	t.YesNoTask.WithResultLine(false)
+	return t
+}
+
+/**
+ * WithNoAsError включает интерпретацию ответа "Нет" как успешного результата.
+ *
+ * @return Указатель на задачу для цепочки вызовов.
+ */
+func (t *YesNoTask) WithNoAsError() *YesNoTask {
+	t.YesNoTask.WithNoAsError()
+	return t
+}
+
 // ----------------------------------------------------------------------------
 // SingleSelectTask
 // ----------------------------------------------------------------------------
