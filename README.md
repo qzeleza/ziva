@@ -51,8 +51,10 @@ func main() {
 		WithTimeout(10*time.Second, "Да")
 
 	// Создаем задачу выбора среды
-	env := ziva.NewSingleSelectTask("Выбор среды", []string{
-		"development", "staging", "production",
+	env := ziva.NewSingleSelectTask("Выбор среды", []ziva.Item{
+		{Key: "development", Name: "development", Description: "Среда разработки"},
+		{Key: "staging", Name: "staging", Description: "Промежуточная среда"},
+		{Key: "production", Name: "production", Description: "Боевая среда"},
 	}).WithTimeout(10*time.Second, "development")
 
 	// Добавляем задачи и запускаем
@@ -60,6 +62,16 @@ func main() {
 	if err := queue.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+```
+
+Каждый элемент списка описывается структурой `ziva.Item`:
+
+```go
+type Item struct {
+	Key         string  // Значение, которое вернётся после выбора
+	Name        string  // Текст, отображаемый пользователю
+	Description string  // Дополнительное описание, выводится в подсказке
 }
 ```
 

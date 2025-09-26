@@ -91,6 +91,26 @@ task.WithCustomLabels("Enable", "Disable")
 task.WithCustomLabels("✓ Yes", "✗ No")
 ```
 
+## Result Line Output
+
+When a task finishes, Ziva shows an extra line with the chosen answer. Hide it when you need a tighter layout:
+
+```go
+task.WithoutResultLine() // suppress the trailing “Yes/No” line
+```
+
+## Treating "No" as Success
+
+By default a "No" answer is recorded as a soft error so the queue summary can highlight the refusal. If you prefer to treat "No" as a successful outcome, enable the helper:
+
+```go
+task.WithNoAsError() // “No” no longer contributes an error to the summary
+
+if task.IsNo() {
+    // handle the choice while keeping the queue statistics positive
+}
+```
+
 ## Usage Examples
 
 ### Simple Confirmation

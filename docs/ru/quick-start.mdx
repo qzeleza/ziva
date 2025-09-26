@@ -64,21 +64,21 @@ func createTasks(queue *ziva.Queue) {
 
     // 2. Выбор среды 
 	// в виде: имя_пункта_меню||справка_к_пункту_меню
-    environments := []string{
-        "development||Среда разработки",
-        "staging||Тестовая среда",
-        "production||Боевая среда",
+    environments := []ziva.Item{
+        {Key: "development", Name: "development", Description: "Среда разработки"},
+        {Key: "staging", Name: "staging", Description: "Тестовая среда"},
+        {Key: "production", Name: "production", Description: "Боевая среда"},
     }
 	// По умолчанию маркер будет указывать на "staging"
     env := ziva.NewSingleSelectTask("Выбор среды", environments).
         WithDefaultItem("staging")
 
     // 3. Выбор компонентов
-    components := []string{
-        "api||REST API сервер",
-        "web||Веб интерфейс",
-        "cli||Командная строка",
-        "docs||Документация",
+    components := []ziva.Item{
+        {Key: "api", Name: "api", Description: "REST API сервер"},
+        {Key: "web", Name: "web", Description: "Веб интерфейс"},
+        {Key: "cli", Name: "cli", Description: "Командная строка"},
+        {Key: "docs", Name: "docs", Description: "Документация"},
     }
 	// Добавляем пункт "Выбрать все"
     comp := ziva.NewMultiSelectTask("Компоненты", components).
@@ -126,8 +126,8 @@ func printResults(confirm *ziva.YesNoTask, env *ziva.SingleSelectTask,
                  comp *ziva.MultiSelectTask, name *ziva.InputTask) {
     fmt.Println("\n📋 Результаты конфигурации:")
     fmt.Printf("Подтверждение: %v\n", confirm.IsYes())
-    fmt.Printf("Среда: %s\n", env.GetSelected())
-    fmt.Printf("Компоненты: %v\n", comp.GetSelected())
+    fmt.Printf("Среда: %s\n", env.GetSelected()) // возвращает ключ
+    fmt.Printf("Компоненты: %v\n", comp.GetSelected()) // список ключей
     fmt.Printf("Имя проекта: %s\n", name.GetValue())
 }
 ```

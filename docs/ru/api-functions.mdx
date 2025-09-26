@@ -170,12 +170,10 @@ if size > cap/2 {
 
 Подсказывает оптимальную ширину вывода с учётом отступов Ziva.
 
-### SetChoiceHelpDelimiter(delim string)
 
 Меняет разделитель между значением и подсказкой в задачах выбора.
 
 ```go
-ziva.SetChoiceHelpDelimiter(" → ")
 ```
 
 Разделитель применяется глобально ко всем `SingleSelectTask`/`MultiSelectTask`/`YesNoTask`.
@@ -204,7 +202,6 @@ func configureEmbeddedCLI() {
     ziva.EnableASCIIMode()
 
     if !ziva.Is64Bit() {
-        ziva.SetChoiceHelpDelimiter(" -> ")
     }
 
     ziva.SetErrorColor(

@@ -10,6 +10,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func makeMultiItems(values []string) []Item {
+	result := make([]Item, len(values))
+	for i, v := range values {
+		result[i] = Item{Key: v, Name: v}
+	}
+	return result
+}
+
 // TestMultiSelectTaskCreation проверяет корректность создания задачи MultiSelectTask
 func TestMultiSelectTaskCreation(t *testing.T) {
 	// Создаем задачу MultiSelectTask
@@ -17,7 +25,7 @@ func TestMultiSelectTaskCreation(t *testing.T) {
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
 
 	// Создаем задачу
-	multiSelectTask := NewMultiSelectTask(title, options)
+	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options))
 
 	// Проверяем, что задача создана корректно
 	assert.NotNil(t, multiSelectTask, "Задача не должна быть nil")
@@ -25,7 +33,7 @@ func TestMultiSelectTaskCreation(t *testing.T) {
 	assert.False(t, multiSelectTask.IsDone(), "Новая задача не должна быть отмечена как завершенная")
 
 	// Создаем еще одну задачу
-	multiSelectTaskEmpty := NewMultiSelectTask(title, options)
+	multiSelectTaskEmpty := NewMultiSelectTask(title, makeMultiItems(options))
 
 	// Проверяем, что задача создана корректно
 	assert.NotNil(t, multiSelectTaskEmpty, "Задача не должна быть nil")
@@ -38,7 +46,7 @@ func TestMultiSelectTaskUpdate(t *testing.T) {
 	// Создаем задачу MultiSelectTask
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
-	multiSelectTask := NewMultiSelectTask(title, options)
+	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options))
 
 	// Проверяем обработку клавиши 'down'
 	updatedTask, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyDown})
@@ -70,7 +78,7 @@ func TestMultiSelectTaskView(t *testing.T) {
 	// Создаем задачу MultiSelectTask
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
-	multiSelectTask := NewMultiSelectTask(title, options)
+	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options))
 
 	// Проверяем, что View содержит заголовок и опции
 	view := multiSelectTask.View(80)
@@ -96,7 +104,7 @@ func TestMultiSelectTaskFinalValue(t *testing.T) {
 	// Создаем задачу MultiSelectTask
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
-	multiSelectTask := NewMultiSelectTask(title, options)
+	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options))
 
 	// Выбираем первую опцию с помощью пробела
 	updatedTask1, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeySpace})
@@ -119,7 +127,7 @@ func TestMultiSelectTaskBoundaries(t *testing.T) {
 	// Создаем задачу MultiSelectTask
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
-	multiSelectTask := NewMultiSelectTask(title, options)
+	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options))
 
 	// Проверяем, что курсор не выходит за нижнюю границу
 	// Нажимаем 'down' несколько раз, чтобы достичь нижней границы
@@ -143,7 +151,7 @@ func TestMultiSelectTaskBoundaries(t *testing.T) {
 	assert.Contains(t, finalView, "Опция 3", "FinalView должен содержать выбранную опцию")
 
 	// Создаем новую задачу для проверки верхней границы
-	multiSelectTask = NewMultiSelectTask(title, options)
+	multiSelectTask = NewMultiSelectTask(title, makeMultiItems(options))
 
 	// Нажимаем 'up' несколько раз, чтобы попытаться выйти за верхнюю границу
 	for i := 0; i < 3; i++ {
@@ -171,7 +179,7 @@ func TestMultiSelectTaskWithSelectAll(t *testing.T) {
 	// Создаем задачу MultiSelectTask с опцией "Выбрать все"
 	title := "Выберите компоненты"
 	options := []string{"API", "Frontend", "Database", "Worker"}
-	multiSelectTask := NewMultiSelectTask(title, options).WithSelectAll()
+	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options)).WithSelectAll()
 
 	// Проверяем, что опция "Выбрать все" включена
 	assert.True(t, multiSelectTask.hasSelectAll, "Опция 'Выбрать все' должна быть включена")
@@ -203,7 +211,7 @@ func TestMultiSelectTaskDisabledItems(t *testing.T) {
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
 
-	task := NewMultiSelectTask(title, options)
+	task := NewMultiSelectTask(title, makeMultiItems(options))
 	task = task.WithItemsDisabled([]int{1})
 	assert.Equal(t, 0, task.cursor, "Курсор должен начинаться на первом доступном элементе")
 
@@ -225,7 +233,7 @@ func TestMultiSelectTaskDisabledItemsWithSelectAll(t *testing.T) {
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
 
-	task := NewMultiSelectTask(title, options).WithItemsDisabled([]int{1}).WithSelectAll()
+	task := NewMultiSelectTask(title, makeMultiItems(options)).WithItemsDisabled([]int{1}).WithSelectAll()
 	assert.Equal(t, -1, task.cursor, "Курсор должен быть на опции 'Выбрать все'")
 
 	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeySpace})
@@ -245,7 +253,7 @@ func TestMultiSelectTaskViewportIndicators(t *testing.T) {
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2", "Опция 3", "Опция 4"}
 
-	task := NewMultiSelectTask(title, options).WithViewport(2)
+	task := NewMultiSelectTask(title, makeMultiItems(options)).WithViewport(2)
 	// Перемещаем курсор вниз, чтобы появился индикатор сверху
 	for i := 0; i < 3; i++ {
 		updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
@@ -255,7 +263,7 @@ func TestMultiSelectTaskViewportIndicators(t *testing.T) {
 	assert.Contains(t, viewWithCounters, "▲", "Индикатор должен содержать символ стрелки")
 	assert.Contains(t, viewWithCounters, "выше", "Индикатор должен указывать на элементы выше")
 
-	task = NewMultiSelectTask(title, options).WithViewport(2, false)
+	task = NewMultiSelectTask(title, makeMultiItems(options)).WithViewport(2, false)
 	for i := 0; i < 3; i++ {
 		updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
 		task, _ = updated.(*MultiSelectTask)
@@ -267,7 +275,11 @@ func TestMultiSelectTaskViewportIndicators(t *testing.T) {
 }
 
 func TestMultiSelectTaskHelpTagRendering(t *testing.T) {
-	task := NewMultiSelectTask("Выбор", []string{"Опция 1::подсказка 1", "Опция 2::подсказка 2"})
+	items := []Item{
+		{Key: "Опция 1", Name: "Опция 1", Description: "подсказка 1"},
+		{Key: "Опция 2", Name: "Опция 2", Description: "подсказка 2"},
+	}
+	task := NewMultiSelectTask("Выбор", items)
 	view := task.View(80)
 	assert.Contains(t, view, "подсказка 1", "Под активным элементом должна отображаться подсказка")
 
@@ -283,7 +295,7 @@ func TestMultiSelectTaskWithDefaultItems(t *testing.T) {
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
 
-	task := NewMultiSelectTask(title, options).WithDefaultItems([]int{0, 2})
+	task := NewMultiSelectTask(title, makeMultiItems(options)).WithDefaultItems([]int{0, 2})
 
 	assert.True(t, task.isSelected(0), "Элемент с индексом 0 должен быть выбран")
 	assert.False(t, task.isSelected(1), "Элемент с индексом 1 не должен быть выбран")
@@ -301,7 +313,7 @@ func TestMultiSelectTaskLeftCancels(t *testing.T) {
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2"}
 
-	task := NewMultiSelectTask(title, options)
+	task := NewMultiSelectTask(title, makeMultiItems(options))
 
 	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyLeft})
 	canceledTask, ok := updated.(*MultiSelectTask)
@@ -316,7 +328,7 @@ func TestMultiSelectTaskRightToggles(t *testing.T) {
 	title := "Выберите опции"
 	options := []string{"Опция 1", "Опция 2"}
 
-	task := NewMultiSelectTask(title, options)
+	task := NewMultiSelectTask(title, makeMultiItems(options))
 
 	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyRight})
 	withSelection, ok := updated.(*MultiSelectTask)
@@ -331,7 +343,7 @@ func TestMultiSelectTaskWithCustomSelectAllText(t *testing.T) {
 	title := "Выберите модули"
 	options := []string{"Модуль A", "Модуль B", "Модуль C"}
 	customText := "Выделить всё"
-	multiSelectTask := NewMultiSelectTask(title, options).WithSelectAll(customText)
+	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options)).WithSelectAll(customText)
 
 	// Проверяем, что кастомный текст установлен
 	assert.Equal(t, customText, multiSelectTask.selectAllText, "Кастомный текст должен быть установлен")
@@ -347,7 +359,7 @@ func TestMultiSelectTaskNavigationWithSelectAll(t *testing.T) {
 	// Создаем задачу MultiSelectTask с опцией "Выбрать все"
 	title := "Выберите элементы"
 	options := []string{"Элемент 1", "Элемент 2", "Элемент 3"}
-	multiSelectTask := NewMultiSelectTask(title, options).WithSelectAll()
+	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options)).WithSelectAll()
 
 	// Изначально курсор должен быть на "Выбрать все"
 	assert.Equal(t, -1, multiSelectTask.cursor, "Курсор должен быть на опции 'Выбрать все'")
@@ -373,7 +385,7 @@ func TestMultiSelectTaskToggleSelectAllLogic(t *testing.T) {
 	// Создаем задачу MultiSelectTask с опцией "Выбрать все"
 	title := "Выберите пункты"
 	options := []string{"Пункт 1", "Пункт 2", "Пункт 3", "Пункт 4"}
-	multiSelectTask := NewMultiSelectTask(title, options).WithSelectAll()
+	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options)).WithSelectAll()
 
 	// Выбираем некоторые элементы вручную
 	// Переходим к первому элементу
@@ -424,7 +436,7 @@ func TestMultiSelectTaskEmptySelectionHandling(t *testing.T) {
 	// Создаем задачу MultiSelectTask
 	title := "Выберите элементы"
 	options := []string{"Элемент 1", "Элемент 2", "Элемент 3"}
-	multiSelectTask := NewMultiSelectTask(title, options)
+	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options))
 
 	// Нажимаем Enter без выбора элементов
 	updatedTask1, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyEnter})

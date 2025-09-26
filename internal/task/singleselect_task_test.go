@@ -18,6 +18,14 @@ func stripANSI(input string) string {
 	return ansiRegexp.ReplaceAllString(input, "")
 }
 
+func makeTestItems(values []string) []Item {
+	result := make([]Item, len(values))
+	for i, v := range values {
+		result[i] = Item{Key: v, Name: v}
+	}
+	return result
+}
+
 // TestSingleSelectTaskCreation проверяет корректность создания задачи SingleSelectTask
 func TestSingleSelectTaskCreation(t *testing.T) {
 	// Создаем задачу SingleSelectTask
@@ -25,7 +33,7 @@ func TestSingleSelectTaskCreation(t *testing.T) {
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
 
 	// Без указания индекса по умолчанию
-	selectTask := NewSingleSelectTask(title, options)
+	selectTask := NewSingleSelectTask(title, makeTestItems(options))
 
 	// Проверяем, что задача создана корректно
 	assert.NotNil(t, selectTask, "Задача не должна быть nil")
@@ -33,7 +41,7 @@ func TestSingleSelectTaskCreation(t *testing.T) {
 	assert.False(t, selectTask.IsDone(), "Новая задача не должна быть отмечена как завершенная")
 
 	// Создаем еще одну задачу
-	selectTaskWithDefault := NewSingleSelectTask(title, options)
+	selectTaskWithDefault := NewSingleSelectTask(title, makeTestItems(options))
 
 	// Проверяем, что задача создана корректно
 	assert.NotNil(t, selectTaskWithDefault, "Задача не должна быть nil")
@@ -46,7 +54,7 @@ func TestSingleSelectTaskUpdate(t *testing.T) {
 	// Создаем задачу SingleSelectTask
 	title := "Выберите опцию"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
-	selectTask := NewSingleSelectTask(title, options)
+	selectTask := NewSingleSelectTask(title, makeTestItems(options))
 
 	// Проверяем обработку клавиши 'down'
 	updatedTask, _ := selectTask.Update(tea.KeyMsg{Type: tea.KeyDown})
@@ -76,7 +84,7 @@ func TestSingleSelectTaskView(t *testing.T) {
 	// Создаем задачу SingleSelectTask
 	title := "Выберите опцию"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
-	selectTask := NewSingleSelectTask(title, options)
+	selectTask := NewSingleSelectTask(title, makeTestItems(options))
 
 	// Проверяем, что View содержит заголовок и опции
 	view := selectTask.View(80)
@@ -97,7 +105,7 @@ func TestSingleSelectTaskWithDefaultIndex(t *testing.T) {
 	title := "Выберите опцию"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
 	defauiltIndex := 1
-	selectTask := NewSingleSelectTask(title, options)
+	selectTask := NewSingleSelectTask(title, makeTestItems(options))
 
 	// Устанавливаем курсор на нужный индекс
 	// Нажимаем 'down' один раз, чтобы перейти к опции с индексом 1
@@ -118,7 +126,7 @@ func TestSingleSelectTaskWithDefaultItemByIndex(t *testing.T) {
 	title := "Выберите опцию"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
 
-	task := NewSingleSelectTask(title, options).WithDefaultItem(2)
+	task := NewSingleSelectTask(title, makeTestItems(options)).WithDefaultItem(2)
 
 	assert.Equal(t, 2, task.cursor, "Курсор должен указывать на элемент с индексом 2")
 	assert.Equal(t, "Опция 3", task.GetSelected(), "Выбранным значением по умолчанию должна быть 'Опция 3'")
@@ -128,7 +136,7 @@ func TestSingleSelectTaskWithDefaultItemByValue(t *testing.T) {
 	title := "Выберите опцию"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
 
-	task := NewSingleSelectTask(title, options).WithDefaultItem("Опция 2")
+	task := NewSingleSelectTask(title, makeTestItems(options)).WithDefaultItem("Опция 2")
 
 	assert.Equal(t, 1, task.cursor, "Курсор должен указывать на элемент с индексом 1")
 	assert.Equal(t, "Опция 2", task.GetSelected(), "Выбранным значением по умолчанию должна быть 'Опция 2'")
@@ -138,7 +146,7 @@ func TestSingleSelectTaskLeftCancels(t *testing.T) {
 	title := "Выберите опцию"
 	options := []string{"Опция 1", "Опция 2"}
 
-	task := NewSingleSelectTask(title, options)
+	task := NewSingleSelectTask(title, makeTestItems(options))
 
 	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyLeft})
 	canceledTask, ok := updated.(*SingleSelectTask)
@@ -153,7 +161,7 @@ func TestSingleSelectTaskRightSelects(t *testing.T) {
 	title := "Выберите опцию"
 	options := []string{"Опция 1", "Опция 2"}
 
-	task := NewSingleSelectTask(title, options)
+	task := NewSingleSelectTask(title, makeTestItems(options))
 
 	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyRight})
 	selectedTask, ok := updated.(*SingleSelectTask)
@@ -167,7 +175,7 @@ func TestSingleSelectTaskBoundaries(t *testing.T) {
 	// Создаем задачу SingleSelectTask
 	title := "Выберите опцию"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
-	selectTask := NewSingleSelectTask(title, options)
+	selectTask := NewSingleSelectTask(title, makeTestItems(options))
 
 	// Проверяем, что курсор не выходит за нижнюю границу
 	// Нажимаем 'down' несколько раз, чтобы достичь нижней границы
@@ -184,7 +192,7 @@ func TestSingleSelectTaskBoundaries(t *testing.T) {
 	assert.Contains(t, finalView, options[len(options)-1], "Значение задачи должно содержать последнюю опцию")
 
 	// Создаем новую задачу для проверки верхней границы
-	selectTask = NewSingleSelectTask(title, options)
+	selectTask = NewSingleSelectTask(title, makeTestItems(options))
 
 	// Нажимаем 'up' несколько раз, чтобы попытаться выйти за верхнюю границу
 	for i := 0; i < 3; i++ {
@@ -204,7 +212,7 @@ func TestSingleSelectTaskDisabledItems(t *testing.T) {
 	title := "Выберите опцию"
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
 
-	task := NewSingleSelectTask(title, options)
+	task := NewSingleSelectTask(title, makeTestItems(options))
 	task = task.WithItemsDisabled([]int{1})
 
 	assert.Equal(t, 0, task.GetSelectedIndex(), "Курсор должен оставаться на первом доступном элементе")
@@ -226,7 +234,7 @@ func TestSingleSelectTaskViewportIndicators(t *testing.T) {
 	title := "Выберите опцию"
 	options := []string{"Опция 1", "Опция 2", "Опция 3", "Опция 4"}
 
-	task := NewSingleSelectTask(title, options).WithViewport(2)
+	task := NewSingleSelectTask(title, makeTestItems(options)).WithViewport(2)
 	for i := 0; i < 3; i++ {
 		updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
 		task, _ = updated.(*SingleSelectTask)
@@ -235,7 +243,7 @@ func TestSingleSelectTaskViewportIndicators(t *testing.T) {
 	assert.Contains(t, viewWithCounters, "▲", "Индикатор должен содержать символ стрелки")
 	assert.Contains(t, viewWithCounters, "выше", "Индикатор должен указывать на элементы выше")
 
-	task = NewSingleSelectTask(title, options).WithViewport(2, false)
+	task = NewSingleSelectTask(title, makeTestItems(options)).WithViewport(2, false)
 	for i := 0; i < 3; i++ {
 		updated, _ := task.Update(tea.KeyMsg{Type: tea.KeyDown})
 		task, _ = updated.(*SingleSelectTask)
@@ -247,7 +255,11 @@ func TestSingleSelectTaskViewportIndicators(t *testing.T) {
 }
 
 func TestSingleSelectTaskHelpTagRendering(t *testing.T) {
-	task := NewSingleSelectTask("Выбор", []string{"Опция 1::подсказка 1", "Опция 2"})
+	items := []Item{
+		{Key: "Опция 1", Name: "Опция 1", Description: "подсказка 1"},
+		{Key: "Опция 2", Name: "Опция 2"},
+	}
+	task := NewSingleSelectTask("Выбор", items)
 	view := task.View(80)
 	assert.Contains(t, view, "Опция 1", "Отображается базовое название без подсказки")
 	assert.Contains(t, view, "подсказка 1", "Подсказка должна отображаться под активным элементом")

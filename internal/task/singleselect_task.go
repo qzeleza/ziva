@@ -15,11 +15,11 @@ import (
 // SingleSelectTask - задача для выбора одного варианта из списка.
 type SingleSelectTask struct {
 	BaseTask
-	choices     []string         // Список вариантов выбора
+	items       []choice         // Список вариантов выбора
 	disabled    map[int]struct{} // Набор отключённых пунктов меню
 	cursor      int              // Текущая позиция курсора
 	activeStyle lipgloss.Style   // Стиль для активного элемента
-	itemHelps   []string         // Справочные сообщения для элементов
+	selectedKey string           // Сохранённый ключ выбранного элемента
 	// Viewport (окно просмотра) для ограничения количества отображаемых элементов
 	viewportSize  int // Размер viewport (количество видимых элементов), 0 = показать все
 	viewportStart int // Начальная позиция viewport в списке элементов
@@ -29,15 +29,14 @@ type SingleSelectTask struct {
 // NewSingleSelectTask создает новую задачу выбора одного варианта из списка.
 //
 // @param title Заголовок задачи
-// @param choices Список вариантов выбора
+// @param items Список элементов выбора
 // @return Указатель на новую задачу выбора
-func NewSingleSelectTask(title string, choices []string) *SingleSelectTask {
-	labels, helps := parseChoicesWithHelp(choices)
+func NewSingleSelectTask(title string, items []Item) *SingleSelectTask {
+	normalized := normalizeItems(items)
 
 	task := &SingleSelectTask{
 		BaseTask:    NewBaseTask(title),
-		choices:     labels,
-		itemHelps:   helps,
+		items:       normalized,
 		disabled:    make(map[int]struct{}),
 		activeStyle: ui.ActiveStyle,
 		// Viewport по умолчанию отключен (показываем все элементы)
@@ -50,9 +49,18 @@ func NewSingleSelectTask(title string, choices []string) *SingleSelectTask {
 	return task
 }
 
+func (t *SingleSelectTask) captureSelection(index int) {
+	if index < 0 || index >= len(t.items) {
+		return
+	}
+	selection := t.items[index]
+	t.selectedKey = selection.key
+	t.finalValue = selection.name
+}
+
 // isDisabled проверяет, помечен ли элемент как недоступный
 func (t *SingleSelectTask) isDisabled(index int) bool {
-	if index < 0 || index >= len(t.choices) {
+	if index < 0 || index >= len(t.items) {
 		return true
 	}
 	_, exists := t.disabled[index]
@@ -62,12 +70,12 @@ func (t *SingleSelectTask) isDisabled(index int) bool {
 // ensureCursorSelectable подбирает ближайший доступный элемент для курсора.
 // Возвращает true, если удалось найти активный элемент.
 func (t *SingleSelectTask) ensureCursorSelectable() bool {
-	if len(t.choices) == 0 {
+	if len(t.items) == 0 {
 		t.cursor = -1
 		return false
 	}
 
-	if t.cursor >= 0 && t.cursor < len(t.choices) && !t.isDisabled(t.cursor) {
+	if t.cursor >= 0 && t.cursor < len(t.items) && !t.isDisabled(t.cursor) {
 		return true
 	}
 
@@ -95,7 +103,7 @@ func (t *SingleSelectTask) findEnabledForward(from int) (int, bool) {
 	if from < 0 {
 		from = 0
 	}
-	for i := from; i < len(t.choices); i++ {
+	for i := from; i < len(t.items); i++ {
 		if !t.isDisabled(i) {
 			return i, true
 		}
@@ -105,8 +113,8 @@ func (t *SingleSelectTask) findEnabledForward(from int) (int, bool) {
 
 // findEnabledBackward возвращает индекс ближайшего доступного элемента, двигаясь в обратном порядке
 func (t *SingleSelectTask) findEnabledBackward(from int) (int, bool) {
-	if from >= len(t.choices) {
-		from = len(t.choices) - 1
+	if from >= len(t.items) {
+		from = len(t.items) - 1
 	}
 	for i := from; i >= 0; i-- {
 		if !t.isDisabled(i) {
@@ -148,7 +156,7 @@ func (t *SingleSelectTask) WithItemsDisabled(disabled interface{}) *SingleSelect
 
 	indices := t.resolveDisabledIndices(disabled)
 	for _, idx := range indices {
-		if idx >= 0 && idx < len(t.choices) {
+		if idx >= 0 && idx < len(t.items) {
 			t.disabled[idx] = struct{}{}
 		}
 	}
@@ -166,7 +174,7 @@ func (t *SingleSelectTask) resolveDisabledIndices(input interface{}) []int {
 	}
 
 	addIndex := func(idx int) {
-		if idx < 0 || idx >= len(t.choices) {
+		if idx < 0 || idx >= len(t.items) {
 			return
 		}
 		for _, existing := range result {
@@ -207,10 +215,12 @@ func (t *SingleSelectTask) resolveDisabledIndices(input interface{}) []int {
 
 // choiceIndex возвращает индекс элемента по значению или -1, если элемент не найден
 func (t *SingleSelectTask) choiceIndex(value string) int {
-	normalized, _ := splitChoiceAndHelp(value)
-	normalized = strings.TrimSpace(normalized)
-	for i, choice := range t.choices {
-		if choice == value || choice == normalized {
+	normalized := strings.TrimSpace(value)
+	if normalized == "" {
+		return -1
+	}
+	for i, item := range t.items {
+		if strings.EqualFold(item.key, normalized) || strings.EqualFold(item.name, normalized) {
 			return i
 		}
 	}
@@ -220,12 +230,12 @@ func (t *SingleSelectTask) choiceIndex(value string) int {
 // WithDefaultItem устанавливает элемент, который будет подсвечен курсором при открытии списка.
 // Поддерживает выбор по индексу (int) или строковому значению (string). Некорректные значения игнорируются.
 func (t *SingleSelectTask) WithDefaultItem(selection interface{}) *SingleSelectTask {
-	if selection == nil || len(t.choices) == 0 {
+	if selection == nil || len(t.items) == 0 {
 		return t
 	}
 
 	setCursor := func(index int) {
-		if index < 0 || index >= len(t.choices) {
+		if index < 0 || index >= len(t.items) {
 			return
 		}
 		t.cursor = index
@@ -285,7 +295,7 @@ func (t *SingleSelectTask) updateViewport() {
 		t.viewportStart = 0
 	}
 
-	maxStart := len(t.choices) - t.viewportSize
+	maxStart := len(t.items) - t.viewportSize
 	if maxStart < 0 {
 		maxStart = 0
 	}
@@ -299,7 +309,7 @@ func (t *SingleSelectTask) updateViewport() {
 func (t *SingleSelectTask) getVisibleRange() (int, int) {
 	// Если viewport отключен, показываем все элементы
 	if t.viewportSize <= 0 {
-		return 0, len(t.choices)
+		return 0, len(t.items)
 	}
 
 	startIdx := t.viewportStart
@@ -308,8 +318,8 @@ func (t *SingleSelectTask) getVisibleRange() (int, int) {
 	}
 
 	endIdx := startIdx + t.viewportSize
-	if endIdx > len(t.choices) {
-		endIdx = len(t.choices)
+	if endIdx > len(t.items) {
+		endIdx = len(t.items)
 	}
 
 	return startIdx, endIdx
@@ -375,23 +385,23 @@ func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		case "enter", "right", "Right":
 			// Если таймер активен, останавливаем его
 			t.stopTimeout()
-			if t.cursor < 0 || t.cursor >= len(t.choices) || t.isDisabled(t.cursor) {
+			if t.cursor < 0 || t.cursor >= len(t.items) || t.isDisabled(t.cursor) {
 				return t, nil
 			}
 			t.done = true
 			t.icon = ui.IconDone
-			t.finalValue = t.choices[t.cursor]
+			t.captureSelection(t.cursor)
 			return t, nil
 		case " ":
 			// Если таймер активен, останавливаем его
 			t.stopTimeout()
 			// В любом случае выбираем текущий элемент
-			if t.cursor < 0 || t.cursor >= len(t.choices) || t.isDisabled(t.cursor) {
+			if t.cursor < 0 || t.cursor >= len(t.items) || t.isDisabled(t.cursor) {
 				return t, nil
 			}
 			t.done = true
 			t.icon = ui.IconDone
-			t.finalValue = t.choices[t.cursor]
+			t.captureSelection(t.cursor)
 			return t, nil
 		}
 		// После обработки клавиш возвращаем команду для продолжения тикера
@@ -419,7 +429,7 @@ func (t *SingleSelectTask) applyDefaultValue() {
 		switch val := t.defaultValue.(type) {
 		case int:
 			// Если индекс в допустимом диапазоне
-			if val >= 0 && val < len(t.choices) {
+			if val >= 0 && val < len(t.items) {
 				targetIndex = val
 			}
 		case string:
@@ -434,7 +444,7 @@ func (t *SingleSelectTask) applyDefaultValue() {
 				// Устанавливаем задачу как завершенную
 				t.done = true
 				t.icon = ui.IconDone
-				t.finalValue = t.choices[t.cursor]
+				t.captureSelection(t.cursor)
 			}
 		}
 	}
@@ -490,67 +500,56 @@ func (t *SingleSelectTask) View(width int) string {
 
 	// Отображаем только видимые элементы списка
 	for i := startIdx; i < endIdx; i++ {
-		if i >= len(t.choices) {
+		if i >= len(t.items) {
 			break
 		}
 
-		choice := t.choices[i]
+		item := t.items[i]
+		label := item.displayName()
+		description := item.helpText()
 		checked := ui.IconRadioOff
 		var itemPrefix string
 		isDisabled := t.isDisabled(i)
 		if isDisabled {
-			choice = ui.DisabledStyle.Render(choice)
+			label = ui.DisabledStyle.Render(label)
 			checked = ui.DisabledStyle.Render(checked)
 		}
 
-		// Определяем тип элемента для получения правильного префикса
-		helpsAvailable := i < len(t.itemHelps)
 		if t.cursor == i {
-			// Активный элемент
 			itemPrefix = ui.GetSelectItemPrefix("active")
 			checked = ui.IconRadioOn
-
-			// Применяем стиль активного элемента
-			choice = t.activeStyle.Render(choice)
+			label = t.activeStyle.Render(label)
 			checked = t.activeStyle.Render(checked)
 		} else if i < t.cursor {
-			// Элемент выше активного
 			itemPrefix = ui.GetSelectItemPrefix("above")
 		} else {
-			// Элемент ниже активного
 			itemPrefix = ui.GetSelectItemPrefix("below")
 		}
 
-		// Формируем строку для отображения варианта выбора с новым префиксом
 		if t.cursor == i {
-			// Для активного элемента используем стилизованные скобки
 			bracketsOpen := t.activeStyle.Render("(")
 			bracketsClose := t.activeStyle.Render(")")
-			sb.WriteString(fmt.Sprintf("%s%s%s%s %s\n", itemPrefix, bracketsOpen, checked, bracketsClose, choice))
+			sb.WriteString(fmt.Sprintf("%s%s%s%s %s\n", itemPrefix, bracketsOpen, checked, bracketsClose, label))
 		} else {
-			// Для неактивных элементов
 			openBracket := "("
 			closeBracket := ")"
 			if isDisabled {
 				openBracket = ui.DisabledStyle.Render(openBracket)
 				closeBracket = ui.DisabledStyle.Render(closeBracket)
 			}
-			sb.WriteString(fmt.Sprintf("%s%s%s%s %s\n", itemPrefix, openBracket, checked, closeBracket, choice))
+			sb.WriteString(fmt.Sprintf("%s%s%s%s %s\n", itemPrefix, openBracket, checked, closeBracket, label))
 		}
 
-		if t.cursor == i && helpsAvailable {
-			help := strings.TrimSpace(t.itemHelps[i])
-			if help != "" {
-				activeHelp = help
-			}
+		if t.cursor == i && strings.TrimSpace(description) != "" {
+			activeHelp = description
 		}
 	}
 
 	// Добавляем индикатор прокрутки вниз, если есть скрытые элементы ниже
-	if t.viewportSize > 0 && endIdx < len(t.choices) {
+	if t.viewportSize > 0 && endIdx < len(t.items) {
 		indentPrefix := ui.GetSelectItemPrefix("below")
 		var indicator string
-		remaining := len(t.choices) - endIdx
+		remaining := len(t.items) - endIdx
 		if t.showCounters {
 			arrow := ui.DownArrowSymbol + " "
 			indicator = fmt.Sprintf(defaults.ScrollBelowFormat, indentPrefix, arrow, remaining)
@@ -579,8 +578,8 @@ func (t *SingleSelectTask) FinalView(width int) string {
 	result := t.BaseTask.FinalView(width)
 
 	// Если задача завершилась успешно и есть дополнительные строки для вывода
-	if t.icon == ui.IconDone && len(t.choices) > 0 {
-		result += "\n" + ui.DrawSummaryLine(t.choices[t.cursor]) +
+	if t.icon == ui.IconDone && len(t.items) > 0 && t.cursor >= 0 && t.cursor < len(t.items) {
+		result += "\n" + ui.DrawSummaryLine(t.items[t.cursor].displayName()) +
 			performance.RepeatEfficient(" ", ui.MainLeftIndent) + ui.VerticalLineSymbol
 	}
 
@@ -591,19 +590,15 @@ func (t *SingleSelectTask) FinalView(width int) string {
 //
 // @return string Выбранный пользователем вариант
 func (t *SingleSelectTask) GetSelected() string {
-	// Если задача не завершена, возвращаем текущий выбор
-	if !t.done && t.cursor >= 0 && t.cursor < len(t.choices) {
-		return t.choices[t.cursor]
+	if !t.done && t.cursor >= 0 && t.cursor < len(t.items) {
+		return t.items[t.cursor].valueKey()
 	}
-	// Если задача завершена, возвращаем сохраненное финальное значение
-	if t.finalValue != "" {
-		return t.finalValue
+	if t.selectedKey != "" {
+		return t.selectedKey
 	}
-	// Если нет финального значения, но есть выбор, возвращаем его
-	if t.cursor >= 0 && t.cursor < len(t.choices) {
-		return t.choices[t.cursor]
+	if t.cursor >= 0 && t.cursor < len(t.items) {
+		return t.items[t.cursor].valueKey()
 	}
-	// Если ничего не выбрано, возвращаем пустую строку
 	return ""
 }
 

@@ -38,6 +38,26 @@ task.WithCustomLabels("Aç", "Kapat")
 task.WithCustomLabels("✓ Evet", "✗ Hayır")
 ```
 
+## Sonuç Satırının Gösterimi
+
+Görev tamamlandığında seçilen yanıt ayrı bir satırda gösterilir. Daha kompakt çıktı için bu satırı gizleyebilirsiniz:
+
+```go
+task.WithoutResultLine() // Evet/Hayır satırını gizle
+```
+
+## "Hayır" Cevabını Başarı Sayma
+
+Varsayılan olarak "Hayır" cevabı özet istatistiklerde hata olarak görünür. Bunu başarı olarak değerlendirmek için yardımcı metodu çağırın:
+
+```go
+task.WithNoAsError() // "Hayır" artık hata olarak sayılmaz
+
+if task.IsNo() {
+    // kullanıcı reddetti ama görev yine de başarılı sayılıyor
+}
+```
+
 ## Kullanım Örneği
 
 ```go

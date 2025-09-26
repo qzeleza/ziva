@@ -31,10 +31,31 @@ type YesNoTask struct {
 	noCountsAsError bool
 }
 
+func (t *YesNoTask) syncSelectedOption() {
+	idx := t.GetSelectedIndex()
+	switch idx {
+	case 0:
+		t.selectedOption = YesOption
+		t.SetError(nil)
+	case 1:
+		t.selectedOption = NoOption
+		if t.noCountsAsError {
+			msg := fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo)
+			t.SetError(msg)
+			t.SetStopOnError(false)
+		} else {
+			t.SetError(nil)
+		}
+	}
+}
+
 // NewYesNoTask создает новую задачу выбора с двумя опциями
 func NewYesNoTask(title, question string) *YesNoTask {
 	// Создаем варианты выбора
-	options := []string{defaults.DefaultYes, defaults.DefaultNo}
+	options := []Item{
+		{Key: defaults.DefaultYes, Name: defaults.DefaultYes},
+		{Key: defaults.DefaultNo, Name: defaults.DefaultNo},
+	}
 
 	// Создаем базовую задачу выбора
 	selectTask := NewSingleSelectTask(title, options)
@@ -102,18 +123,7 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 
 	// Если задача завершена, определяем выбранную опцию
 	if t.IsDone() {
-		selectedIndex := t.GetSelectedIndex()
-		switch selectedIndex {
-		case 0:
-			t.selectedOption = YesOption
-		case 1:
-			t.selectedOption = NoOption
-			if t.noCountsAsError {
-				// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-				t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
-				t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
-			}
-		}
+		t.syncSelectedOption()
 	}
 
 	return t, cmd
@@ -131,63 +141,9 @@ func (t *YesNoTask) Run() tea.Cmd {
 // View отображает текущее состояние задачи, делегируя логику базовому SingleSelectTask
 // applyDefaultValue применяет значение по умолчанию при истечении таймера
 func (t *YesNoTask) applyDefaultValue() {
-	// Если есть значение по умолчанию
-	if t.defaultValue != nil {
-		switch val := t.defaultValue.(type) {
-		case int:
-			// Если это индекс (0 - Да, 1 - Нет)
-			if val >= 0 && val < len(t.choices) {
-				// Устанавливаем курсор на выбранный индекс
-				t.cursor = val
-				// Выбираем соответствующий вариант
-				t.done = true
-				t.icon = ui.IconDone
-				t.finalValue = t.choices[t.cursor]
-
-				// Устанавливаем выбранную опцию
-				switch val {
-				case 0: // Да
-					t.selectedOption = YesOption
-				case 1: // Нет
-					t.selectedOption = NoOption
-					if t.noCountsAsError {
-						// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-						t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
-						t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
-					}
-				}
-			}
-		case string:
-			// Если это строка (Да, Нет)
-			selectedIndex := -1 // Инициализируем значением, указывающим что ничего не найдено
-			for i, choice := range t.choices {
-				if strings.EqualFold(choice, val) { // Сравниваем без учета регистра
-					// Устанавливаем курсор на выбранный вариант
-					t.cursor = i
-					selectedIndex = i
-					// Выбираем вариант
-					t.done = true
-					t.icon = ui.IconDone
-					t.finalValue = choice
-					break
-				}
-			}
-
-			// Устанавливаем выбранную опцию только если найдено соответствие
-			if selectedIndex != -1 {
-				switch selectedIndex {
-				case 0: // Да
-					t.selectedOption = YesOption
-				case 1: // Нет
-					t.selectedOption = NoOption
-					if t.noCountsAsError {
-						// Выбор "Нет" считается ошибкой для статистики, но не останавливает очередь
-						t.SetError(fmt.Errorf("%s \"%s\"", defaults.DefaultSelectedLabel, defaults.DefaultNo))
-						t.SetStopOnError(false) // Не останавливаем очередь при выборе "Нет"
-					}
-				}
-			}
-		}
+	t.SingleSelectTask.applyDefaultValue()
+	if t.IsDone() {
+		t.syncSelectedOption()
 	}
 }
 
@@ -241,8 +197,8 @@ func (t *YesNoTask) FinalView(width int) string {
 	// Сформируем строку результата
 	var result string
 	// Если задача завершилась успешно и есть дополнительные строки для вывода
-	if t.showResultLine && t.icon == ui.IconDone && len(t.choices) > 0 {
-		result = "\n" + ui.DrawSummaryLine(t.choices[t.cursor]) +
+	if t.showResultLine && t.icon == ui.IconDone && len(t.items) > 0 && t.cursor >= 0 && t.cursor < len(t.items) {
+		result = "\n" + ui.DrawSummaryLine(t.items[t.cursor].displayName()) +
 			performance.RepeatEfficient(" ", ui.MainLeftIndent) + ui.VerticalLineSymbol
 	}
 
@@ -281,13 +237,17 @@ func (t *YesNoTask) ResultLineVisible() bool {
 // WithCustomLabels позволяет изменить текст опций (перегрузка для 2 параметров)
 // Возвращает *YesNoTask для возможности цепочки вызовов
 func (t *YesNoTask) WithCustomLabels(yesLabel, noLabel string) *YesNoTask {
-	if strings.TrimSpace(yesLabel) != "" {
-		t.yesLabel = yesLabel
-		t.choices[0] = yesLabel
+	if trimmed := strings.TrimSpace(yesLabel); trimmed != "" {
+		t.yesLabel = trimmed
+		if len(t.items) > 0 {
+			t.items[0].name = trimmed
+		}
 	}
-	if strings.TrimSpace(noLabel) != "" {
-		t.noLabel = noLabel
-		t.choices[1] = noLabel
+	if trimmed := strings.TrimSpace(noLabel); trimmed != "" {
+		t.noLabel = trimmed
+		if len(t.items) > 1 {
+			t.items[1].name = trimmed
+		}
 	}
 	return t
 }
@@ -326,11 +286,8 @@ func (t *YesNoTask) WithDefaultItem(option interface{}) *YesNoTask {
 	case int:
 		selectByIndex(v)
 	case string:
-		for i, choice := range t.choices {
-			if strings.EqualFold(choice, v) {
-				selectByIndex(i)
-				break
-			}
+		if idx := t.SingleSelectTask.choiceIndex(v); idx != -1 {
+			selectByIndex(idx)
 		}
 	}
 
@@ -441,15 +398,10 @@ func (t *YesNoTask) normalizeStringToIndex(value string) interface{} {
 		}
 	}
 
-	// Если не найдено соответствие в известных вариантах,
-	// пытаемся найти прямое соответствие в текущих choices
-	for i, choice := range t.choices {
-		if strings.EqualFold(choice, value) {
-			return i
-		}
+	if idx := t.SingleSelectTask.choiceIndex(value); idx != -1 {
+		return idx
 	}
 
-	// Если ничего не найдено, возвращаем исходную строку
 	return value
 }
 

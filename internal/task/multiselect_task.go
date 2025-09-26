@@ -85,7 +85,7 @@ func (s *SelectionBitset) SetAll(n int) {
 // MultiSelectTask позволяет выбрать несколько вариантов из списка.
 type MultiSelectTask struct {
 	BaseTask
-	choices         []string         // Список вариантов выбора
+	items           []choice         // Список вариантов выбора
 	disabled        map[int]struct{} // Набор отключённых пунктов
 	selected        SelectionBitset  // Битовый набор выбранных элементов (оптимизировано для embedded)
 	fallbackMap     map[int]struct{} // Резервная карта для списков > 64 элементов
@@ -95,7 +95,6 @@ type MultiSelectTask struct {
 	selectAllText   string           // Текст опции "Выбрать все"
 	showHelpMessage bool             // Показывать ли сообщение-подсказку
 	helpMessage     string           // Текст сообщения-подсказки
-	itemHelps       []string         // Справочные сообщения для элементов
 	// Viewport (окно просмотра) для ограничения количества отображаемых элементов
 	viewportSize  int // Размер viewport (количество видимых элементов), 0 = показать все
 	viewportStart int // Начальная позиция viewport в списке элементов
@@ -105,15 +104,14 @@ type MultiSelectTask struct {
 // NewMultiSelectTask создает новую задачу множественного выбора.
 //
 // @param title Заголовок задачи
-// @param choices Список вариантов выбора
+// @param items Список вариантов выбора
 // @return Указатель на новую задачу множественного выбора
-func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
-	labels, helps := parseChoicesWithHelp(choices)
+func NewMultiSelectTask(title string, items []Item) *MultiSelectTask {
+	normalized := normalizeItems(items)
 
 	task := &MultiSelectTask{
 		BaseTask:        NewBaseTask(title),
-		choices:         labels,
-		itemHelps:       helps,
+		items:           normalized,
 		disabled:        make(map[int]struct{}),
 		cursor:          0, // Начинаем с первого элемента списка
 		activeStyle:     ui.ActiveStyle,
@@ -129,7 +127,7 @@ func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
 
 	// Для embedded устройств: используем битсет для списков <= 32 элементов,
 	// иначе fallback на карту
-	if len(choices) > 32 {
+	if len(normalized) > 32 {
 		task.fallbackMap = make(map[int]struct{})
 	}
 
@@ -139,7 +137,7 @@ func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
 
 // isDisabled проверяет, помечен ли элемент как недоступный
 func (t *MultiSelectTask) isDisabled(index int) bool {
-	if index < 0 || index >= len(t.choices) {
+	if index < 0 || index >= len(t.items) {
 		return true
 	}
 	_, exists := t.disabled[index]
@@ -148,7 +146,7 @@ func (t *MultiSelectTask) isDisabled(index int) bool {
 
 // ensureCursorSelectable пытается разместить курсор на ближайшем доступном элементе
 func (t *MultiSelectTask) ensureCursorSelectable() bool {
-	if len(t.choices) == 0 {
+	if len(t.items) == 0 {
 		if t.hasSelectAll {
 			t.cursor = -1
 		} else {
@@ -161,7 +159,7 @@ func (t *MultiSelectTask) ensureCursorSelectable() bool {
 		return true
 	}
 
-	if t.cursor >= 0 && t.cursor < len(t.choices) && !t.isDisabled(t.cursor) {
+	if t.cursor >= 0 && t.cursor < len(t.items) && !t.isDisabled(t.cursor) {
 		return true
 	}
 
@@ -194,7 +192,7 @@ func (t *MultiSelectTask) findEnabledForward(from int) (int, bool) {
 	if from < 0 {
 		from = 0
 	}
-	for i := from; i < len(t.choices); i++ {
+	for i := from; i < len(t.items); i++ {
 		if !t.isDisabled(i) {
 			return i, true
 		}
@@ -204,8 +202,8 @@ func (t *MultiSelectTask) findEnabledForward(from int) (int, bool) {
 
 // findEnabledBackward возвращает индекс предыдущего доступного элемента
 func (t *MultiSelectTask) findEnabledBackward(from int) (int, bool) {
-	if from >= len(t.choices) {
-		from = len(t.choices) - 1
+	if from >= len(t.items) {
+		from = len(t.items) - 1
 	}
 	for i := from; i >= 0; i-- {
 		if !t.isDisabled(i) {
@@ -257,7 +255,7 @@ func (t *MultiSelectTask) resolveDisabledIndices(input interface{}) []int {
 	}
 
 	addIndex := func(idx int) {
-		if idx < 0 || idx >= len(t.choices) {
+		if idx < 0 || idx >= len(t.items) {
 			return
 		}
 		for _, existing := range result {
@@ -298,10 +296,12 @@ func (t *MultiSelectTask) resolveDisabledIndices(input interface{}) []int {
 
 // choiceIndex возвращает индекс элемента по значению или -1, если элемент не найден
 func (t *MultiSelectTask) choiceIndex(value string) int {
-	normalized, _ := splitChoiceAndHelp(value)
-	normalized = strings.TrimSpace(normalized)
-	for i, choice := range t.choices {
-		if choice == value || choice == normalized {
+	normalized := strings.TrimSpace(value)
+	if normalized == "" {
+		return -1
+	}
+	for i, item := range t.items {
+		if strings.EqualFold(item.key, normalized) || strings.EqualFold(item.name, normalized) {
 			return i
 		}
 	}
@@ -310,7 +310,7 @@ func (t *MultiSelectTask) choiceIndex(value string) int {
 
 // clearDisabledSelections снимает выбор с отключённых элементов
 func (t *MultiSelectTask) clearDisabledSelections() {
-	if len(t.choices) > 32 {
+	if len(t.items) > 32 {
 		if t.fallbackMap == nil {
 			return
 		}
@@ -327,7 +327,7 @@ func (t *MultiSelectTask) clearDisabledSelections() {
 
 // clearAllSelections снимает выбор со всех элементов
 func (t *MultiSelectTask) clearAllSelections() {
-	if len(t.choices) > 32 {
+	if len(t.items) > 32 {
 		if t.fallbackMap == nil {
 			return
 		}
@@ -342,11 +342,11 @@ func (t *MultiSelectTask) clearAllSelections() {
 
 // selectAllEnabled отмечает все доступные элементы выбранными
 func (t *MultiSelectTask) selectAllEnabled() {
-	if len(t.choices) > 32 {
+	if len(t.items) > 32 {
 		if t.fallbackMap == nil {
 			t.fallbackMap = make(map[int]struct{})
 		}
-		for i := range t.choices {
+		for i := range t.items {
 			if t.isDisabled(i) {
 				delete(t.fallbackMap, i)
 				continue
@@ -357,7 +357,7 @@ func (t *MultiSelectTask) selectAllEnabled() {
 	}
 
 	t.selected.ClearAll()
-	for i := range t.choices {
+	for i := range t.items {
 		if t.isDisabled(i) {
 			continue
 		}
@@ -391,7 +391,7 @@ func (t *MultiSelectTask) WithItemsDisabled(disabled interface{}) *MultiSelectTa
 
 	indices := t.resolveDisabledIndices(disabled)
 	for _, idx := range indices {
-		if idx >= 0 && idx < len(t.choices) {
+		if idx >= 0 && idx < len(t.items) {
 			t.disabled[idx] = struct{}{}
 		}
 	}
@@ -430,9 +430,9 @@ func (t *MultiSelectTask) updateViewport() {
 		t.viewportStart = 0
 	}
 
-	maxStart := len(t.choices) - t.viewportSize
+	maxStart := len(t.items) - t.viewportSize
 	if t.hasSelectAll {
-		maxStart = len(t.choices) + 1 - t.viewportSize // +1 для опции "Выбрать все"
+		maxStart = len(t.items) + 1 - t.viewportSize // +1 для опции "Выбрать все"
 	}
 	if maxStart < 0 {
 		maxStart = 0
@@ -447,7 +447,7 @@ func (t *MultiSelectTask) updateViewport() {
 func (t *MultiSelectTask) getVisibleRange() (int, int, bool) {
 	// Если viewport отключен, показываем все элементы
 	if t.viewportSize <= 0 {
-		return 0, len(t.choices), t.hasSelectAll
+		return 0, len(t.items), t.hasSelectAll
 	}
 
 	// Определяем, показывать ли опцию "Выбрать все"
@@ -468,8 +468,8 @@ func (t *MultiSelectTask) getVisibleRange() (int, int, bool) {
 		endIdx-- // Уменьшаем на 1, так как одно место занимает опция "Выбрать все"
 	}
 
-	if endIdx > len(t.choices) {
-		endIdx = len(t.choices)
+	if endIdx > len(t.items) {
+		endIdx = len(t.items)
 	}
 
 	return startIdx, endIdx, showSelectAll
@@ -496,12 +496,12 @@ func (t *MultiSelectTask) WithSelectAll(text ...string) *MultiSelectTask {
 // WithDefaultItems позволяет заранее отметить элементы списка выбранными при открытии задачи.
 // Поддерживает выбор одного индекса/строки или списков значений ([]int, []string).
 func (t *MultiSelectTask) WithDefaultItems(defauiltSelection interface{}) *MultiSelectTask {
-	if defauiltSelection == nil || len(t.choices) == 0 {
+	if defauiltSelection == nil || len(t.items) == 0 {
 		return t
 	}
 
 	// Сбрасываем текущий выбор
-	if len(t.choices) > 32 {
+	if len(t.items) > 32 {
 		if t.fallbackMap == nil {
 			t.fallbackMap = make(map[int]struct{})
 		} else {
@@ -515,13 +515,13 @@ func (t *MultiSelectTask) WithDefaultItems(defauiltSelection interface{}) *Multi
 	}
 
 	setSelected := func(index int) bool {
-		if index < 0 || index >= len(t.choices) {
+		if index < 0 || index >= len(t.items) {
 			return false
 		}
 		if t.isDisabled(index) {
 			return false
 		}
-		if len(t.choices) > 32 && t.fallbackMap != nil {
+		if len(t.items) > 32 && t.fallbackMap != nil {
 			t.fallbackMap[index] = struct{}{}
 		} else {
 			t.selected.Set(index)
@@ -558,8 +558,8 @@ func (t *MultiSelectTask) WithDefaultItems(defauiltSelection interface{}) *Multi
 
 	if anyApplied {
 		// Перемещаем курсор на первый выбранный элемент (если он вне диапазона)
-		if t.cursor < 0 || t.cursor >= len(t.choices) {
-			for i := range t.choices {
+		if t.cursor < 0 || t.cursor >= len(t.items) {
+			for i := range t.items {
 				if t.isSelected(i) {
 					t.cursor = i
 					break
@@ -577,7 +577,7 @@ func (t *MultiSelectTask) WithDefaultItems(defauiltSelection interface{}) *Multi
 // Если все элементы выбраны - снимает выбор со всех.
 // Если хотя бы один элемент не выбран - выбирает все.
 func (t *MultiSelectTask) toggleSelectAll() {
-	if len(t.choices) == 0 {
+	if len(t.items) == 0 {
 		return
 	}
 
@@ -593,7 +593,7 @@ func (t *MultiSelectTask) toggleSelectAll() {
 func (t *MultiSelectTask) isAllSelected() bool {
 	enabledCount := 0
 	selectedCount := 0
-	for i := range t.choices {
+	for i := range t.items {
 		if t.isDisabled(i) {
 			continue
 		}
@@ -616,7 +616,7 @@ func (t *MultiSelectTask) toggleSelection(index int) {
 		return
 	}
 
-	if len(t.choices) > 32 && t.fallbackMap != nil {
+	if len(t.items) > 32 && t.fallbackMap != nil {
 		// Используем fallback карту для больших списков
 		if _, exists := t.fallbackMap[index]; exists {
 			delete(t.fallbackMap, index)
@@ -634,7 +634,7 @@ func (t *MultiSelectTask) isSelected(index int) bool {
 	if t.isDisabled(index) {
 		return false
 	}
-	if len(t.choices) > 32 && t.fallbackMap != nil {
+	if len(t.items) > 32 && t.fallbackMap != nil {
 		_, exists := t.fallbackMap[index]
 		return exists
 	}
@@ -715,14 +715,8 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 
 		case "enter":
 			t.stopTimeout()
-			// Собираем выбранные элементы
-			var selectedChoices []string
-			for i := range t.choices {
-				if t.isSelected(i) {
-					selectedChoices = append(selectedChoices, t.choices[i])
-				}
-			}
-			if len(selectedChoices) == 0 {
+			keys, names := t.collectSelectionSnapshot()
+			if len(keys) == 0 {
 				// Если ничего не выбрано, показываем сообщение-подсказку
 				// но НЕ устанавливаем ошибку и НЕ завершаем задачу
 				t.showHelpMessage = true
@@ -732,7 +726,7 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			// Если есть выбранные элементы, завершаем задачу успешно
 			t.done = true
 			t.icon = ui.IconDone
-			t.finalValue = strings.Join(selectedChoices, defaults.DefaultSeparator)
+			t.finalValue = strings.Join(names, defaults.DefaultSeparator)
 			// Убеждаемся, что ошибка очищена
 			t.SetError(nil)
 			t.showHelpMessage = false
@@ -771,9 +765,9 @@ func (t *MultiSelectTask) applyDefaultValue() {
 			// Если это список индексов для выбора
 			for _, index := range val {
 				// Выбираем только корректные индексы
-				if index >= 0 && index < len(t.choices) && !t.isDisabled(index) {
+				if index >= 0 && index < len(t.items) && !t.isDisabled(index) {
 					// Устанавливаем выбор для этого элемента
-					if len(t.choices) > 32 && t.fallbackMap != nil {
+					if len(t.items) > 32 && t.fallbackMap != nil {
 						t.fallbackMap[index] = struct{}{}
 					} else {
 						t.selected.Set(index)
@@ -784,7 +778,7 @@ func (t *MultiSelectTask) applyDefaultValue() {
 			// Если это список строк для выбора
 			for _, strVal := range val {
 				if idx := t.choiceIndex(strVal); idx != -1 && !t.isDisabled(idx) {
-					if len(t.choices) > 32 && t.fallbackMap != nil {
+					if len(t.items) > 32 && t.fallbackMap != nil {
 						t.fallbackMap[idx] = struct{}{}
 					} else {
 						t.selected.Set(idx)
@@ -795,7 +789,7 @@ func (t *MultiSelectTask) applyDefaultValue() {
 
 		// Проверяем, есть ли хотя бы один выбранный элемент
 		hasSelection := false
-		if len(t.choices) > 32 && t.fallbackMap != nil {
+		if len(t.items) > 32 && t.fallbackMap != nil {
 			hasSelection = len(t.fallbackMap) > 0
 		} else {
 			hasSelection = t.selected.Count() > 0
@@ -804,16 +798,11 @@ func (t *MultiSelectTask) applyDefaultValue() {
 		// Если есть выбранные элементы, завершаем задачу
 		if hasSelection {
 			// Собираем выбранные элементы
-			var selectedChoices []string
-			for i := range t.choices {
-				if t.isSelected(i) {
-					selectedChoices = append(selectedChoices, t.choices[i])
-				}
-			}
+			_, names := t.collectSelectionSnapshot()
 			// Завершаем задачу
 			t.done = true
 			t.icon = ui.IconDone
-			t.finalValue = strings.Join(selectedChoices, defaults.DefaultSeparator)
+			t.finalValue = strings.Join(names, defaults.DefaultSeparator)
 			t.SetError(nil)
 		}
 	}
@@ -905,66 +894,56 @@ func (t *MultiSelectTask) View(width int) string {
 
 	// Отображаем только видимые элементы списка
 	for i := startIdx; i < endIdx; i++ {
-		if i >= len(t.choices) {
+		if i >= len(t.items) {
 			break
 		}
 
-		choice := t.choices[i]
+		item := t.items[i]
+		label := item.displayName()
+		description := item.helpText()
 		checked := " "
 		var itemPrefix string
 		itemDisabled := t.isDisabled(i)
-		helpsAvailable := i < len(t.itemHelps)
 
-		// Проверяем, выбран ли этот элемент
 		if t.isSelected(i) {
 			checked = ui.IconSelected
 		}
 
 		if itemDisabled {
-			choice = ui.DisabledStyle.Render(choice)
+			label = ui.DisabledStyle.Render(label)
 			checked = ui.DisabledStyle.Render(checked)
 		}
 
-		// Определяем тип элемента для получения правильного префикса
 		if t.cursor == i {
-			// Активный элемент
 			itemPrefix = ui.GetSelectItemPrefix("active")
-			// Применяем стиль активного элемента
-			choice = t.activeStyle.Render(choice)
+			label = t.activeStyle.Render(label)
 		} else if t.hasSelectAll && t.cursor == -1 {
-			// Если активна опция "Выбрать все", все элементы списка должны быть "below"
 			itemPrefix = ui.GetSelectItemPrefix("below")
 		} else if i < t.cursor {
-			// Элемент выше текущего активного элемента
 			itemPrefix = ui.GetSelectItemPrefix("above")
 		} else {
-			// Элемент ниже текущего активного элемента
 			itemPrefix = ui.GetSelectItemPrefix("below")
 		}
 
-		// Формируем строку для отображения варианта выбора с новым префиксом
 		openBracket := "["
 		closeBracket := "]"
 		if itemDisabled {
 			openBracket = ui.DisabledStyle.Render(openBracket)
 			closeBracket = ui.DisabledStyle.Render(closeBracket)
 		}
-		sb.WriteString(fmt.Sprintf("%s%s%s%s %s\n", itemPrefix, openBracket, checked, closeBracket, choice))
+		sb.WriteString(fmt.Sprintf("%s%s%s%s %s\n", itemPrefix, openBracket, checked, closeBracket, label))
 
-		if t.cursor == i && helpsAvailable {
-			help := strings.TrimSpace(t.itemHelps[i])
-			if help != "" {
-				activeHelp = help
-			}
+		if t.cursor == i && strings.TrimSpace(description) != "" {
+			activeHelp = description
 		}
 	}
 
 	// Добавляем индикатор прокрутки вниз, если есть скрытые элементы ниже
-	if t.viewportSize > 0 && endIdx < len(t.choices) {
+	if t.viewportSize > 0 && endIdx < len(t.items) {
 		// Используем точно такой же префикс как у элементов "below"
 		indentPrefix := ui.GetSelectItemPrefix("below")
 		// Не добавляем перенос строки в конце, чтобы не нарушать форматирование
-		remaining := len(t.choices) - endIdx
+		remaining := len(t.items) - endIdx
 		var indicator string
 		if t.showCounters {
 			arrow := ui.DownArrowSymbol + " "
@@ -1020,11 +999,11 @@ func (t *MultiSelectTask) FinalView(width int) string {
 	result := t.BaseTask.FinalView(width)
 
 	// Если задача завершилась успешно и есть дополнительные строки для вывода
-	if t.icon == ui.IconDone && len(t.choices) > 0 {
-		selected := t.GetSelected()
-		if len(selected) > 0 {
+	if t.icon == ui.IconDone && len(t.items) > 0 {
+		_, names := t.collectSelectionSnapshot()
+		if len(names) > 0 {
 			result += "\n"
-			for _, value := range selected {
+			for _, value := range names {
 				result += ui.DrawSummaryLine(value)
 			}
 		}
@@ -1056,26 +1035,19 @@ func (t *MultiSelectTask) WithTimeout(duration time.Duration, defaultValue inter
 //
 // @return []string Список выбранных пользователем вариантов
 func (t *MultiSelectTask) GetSelected() []string {
-	// Если задача завершена и есть финальное значение, разбираем его на список
-	if t.done && t.finalValue != "" {
-		// Разбиваем строку по запятой и пробелу
-		parts := strings.Split(t.finalValue, defaults.DefaultSeparator)
-		// Удаляем пустые элементы
-		var result []string
-		for _, part := range parts {
-			if strings.TrimSpace(part) != "" {
-				result = append(result, strings.TrimSpace(part))
-			}
-		}
-		return result
-	}
+	keys, _ := t.collectSelectionSnapshot()
+	return keys
+}
 
-	// Если задача не завершена или нет финального значения, собираем выбранные элементы
-	var selectedChoices []string
-	for i := range t.choices {
+func (t *MultiSelectTask) collectSelectionSnapshot() ([]string, []string) {
+	var keys []string
+	var names []string
+	for i := range t.items {
 		if t.isSelected(i) {
-			selectedChoices = append(selectedChoices, t.choices[i])
+			item := t.items[i]
+			keys = append(keys, item.valueKey())
+			names = append(names, item.displayName())
 		}
 	}
-	return selectedChoices
+	return keys, names
 }

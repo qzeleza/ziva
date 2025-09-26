@@ -48,6 +48,9 @@ type Task = common.Task
 // YesNoOption представляет варианты выбора для YesNoTask
 type YesNoOption = task.YesNoOption
 
+// Item описывает элемент списка для задач выбора.
+type Item = task.Item
+
 const (
 	// YesOption - опция "Да"
 	YesOption = task.YesOption
@@ -251,12 +254,6 @@ func (t *YesNoTask) WithCustomLabels(yesLabel, noLabel string) *YesNoTask {
 	return t
 }
 
-// SetDescriptionSeparator задаёт разделитель, используемый для встроенных подсказок в строках выбора.
-// По умолчанию используется "::".
-func SetDescriptionSeparator(delim string) {
-	task.SetChoiceHelpDelimiter(delim)
-}
-
 // GetSelectedOption возвращает выбранную опцию
 //
 // @return Выбранная опция
@@ -306,10 +303,10 @@ func (t *YesNoTask) WithNoAsError() *YesNoTask {
 // NewSingleSelectTask создает новую задачу выбора одного варианта из списка
 //
 // @param title Заголовок задачи
-// @param choices Список вариантов выбора
+// @param items Список элементов списка
 // @return Указатель на новую задачу выбора
-func NewSingleSelectTask(title string, choices []string) *SingleSelectTask {
-	return &SingleSelectTask{task.NewSingleSelectTask(title, choices)}
+func NewSingleSelectTask(title string, items []Item) *SingleSelectTask {
+	return &SingleSelectTask{task.NewSingleSelectTask(title, items)}
 }
 
 // SingleSelectTask представляет задачу для выбора одного варианта из списка
@@ -378,10 +375,10 @@ func (t *SingleSelectTask) GetSelectedIndex() int {
 // NewMultiSelectTask создает новую задачу множественного выбора
 //
 // @param title Заголовок задачи
-// @param choices Список вариантов выбора
+// @param items Список элементов списка
 // @return Указатель на новую задачу множественного выбора
-func NewMultiSelectTask(title string, choices []string) *MultiSelectTask {
-	return &MultiSelectTask{task.NewMultiSelectTask(title, choices)}
+func NewMultiSelectTask(title string, items []Item) *MultiSelectTask {
+	return &MultiSelectTask{task.NewMultiSelectTask(title, items)}
 }
 
 // MultiSelectTask представляет задачу для выбора нескольких вариантов из списка

@@ -10,7 +10,11 @@ description: "Multiple option selection task from a list"
 ## Creating
 
 ```go
-options := []string{"item1", "item2", "item3"}
+options := []ziva.Item{
+    {Key: "item1", Name: "Item 1"},
+    {Key: "item2", Name: "Item 2"},
+    {Key: "item3", Name: "Item 3"},
+}
 task := ziva.NewMultiSelectTask("Select components", options)
 ```
 
@@ -21,9 +25,9 @@ task := ziva.NewMultiSelectTask("Select components", options)
 ```go
 // Settings
 task.WithSelectAll("Select all")                    // add "select all" option
-task.WithDefaultItems([]string{"item1", "item2"})   // default selected
+task.WithDefaultItems([]string{"item1", "item2"})   // default selected keys
 task.WithViewport(5, true)                          // viewport window
-task.WithItemsDisabled([]string{"item3"})            // disabled items
+task.WithItemsDisabled([]string{"item3"})            // disable items by key
 
 // Get results
 selected := task.GetSelected() // []string
@@ -32,10 +36,10 @@ selected := task.GetSelected() // []string
 ## Usage Example
 
 ```go
-components := []string{
-    "web::Web server",
-    "api::REST API",
-    "db::Database",
+components := []ziva.Item{
+    {Key: "web", Name: "web", Description: "Web server"},
+    {Key: "api", Name: "api", Description: "REST API"},
+    {Key: "db", Name: "db", Description: "Database"},
 }
 
 task := ziva.NewMultiSelectTask("Components", components).
@@ -46,5 +50,5 @@ queue := ziva.NewQueue("Setup")
 queue.AddTasks(task)
 queue.Run()
 
-fmt.Printf("Selected: %v\n", task.GetSelected())
+fmt.Printf("Selected: %v\n", task.GetSelected()) // keys of selected items
 ```

@@ -8,12 +8,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func makePrefixItems(values []string) []Item {
+	result := make([]Item, len(values))
+	for i, v := range values {
+		result[i] = Item{Key: v, Name: v}
+	}
+	return result
+}
+
 // TestMultiSelectTaskPrefixRendering проверяет правильность формирования префиксов
 func TestMultiSelectTaskPrefixRendering(t *testing.T) {
 	// Создаем задачу MultiSelectTask с опцией "Выбрать все"
 	title := "Тест префиксов"
 	options := []string{"Элемент 1", "Элемент 2", "Элемент 3"}
-	multiSelectTask := NewMultiSelectTask(title, options).WithSelectAll("Выбрать все")
+	multiSelectTask := NewMultiSelectTask(title, makePrefixItems(options)).WithSelectAll("Выбрать все")
 
 	// Тест 1: Курсор на "Выбрать все" (позиция -1)
 	// Ожидаем: "Выбрать все" с префиксом "active", все элементы с префиксом "below" (только отступы)
@@ -92,7 +100,7 @@ func TestMultiSelectTaskPrefixWithoutSelectAll(t *testing.T) {
 	// Создаем обычную задачу без "Выбрать все"
 	title := "Тест без 'Выбрать все'"
 	options := []string{"Пункт 1", "Пункт 2", "Пункт 3"}
-	multiSelectTask := NewMultiSelectTask(title, options)
+	multiSelectTask := NewMultiSelectTask(title, makePrefixItems(options))
 
 	// Курсор должен быть на первом элементе (позиция 0)
 	view := multiSelectTask.View(80)

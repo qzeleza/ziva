@@ -10,7 +10,11 @@ description: "Single option selection task from a list"
 ## Creating a Task
 
 ```go
-options := []string{"option1", "option2", "option3"}
+options := []ziva.Item{
+    {Key: "option1", Name: "Option 1", Description: "First environment"},
+    {Key: "option2", Name: "Option 2", Description: "Second environment"},
+    {Key: "option3", Name: "Option 3"},
+}
 task := ziva.NewSingleSelectTask("Title", options)
 ```
 
@@ -22,38 +26,29 @@ task := ziva.NewSingleSelectTask("Title", options)
 
 ```go
 task := ziva.NewSingleSelectTask("Environment Selection", environments).
-    WithDefaultItem("staging").                    // default value
+    WithDefaultItem("staging").                    // default by key
     WithTimeout(10*time.Second, "production").     // timeout with fallback
-    WithViewport(5, true).                         // display limitation
-    WithItemsDisabled([]string{"maintenance"})     // disabled items
+    WithViewport(5, true).                         // limit visible items
+    WithItemsDisabled([]string{"maintenance"})     // disable by key
 ```
 
 ### Getting Results
 
 ```go
 // After task execution
-selected := task.GetSelected()      // string - selected value
+selected := task.GetSelected()      // string - selected key
 index := task.GetSelectedIndex()    // int - selected item index
 ```
 
 ## Choice Hints
 
-For creating more informative lists, use hint delimiters:
+Use the `Description` field to provide contextual hints. The text appears in the helper area when an item is focused.
 
 ```go
-// Using "::" delimiter (default)
-options := []string{
-    "dev::Development environment",
-    "staging::Testing environment", 
-    "prod::Production environment",
-}
-
-// Or configure custom delimiter
-ziva.SetChoiceHelpDelimiter("||")
-options = []string{
-    "api||REST API server",
-    "web||Web interface",
-    "cli||Command line",
+options := []ziva.Item{
+    {Key: "dev", Name: "Development", Description: "Non-production sandbox"},
+    {Key: "staging", Name: "Staging", Description: "Pre-production tests"},
+    {Key: "prod", Name: "Production"},
 }
 ```
 

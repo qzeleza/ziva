@@ -27,8 +27,6 @@ func main() {
 	activeLang := configureLanguage()
 	warnTerminalCapabilities(activeLang)
 	ziva.SetDefaultLanguage("ru")
-	// Используем собственный разделитель для подсказок в пунктах меню
-	ziva.SetDescriptionSeparator("||")
 
 	// Заголовок и краткое описание для TUI
 	header := "Демонстрация всех типов задач Ziva"
@@ -41,50 +39,75 @@ func main() {
 	// queue.WithTasksNumbered(false, "[%d]")
 
 	// Формируем очередь задач
-	var msel = []string{
-		"CLI||Командный интерфейс для администрирования",
-		"Сервер||Бэкенд сервисы",
-		"Агент",
-		"Web UI||Веб-интерфейс для пользователей",
-		"Документация||Автоматическая генерация документации",
-		"Компилировать||Сборка исполняемых файлов",
-		"Выходные данные||Архивация результатов",
-		"Область просмотра",
-		"Поле ввода||Пример текстовой задачи",
-		"Мультивыбор||Дополнительные параметры",
-		"Одиночный выбор||Переключатель режимов",
-		"Проверка ввода||Встроенные валидаторы"}
+	const (
+		componentCLI        = "cli"
+		componentServer     = "server"
+		componentAgent      = "agent"
+		componentWeb        = "web"
+		componentDocs       = "docs"
+		componentBuild      = "build"
+		componentArtifacts  = "artifacts"
+		componentViewport   = "viewport"
+		componentInput      = "input"
+		componentMulti      = "multi"
+		componentSingle     = "single"
+		componentValidation = "validation"
+	)
 
-	var ssel = []string{
-		"development||Среда разработки",
-		"staging||Промежуточная среда",
-		"production||Боевая среда",
-		"другое||Пользовательское значение",
-		"отмена||Отмена выбора",
-		"выход||Выход из программы",
+	msel := []ziva.Item{
+		{Key: componentCLI, Name: "CLI", Description: "Командный интерфейс для администрирования"},
+		{Key: componentServer, Name: "Сервер", Description: "Бэкенд сервисы"},
+		{Key: componentAgent, Name: "Агент"},
+		{Key: componentWeb, Name: "Web UI", Description: "Веб-интерфейс для пользователей"},
+		{Key: componentDocs, Name: "Документация", Description: "Автоматическая генерация документации"},
+		{Key: componentBuild, Name: "Компилировать", Description: "Сборка исполняемых файлов"},
+		{Key: componentArtifacts, Name: "Выходные данные", Description: "Архивация результатов"},
+		{Key: componentViewport, Name: "Область просмотра"},
+		{Key: componentInput, Name: "Поле ввода", Description: "Пример текстовой задачи"},
+		{Key: componentMulti, Name: "Мультивыбор", Description: "Дополнительные параметры"},
+		{Key: componentSingle, Name: "Одиночный выбор", Description: "Переключатель режимов"},
+		{Key: componentValidation, Name: "Проверка ввода", Description: "Встроенные валидаторы"},
+	}
+
+	const (
+		envDevelopment = "development"
+		envStaging     = "staging"
+		envProduction  = "production"
+		envCustom      = "custom"
+		envCancel      = "cancel"
+		envExit        = "exit"
+	)
+
+	ssel := []ziva.Item{
+		{Key: envDevelopment, Name: "development", Description: "Среда разработки"},
+		{Key: envStaging, Name: "staging", Description: "Промежуточная среда"},
+		{Key: envProduction, Name: "production", Description: "Боевая среда"},
+		{Key: envCustom, Name: "другое", Description: "Пользовательское значение"},
+		{Key: envCancel, Name: "отмена", Description: "Отмена выбора"},
+		{Key: envExit, Name: "выход", Description: "Выход из программы"},
 	}
 	// 1) Задачи мультивыбора (без и с пунктом "Выбрать все")
 	//    Пример без "Выбрать все"
 	ms1 := ziva.NewMultiSelectTask("Выберите компоненты установки", msel).
 		WithViewport(5, false).
-		WithTimeout(3*time.Second, []string{msel[0], msel[1]}).
-		WithItemsDisabled([]string{msel[2], msel[3]})
+		WithTimeout(3*time.Second, []string{componentCLI, componentServer}).
+		WithItemsDisabled([]string{componentAgent, componentWeb})
 
 	// //    Пример с пунктом "Выбрать все"
 	// ms2 := ziva.NewMultiSelectTask("Выберите модули для сборки", ssel).
 	// 	WithViewport(3, false).
 	// 	WithSelectAll("Выбрать все").
-	// 	WithTimeout(10*time.Second, []string{ssel[0], ssel[1]}).
-	// 	WithDefaultItems([]string{ssel[0], ssel[1]}).
-	// 	WithItemsDisabled([]string{ssel[2], ssel[3]})
+	// 	WithTimeout(10*time.Second, []string{envDevelopment, envStaging}).
+	// 	WithDefaultItems([]string{envDevelopment, envStaging}).
+	// 	WithItemsDisabled([]string{envProduction, envCustom})
 
 	// 2) Одиночный выбор
 	ss := ziva.NewSingleSelectTask(
 		"Выберите среду развертывания",
 		ssel,
 	).WithViewport(3).
-		WithTimeout(3*time.Second, "staging").
-		WithDefaultItem("production")
+		WithTimeout(3*time.Second, envStaging).
+		WithDefaultItem(envProduction)
 
 	// 3) Ввод с использованием всех стандартных валидаторов
 	//    Валидация будет происходить в момент подтверждения (Enter)

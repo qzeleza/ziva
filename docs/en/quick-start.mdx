@@ -60,20 +60,20 @@ func createTasks(queue *ziva.Queue) {
         WithTimeout(5*time.Second, "Yes")
 
     // 2. Environment selection
-    environments := []string{
-        "development||Development environment",
-        "staging||Testing environment",
-        "production||Production environment",
+    environments := []ziva.Item{
+        {Key: "development", Name: "development", Description: "Development environment"},
+        {Key: "staging", Name: "staging", Description: "Testing environment"},
+        {Key: "production", Name: "production", Description: "Production environment"},
     }
     env := ziva.NewSingleSelectTask("Environment Selection", environments).
         WithDefaultItem("staging")
 
     // 3. Component selection
-    components := []string{
-        "api||REST API server",
-        "web||Web interface",
-        "cli||Command line",
-        "docs||Documentation",
+    components := []ziva.Item{
+        {Key: "api", Name: "api", Description: "REST API server"},
+        {Key: "web", Name: "web", Description: "Web interface"},
+        {Key: "cli", Name: "cli", Description: "Command line"},
+        {Key: "docs", Name: "docs", Description: "Documentation"},
     }
     comp := ziva.NewMultiSelectTask("Components", components).
         WithSelectAll("Select all").
@@ -120,8 +120,8 @@ func printResults(confirm *ziva.YesNoTask, env *ziva.SingleSelectTask,
                  comp *ziva.MultiSelectTask, name *ziva.InputTask) {
     fmt.Println("\n📋 Configuration Results:")
     fmt.Printf("Confirmation: %v\n", confirm.IsYes())
-    fmt.Printf("Environment: %s\n", env.GetSelected())
-    fmt.Printf("Components: %v\n", comp.GetSelected())
+    fmt.Printf("Environment: %s\n", env.GetSelected()) // returns key
+    fmt.Printf("Components: %v\n", comp.GetSelected()) // list of keys
     fmt.Printf("Project name: %s\n", name.GetValue())
 }
 ```
