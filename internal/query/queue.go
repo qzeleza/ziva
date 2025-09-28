@@ -150,7 +150,21 @@ func New(title string) *Model {
 
 // Добавляет список задач для выполнения.
 func (m *Model) AddTasks(tasks []common.Task) {
-	m.tasks = append(m.tasks, tasks...)
+	// Создаем новый срез, куда будем добавлять только валидные (не nil) задачи.
+	// Это более эффективно, чем многократно вызывать append для m.tasks в цикле.
+	validTasks := make([]common.Task, 0, len(tasks))
+
+	// Проходим по всем задачам, которые пришли в функцию.
+	for _, task := range tasks {
+		// Проверяем, не является ли задача nil.
+		if task != nil {
+			// Если задача не nil, добавляем ее в срез валидных задач.
+			validTasks = append(validTasks, task)
+		}
+	}
+
+	// Добавляем все валидные задачи в основной срез m.tasks одним вызовом append.
+	m.tasks = append(m.tasks, validTasks...)
 }
 
 // WithTasksNumbered включает нумерацию и задаёт формат представления числа в префиксе.
