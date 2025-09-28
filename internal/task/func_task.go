@@ -165,8 +165,10 @@ func (t *FuncTask) Run() tea.Cmd {
 		}
 
 		// Делаем задержку перед завершением
-		// для лучшей визуальной анимации
-		time.Sleep(defaults.DefaultCompletionDelay)
+		// для лучшей визуальной анимации (если она включена)
+		if defaults.IsCompletionDelayEnabled() {
+			time.Sleep(defaults.DefaultCompletionDelay)
+		}
 
 		// Возвращаем специальное сообщение об успешном завершении
 		return funcTaskCompleteMsg{}

@@ -34,6 +34,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/qzeleza/ziva/internal/autoconfig"
 	"github.com/qzeleza/ziva/internal/common"
+	"github.com/qzeleza/ziva/internal/defaults"
 	"github.com/qzeleza/ziva/internal/performance"
 	"github.com/qzeleza/ziva/internal/query"
 	"github.com/qzeleza/ziva/internal/task"
@@ -61,6 +62,11 @@ const (
 // Queue представляет очередь задач для выполнения
 type Queue struct {
 	model *query.Model
+}
+
+// DisableCompletionDelay полностью отключает задержку завершения задач (по умолчанию включена).
+func DisableCompletionDelay() {
+	defaults.SetCompletionDelayEnabled(false)
 }
 
 // ----------------------------------------------------------------------------

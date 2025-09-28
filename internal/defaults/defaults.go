@@ -1,8 +1,25 @@
 package defaults
 
 import (
+	"sync/atomic"
 	"time"
 )
+
+var completionDelayEnabled atomic.Bool
+
+func init() {
+	completionDelayEnabled.Store(true)
+}
+
+// SetCompletionDelayEnabled глобально включает или выключает задержку завершения задачи.
+func SetCompletionDelayEnabled(enabled bool) {
+	completionDelayEnabled.Store(enabled)
+}
+
+// IsCompletionDelayEnabled сообщает, включена ли задержка завершения задачи.
+func IsCompletionDelayEnabled() bool {
+	return completionDelayEnabled.Load()
+}
 
 // Константы для времени выполнения задач
 const (
