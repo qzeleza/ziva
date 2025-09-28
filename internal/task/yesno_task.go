@@ -19,6 +19,9 @@ const (
 	NoOption
 )
 
+// YesNoCallback описывает функцию, выполняемую при подтверждении выбора.
+type YesNoCallback func() error
+
 // YesNoTask представляет задачу выбора из двух опций: Да, Нет
 // Это обертка над SingleSelectTask для консистентности UI
 type YesNoTask struct {
@@ -29,6 +32,9 @@ type YesNoTask struct {
 	selectedOption  YesNoOption
 	showResultLine  bool
 	noCountsAsError bool
+	onYes           YesNoCallback
+	onNo            YesNoCallback
+	callbackHandled bool
 }
 
 func (t *YesNoTask) syncSelectedOption() {
@@ -46,6 +52,39 @@ func (t *YesNoTask) syncSelectedOption() {
 		} else {
 			t.SetError(nil)
 		}
+	default:
+		return
+	}
+
+	t.runSelectionHandler()
+}
+
+// runSelectionHandler выполняет callback в зависимости от выбранной опции
+func (t *YesNoTask) runSelectionHandler() {
+	if t.callbackHandled {
+		return
+	}
+
+	var handler YesNoCallback
+	switch t.selectedOption {
+	case YesOption:
+		handler = t.onYes
+	case NoOption:
+		handler = t.onNo
+	}
+
+	// Помечаем, что коллбэк обработан, чтобы не выполнять его повторно
+	t.callbackHandled = true
+
+	if handler == nil {
+		return
+	}
+
+	if err := handler(); err != nil {
+		t.SetError(err)
+		t.icon = ui.IconError
+		t.finalValue = ui.GetErrorMessageStyle().Render(err.Error())
+		t.SetStopOnError(true)
 	}
 }
 
@@ -161,6 +200,10 @@ func (t *YesNoTask) View(width int) string {
 // ярко-жёлтым цветом. Для ответа "Да" используется стандартное зелёное
 // оформление выбранной опции.
 func (t *YesNoTask) FinalView(width int) string {
+	if t.icon == ui.IconError {
+		return t.SingleSelectTask.FinalView(width)
+	}
+
 	// Используем новый префикс завершённой задачи
 	// Успешной считается выбор без ошибок и ("Да" или "Нет", если она не считается ошибкой)
 	success := !t.HasError() && (t.selectedOption == YesOption || !t.noCountsAsError)
@@ -248,6 +291,25 @@ func (t *YesNoTask) WithCustomLabels(yesLabel, noLabel string) *YesNoTask {
 		if len(t.items) > 1 {
 			t.items[1].name = trimmed
 		}
+	}
+	return t
+}
+
+// OnYes регистрирует функцию, которая будет выполнена при выборе опции "Да"
+func (t *YesNoTask) OnYes(handler YesNoCallback) *YesNoTask {
+	t.onYes = handler
+	// Сбрасываем флаг только если задача ещё не завершена
+	if !t.IsDone() {
+		t.callbackHandled = false
+	}
+	return t
+}
+
+// OnNo регистрирует функцию, которая будет выполнена при выборе опции "Нет"
+func (t *YesNoTask) OnNo(handler YesNoCallback) *YesNoTask {
+	t.onNo = handler
+	if !t.IsDone() {
+		t.callbackHandled = false
 	}
 	return t
 }
