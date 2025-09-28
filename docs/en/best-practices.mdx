@@ -17,7 +17,7 @@ Use this checklist when integrating Ziva into production systems. It covers stru
 ## Queue management
 
 - Enable numbering via `WithTasksNumbered(true, "[%02d]")` for long scenarios; operators orient themselves faster.
-- Disable the final summary (`WithOutSummary(true)`) when you already log results elsewhere. Otherwise, add `WithSummaryFunction` to show key metrics inline.
+- Disable the final summary (`WithOutSummary()`) when you already log results elsewhere. Otherwise, add `WithSummaryFunction` to show key metrics inline.
 - Always provide `WithTimeout*()` defaults for headless runs (CI, SSH). Pick a fallback that is safe for the workflow.
 - For dynamic flows, assemble a new `Queue`, push the generated tasks, and run it after the primary queue.
 

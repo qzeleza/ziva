@@ -107,7 +107,7 @@ func (q *Queue) WithAppName(appName string, version ...string) *Queue {
 // @param show Флаг, указывающий, нужно ли отображать сводку
 // @param lineEnabled Флаг, указывающий, нужно ли отображать линию сводки, под которой выводится сводка
 // @return Указатель на очередь задач
-func (q *Queue) WithOutSummary(lineEnabled bool) *Queue {
+func (q *Queue) WithOutSummary() *Queue {
 	q.model.WithSummary(false)
 
 	return q

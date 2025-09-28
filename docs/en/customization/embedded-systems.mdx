@@ -29,7 +29,7 @@ export ZIVA_MAX_COMPLETED_TASKS=5
 ```go
 // Embedded-friendly configuration
 queue := ziva.NewQueue("IoT Setup")
-queue.WithOutSummary(true).        // disable summary
+queue.WithOutSummary().        // disable summary
       WithOutResultLine().         // disable result lines
       WithTasksNumbered(false, ""). // disable numbering
       WithClearScreen(false)       // preserve context
@@ -58,6 +58,6 @@ queue.WithAppNameColor(ziva.WhiteBright, false).
 // Check if running on embedded system
 if ziva.IsEmbeddedSystem() {
     // Apply embedded optimizations
-    queue.WithOutSummary(true)
+    queue.WithOutSummary()
 }
 ```

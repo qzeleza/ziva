@@ -74,7 +74,7 @@ queue.WithTasksNumbered(true, "[%02d]") // preserve '['
 
 ```go
 // Disable completion summary
-queue.WithOutSummary(true)
+queue.WithOutSummary()
 
 // Disable result separator lines
 queue.WithOutResultLine()
@@ -140,7 +140,7 @@ if err := queue.Run(); err != nil {
 ```go
 queue := ziva.NewQueue("IoT Configuration")
 queue.WithAppName("RouterSetup").
-      WithOutSummary(true).        // Space saving
+      WithOutSummary().        // Space saving
       WithOutResultLine().         // Simplified output
       WithTasksNumbered(false, ""). // No numbering
       WithClearScreen(false)       // Preserve context
@@ -197,7 +197,7 @@ os.Setenv("ZIVA_MEMORY_PRESSURE_THRESHOLD", "100M")
 ```go
 // Simplified display mode
 queue.WithOutResultLine().
-      WithOutSummary(true).
+      WithOutSummary().
       WithTasksNumbered(false, "")
 ```
 

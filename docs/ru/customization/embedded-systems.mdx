@@ -40,7 +40,7 @@ export ZIVA_LANG=ru
 queue := ziva.NewQueue("Конфигурация роутера")
 queue.
   WithAppName("RouterSetup").
-  WithOutSummary(true).
+  WithOutSummary().
   WithOutResultLine().
   WithTasksNumbered(false, "")
 ```

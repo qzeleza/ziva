@@ -29,14 +29,14 @@ func main() {
 	ziva.SetDefaultLanguage("ru")
 
 	// Заголовок и краткое описание для TUI
-	header := "Демонстрация всех типов задач Ziva"
+	header := "Демонстрация всех типов задач Жива™"
 
 	// Создаем очередь и добавляем задачи
 	queue := ziva.NewQueue(header)
-	queue.WithAppName("Жива", "v1.0.0")
-	// queue.WithOutResultLine()
-	// queue.WithOutSummary()
-	// queue.WithTasksNumbered(false, "[%d]")
+	queue.WithAppName("Жива™", "v1.0.0")
+	queue.WithOutResultLine()
+	queue.WithOutSummary()
+	queue.WithTasksNumbered(false, "[%d]")
 
 	// Формируем очередь задач
 	const (

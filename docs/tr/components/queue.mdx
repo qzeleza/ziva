@@ -74,7 +74,7 @@ queue.WithTasksNumbered(true, "[%02d]") // '[' karakterini koru
 
 ```go
 // Tamamlanma özetini devre dışı bırak
-queue.WithOutSummary(true)
+queue.WithOutSummary()
 
 // Sonuç ayıraç çizgilerini devre dışı bırak
 queue.WithOutResultLine()
@@ -140,7 +140,7 @@ if err := queue.Run(); err != nil {
 ```go
 queue := ziva.NewQueue("IoT Yapılandırması")
 queue.WithAppName("RouterKurulum").
-      WithOutSummary(true).        // Yer tasarrufu
+      WithOutSummary().        // Yer tasarrufu
       WithOutResultLine().         // Basitleştirilmiş çıktı
       WithTasksNumbered(false, ""). // Numarasız
       WithClearScreen(false)       // Bağlamı koru
@@ -197,7 +197,7 @@ os.Setenv("ZIVA_MEMORY_PRESSURE_THRESHOLD", "100M")
 ```go
 // Basitleştirilmiş görüntü modu
 queue.WithOutResultLine().
-      WithOutSummary(true).
+      WithOutSummary().
       WithTasksNumbered(false, "")
 ```
 

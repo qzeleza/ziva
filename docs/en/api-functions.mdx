@@ -33,6 +33,19 @@ This function:
 - Optimizes settings for embedded systems
 - Configures caching and buffering
 
+### DisableCompletionDelay()
+
+Turns off the default completion delay that keeps the last task on screen for a short moment.
+
+```go
+func init() {
+    // For CI pipelines or scripted runs we don't need the pause
+    ziva.DisableCompletionDelay()
+}
+```
+
+Use it when you prefer immediate transitions between tasks or when running automated tests where every extra millisecond matters.
+
 ### Is64Bit()
 
 Determines system architecture for optimal algorithm selection.

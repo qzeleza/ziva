@@ -127,6 +127,10 @@ type Model struct {
 	resultLineLength        int    // Количество символов "─" в разделительной линии
 }
 
+type selectionSeparatorSetter interface {
+	SetSelectionSeparatorEnabled(bool)
+}
+
 const defauiltNumberFormat = "[%02d]" // формат по умолчанию для отображения номеров задач
 
 // New создает новую модель очереди с заданным заголовком и задачами.
@@ -165,6 +169,10 @@ func (m *Model) AddTasks(tasks []common.Task) {
 
 	// Добавляем все валидные задачи в основной срез m.tasks одним вызовом append.
 	m.tasks = append(m.tasks, validTasks...)
+
+	if len(validTasks) > 0 {
+		m.applySelectionSeparatorFlag(validTasks)
+	}
 }
 
 // WithTasksNumbered включает нумерацию и задаёт формат представления числа в префиксе.
@@ -312,7 +320,16 @@ func (m *Model) WithClearScreen(clear bool) *Model {
 // @param enabled - включить/выключить форматирование
 func (m *Model) WithResultFormatting(enabled bool) *Model {
 	m.resultFormattingEnabled = enabled
+	m.applySelectionSeparatorFlag(m.tasks)
 	return m
+}
+
+func (m *Model) applySelectionSeparatorFlag(tasks []common.Task) {
+	for _, task := range tasks {
+		if setter, ok := task.(selectionSeparatorSetter); ok {
+			setter.SetSelectionSeparatorEnabled(m.resultFormattingEnabled)
+		}
+	}
 }
 
 // SetErrorColor устанавливает цвет для отображения ошибок в очереди.
@@ -512,11 +529,13 @@ func (m *Model) View() string {
 			// 	"  ", ui.VerticalLineSymbol,
 			// 	"\n",
 			// )
-			separator := ""
+			separator := performance.FastConcat(
+				"  ", ui.VerticalLineSymbol,
+				"\n",
+			)
 			if hasHiddenResultLine(m.tasks) {
 				separator = performance.FastConcat(
-					"  ", ui.VerticalLineSymbol,
-					"\n",
+					separator,
 					"  ", ui.VerticalLineSymbol,
 					"\n",
 				)
@@ -546,8 +565,10 @@ func (m *Model) View() string {
 		} else {
 			// Заменяем вертикальные линии перед символами задач ПЕРЕД добавлением финальных элементов
 			removeVerticalLinesBeforeTaskSymbols(&sb)
-			// Если сводка отключена, добавляем только финальную линию
-			// sb.WriteString("\n")
+			// Если сводка отключена, добавляем пустую строку перед финальной линией
+			if sb.Len() > 0 {
+				sb.WriteString("\n")
+			}
 			sb.WriteString(ui.DrawLine(layoutWidth) + "\n")
 		}
 	}

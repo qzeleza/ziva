@@ -17,7 +17,7 @@ Ziva'u üretim sistemlerine entegre ederken bu rehberi kullanın. Yapı, doğrul
 ## Kuyruk yönetimi
 
 - Uzun senaryolarda `WithTasksNumbered(true, "[%02d]")` kullanarak numaralandırma ekleyin; operatörler daha hızlı yön bulur.
-- Son özet gerekmediğinde `WithOutSummary(true)` ile kapatın; aksi hâlde `WithSummaryFunction` ile önemli sonuçları satır içinde gösterin.
+- Son özet gerekmediğinde `WithOutSummary()` ile kapatın; aksi hâlde `WithSummaryFunction` ile önemli sonuçları satır içinde gösterin.
 - Headless ortamlarda (CI, SSH) mutlaka `WithTimeout*()` belirtin ve senaryo için güvenli bir varsayılan değer seçin.
 - Dinamik akışlarda yeni bir `Queue` oluşturun, üretilen görevleri ekleyin ve ana kuyruktan sonra çalıştırın.
 

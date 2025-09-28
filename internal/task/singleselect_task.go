@@ -479,6 +479,8 @@ func (t *SingleSelectTask) View(width int) string {
 		sb.WriteString(titleWithPrefix + "\n")
 	}
 
+	sb.WriteString(renderSelectionSeparator(width, t.showSelectionSeparator))
+
 	// Получаем диапазон видимых элементов с учетом viewport
 	startIdx, endIdx := t.getVisibleRange()
 

@@ -123,12 +123,12 @@ func GetTaskBelowPrefix() string {
 }
 
 // GetCurrentTaskPrefix возвращает префикс для текущей выполняющейся задачи
-// Формат: "   ○ " (отступ + ветка + линия + пробел)
+// Формат: "   ○  " (отступ + символ и два пробела)
 func GetCurrentTaskPrefix() string {
 	return performance.FastConcat(
 		performance.RepeatEfficient(" ", MainLeftIndent),
 		TaskInProgressSymbol,
-		" ",
+		"  ",
 	)
 }
 

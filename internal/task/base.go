@@ -29,6 +29,9 @@ type BaseTask struct {
 	// inProgressPrefix используется очередью для нумерации активных задач
 	inProgressPrefix string
 
+	// Флаг отображения разделительной линии в активных задачах выбора
+	showSelectionSeparator bool
+
 	// Флаг, указывающий, нужно ли сохранять переносы строк в сообщениях об ошибках
 	preserveErrorNewLines bool
 
@@ -41,11 +44,12 @@ type BaseTask struct {
 
 func NewBaseTask(title string) BaseTask {
 	return BaseTask{
-		title:                 title,
-		stopOnError:           true, // По умолчанию останавливаем очередь при ошибке
-		preserveErrorNewLines: true, // По умолчанию сохраняем переносы строк в ошибках - печатаем "как есть".
-		timeoutEnabled:        false,
-		showTimeout:           true, // По умолчанию отображаем оставшееся время
+		title:                  title,
+		stopOnError:            true, // По умолчанию останавливаем очередь при ошибке
+		preserveErrorNewLines:  true, // По умолчанию сохраняем переносы строк в ошибках - печатаем "как есть".
+		timeoutEnabled:         false,
+		showTimeout:            true, // По умолчанию отображаем оставшееся время
+		showSelectionSeparator: true,
 	}
 }
 
@@ -123,6 +127,16 @@ func (t *BaseTask) DisableTimeout() *BaseTask {
 func (t *BaseTask) ShowTimeout(show bool) *BaseTask {
 	t.showTimeout = show
 	return t
+}
+
+// SetSelectionSeparatorEnabled управляет отображением разделительной линии в активных задачах выбора.
+func (t *BaseTask) SetSelectionSeparatorEnabled(enabled bool) {
+	t.showSelectionSeparator = enabled
+}
+
+// SelectionSeparatorEnabled сообщает, активна ли разделительная линия в задачах выбора.
+func (t *BaseTask) SelectionSeparatorEnabled() bool {
+	return t.showSelectionSeparator
 }
 
 // GetRemainingTime возвращает оставшееся время в секундах
