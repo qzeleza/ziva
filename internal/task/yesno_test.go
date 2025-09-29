@@ -1,7 +1,6 @@
 package task
 
 import (
-	"errors"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -57,46 +56,6 @@ func TestYesNoTaskSuccessHandling(t *testing.T) {
 	// Проверяем, что нет ошибки
 	assert.False(t, task.HasError(), "При выборе 'Да' не должно быть ошибки")
 	assert.Nil(t, task.Error(), "Ошибка должна быть nil")
-}
-
-// TestYesNoTaskOnYesHandler проверяет вызов обработчика для ответа "Да"
-func TestYesNoTaskOnYesHandler(t *testing.T) {
-	var called bool
-	task := NewYesNoTask("Тестовый вопрос", "Согласны ли вы?")
-	task.OnYes(func() error {
-		called = true
-		return nil
-	})
-
-	task.Update(tea.KeyMsg{Type: tea.KeyEnter})
-
-	assert.True(t, called, "Обработчик 'Да' должен вызываться")
-	assert.True(t, task.IsDone(), "Задача должна завершиться после выбора")
-	assert.True(t, task.IsYes(), "Опция 'Да' должна быть выбрана")
-	assert.False(t, task.HasError(), "После успешного обработчика не должно быть ошибки")
-	assert.True(t, task.StopOnError(), "Флаг StopOnError должен оставаться по умолчанию")
-}
-
-// TestYesNoTaskOnNoHandlerError проверяет обработку ошибки из обработчика "Нет"
-func TestYesNoTaskOnNoHandlerError(t *testing.T) {
-	var called bool
-	expectedErr := errors.New("custom no error")
-	task := NewYesNoTask("Тестовый вопрос", "Согласны ли вы?")
-	task.OnNo(func() error {
-		called = true
-		return expectedErr
-	})
-
-	task.Update(tea.KeyMsg{Type: tea.KeyDown})
-	task.Update(tea.KeyMsg{Type: tea.KeyEnter})
-
-	assert.True(t, called, "Обработчик 'Нет' должен вызываться")
-	assert.True(t, task.IsDone(), "Задача должна завершиться после выбора")
-	assert.True(t, task.IsNo(), "Опция 'Нет' должна быть выбрана")
-	assert.True(t, task.HasError(), "Ошибка из обработчика должна сохраняться")
-	assert.Equal(t, expectedErr, task.Error(), "Ошибка должна совпадать с возвращенной обработчиком")
-	assert.True(t, task.StopOnError(), "Ошибка обработчика должна останавливать очередь")
-	assert.Contains(t, task.FinalView(80), expectedErr.Error(), "Финальное представление должно содержать текст ошибки")
 }
 
 // TestYesNoTaskCancelHandling проверяет правильность обработки отмены

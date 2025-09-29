@@ -260,32 +260,6 @@ func (t *YesNoTask) WithCustomLabels(yesLabel, noLabel string) *YesNoTask {
 	return t
 }
 
-// OnYes регистрирует функцию, которая будет выполнена при выборе ответа "Да".
-//
-// @param handler Функция, выполняемая при выборе "Да". Может возвращать ошибку для остановки очереди.
-// @return Указатель на задачу для цепочки вызовов
-func (t *YesNoTask) OnYes(handler func() error) *YesNoTask {
-	var cb task.YesNoCallback
-	if handler != nil {
-		cb = task.YesNoCallback(handler)
-	}
-	t.YesNoTask.OnYes(cb)
-	return t
-}
-
-// OnNo регистрирует функцию, которая будет выполнена при выборе ответа "Нет".
-//
-// @param handler Функция, выполняемая при выборе "Нет". Может возвращать ошибку для остановки очереди.
-// @return Указатель на задачу для цепочки вызовов
-func (t *YesNoTask) OnNo(handler func() error) *YesNoTask {
-	var cb task.YesNoCallback
-	if handler != nil {
-		cb = task.YesNoCallback(handler)
-	}
-	t.YesNoTask.OnNo(cb)
-	return t
-}
-
 // GetSelectedOption возвращает выбранную опцию
 //
 // @return Выбранная опция

@@ -461,8 +461,8 @@ func (t *SingleSelectTask) View(width int) string {
 	}
 	var sb strings.Builder
 
-	// Добавляем заголовок задачи с префиксом для активной задачи
-	titlePrefix := ui.GetCurrentTaskPrefix()
+	// Добавляем заголовок задачи с префиксом для активной задачи (учитываем нумерацию)
+	titlePrefix := t.InProgressPrefix()
 
 	// Формируем заголовок с префиксом
 	title := ui.ActiveTitleStyle.Render(t.title)
@@ -479,7 +479,7 @@ func (t *SingleSelectTask) View(width int) string {
 		sb.WriteString(titleWithPrefix + "\n")
 	}
 
-	sb.WriteString(renderSelectionSeparator(width, t.showSelectionSeparator))
+	sb.WriteString(renderSelectionSeparator(width, t.showSelectionSeparator, titlePrefix))
 
 	// Получаем диапазон видимых элементов с учетом viewport
 	startIdx, endIdx := t.getVisibleRange()

@@ -1,30 +1,41 @@
 package task
 
 import (
+	"strings"
+
 	"github.com/charmbracelet/lipgloss"
 	"github.com/qzeleza/ziva/internal/performance"
 	"github.com/qzeleza/ziva/internal/ui"
 )
 
 // renderSelectionSeparator формирует разделитель между заголовком и списком пунктов
-func renderSelectionSeparator(width int, enabled bool) string {
+func renderSelectionSeparator(width int, enabled bool, inProgressPrefix string) string {
 	if !enabled {
 		return ""
 	}
-	// Получаем отступ для результата, в зависимости от включенной нумерации задач
-	additionalIndent := ui.GetResultIndentWhenNumberingEnabled()
-	if len(additionalIndent) >= 2 {
-		// Убираем последние два символа отступа
-		additionalIndent = additionalIndent[:len(additionalIndent)-2]
-	} else {
-		additionalIndent = ""
+	if strings.TrimSpace(inProgressPrefix) == "" {
+		inProgressPrefix = ui.GetCurrentTaskPrefix()
 	}
 
-	// Формируем префикс для разделителя
-	prefix := performance.FastConcat(
+	basePrefix := performance.FastConcat(
 		performance.RepeatEfficient(" ", ui.MainLeftIndent),
 		ui.VerticalLineSymbol,
-		additionalIndent,
+	)
+
+	targetWidth := lipgloss.Width(inProgressPrefix)
+	baseWidth := lipgloss.Width(basePrefix)
+	if targetWidth < baseWidth {
+		targetWidth = baseWidth
+	}
+
+	extraSpaces := targetWidth - baseWidth
+	if extraSpaces < 0 {
+		extraSpaces = 0
+	}
+
+	prefix := performance.FastConcat(
+		basePrefix,
+		performance.RepeatEfficient(" ", extraSpaces),
 	)
 
 	// Вычисляем доступную ширину для горизонтальной линии
