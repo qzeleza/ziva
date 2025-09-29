@@ -7,7 +7,6 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/qzeleza/ziva/internal/defaults"
-	"github.com/qzeleza/ziva/internal/performance"
 	"github.com/qzeleza/ziva/internal/ui"
 )
 
