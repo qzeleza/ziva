@@ -1009,7 +1009,6 @@ func (t *MultiSelectTask) FinalView(width int) string {
 				result += ui.DrawSummaryLine(value)
 			}
 		}
-		result += performance.RepeatEfficient(" ", ui.MainLeftIndent) + ui.VerticalLineSymbol
 	}
 
 	return result

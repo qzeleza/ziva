@@ -204,8 +204,7 @@ func (t *YesNoTask) FinalView(width int) string {
 	var result string
 	// Если задача завершилась успешно и есть дополнительные строки для вывода
 	if t.showResultLine && t.icon == ui.IconDone && len(t.items) > 0 && t.cursor >= 0 && t.cursor < len(t.items) {
-		result = "\n" + ui.DrawSummaryLine(t.items[t.cursor].displayName()) +
-			performance.RepeatEfficient(" ", ui.MainLeftIndent) + ui.VerticalLineSymbol
+		result = "\n" + ui.DrawSummaryLine(t.items[t.cursor].displayName())
 	}
 
 	// Выравниваем по ширине макета
