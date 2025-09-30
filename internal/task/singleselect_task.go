@@ -378,7 +378,7 @@ func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			t.done = true
 			t.err = cancelErr
 			t.icon = ui.IconCancelled
-			t.finalValue = ui.GetErrorMessageStyle().Render(cancelErr.Error())
+			t.finalValue = ui.ErrorMessageStyle.Render(cancelErr.Error())
 			t.SetStopOnError(true)
 			return t, nil
 

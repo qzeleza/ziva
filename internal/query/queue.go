@@ -438,6 +438,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // View отображает список задач.
+// @return string - отображаемый список задач
 func (m *Model) View() string {
 
 	// Если очередь завершена, отображаем просто надпись о завершении
@@ -456,17 +457,26 @@ func (m *Model) View() string {
 	sb.WriteString(ui.DrawLine(layoutWidth) + "\n")
 
 	for i, t := range m.tasks {
+		// Если задача завершена, отображаем её с форматированием
 		if i < m.current {
+			// Проверяем, есть ли ошибка в задаче
 			hasError := t.HasError()
+			// Применяем префикс завершённой задачи
 			m.applyCompletedTaskPrefix(t, i, hasError)
 			// Завершенные задачи: отображаем их с форматированием (или без, если отключено)
-			sb.WriteString(m.formatTaskResult(t, layoutWidth) + "\n")
+			sb.WriteString(m.formatTaskResult(t, layoutWidth))
+			// Добавляем префикс для следующей задачи в виде пустой строки с префиксом "  │"
+			sb.WriteString(ui.GetTaskBelowPrefix() + "\n")
+
 		} else if i == m.current {
+			// Если задача не завершена, отображаем её в интерактивном виде
 			hasError := t.HasError()
+			// Если задача завершена, отображаем её с форматированием
 			if t.IsDone() {
 				m.applyCompletedTaskPrefix(t, i, hasError)
 				sb.WriteString(m.formatTaskResult(t, layoutWidth) + "\n")
 			} else {
+				// Если задача не завершена, отображаем её в интерактивном виде
 				m.applyInProgressTaskPrefix(t, i, hasError)
 				// Активная задача: отображаем ее интерактивный вид.
 				// Обрезаем только завершающие символы новой строки, сохраняя ведущие пробелы
@@ -523,29 +533,22 @@ func (m *Model) View() string {
 				summaryStyle = ui.SubtleStyle
 			}
 
-			// Формируем разделитель перед итоговой строкой с учётом задач без строки результата
-			// separator := performance.FastConcat(
-			// 	// "\n",
-			// 	"  ", ui.VerticalLineSymbol,
-			// 	"\n",
+			// Разделяем линию только если есть задачи с результатом
+			var separator string
+			// separator = performance.FastConcat(
+			// 	"  ", ui.VerticalLineSymbol, "\n",
 			// )
-			separator := performance.FastConcat(
-				"  ", ui.VerticalLineSymbol,
-				"\n",
-			)
-			if hasHiddenResultLine(m.tasks) {
-				separator = performance.FastConcat(
-					separator,
-					"  ", ui.VerticalLineSymbol,
-					"\n",
-				)
-			}
+			// // Добавляем разделитель перед итоговой строкой
+			// if hasHiddenResultLine(m.tasks) {
+			// 	separator = performance.FastConcat(
+			// 		separator,
+			// 		"  ", ui.VerticalLineSymbol, "\n",
+			// 	)
+			// }
 
 			// Создаем левую часть футера
 			leftPart := performance.FastConcat(
-				"  ",
-				ui.FinishedLabelStyle.Render(ui.TaskCompletedSymbol),
-				"  ",
+				"  ", ui.FinishedLabelStyle.Render(ui.TaskCompletedSymbol), "  ",
 				summaryStyle.Render(leftSummary), "  ",
 			)
 
@@ -566,9 +569,9 @@ func (m *Model) View() string {
 			// Заменяем вертикальные линии перед символами задач ПЕРЕД добавлением финальных элементов
 			removeVerticalLinesBeforeTaskSymbols(&sb)
 			// Если сводка отключена, добавляем пустую строку перед финальной линией
-			if sb.Len() > 0 {
-				sb.WriteString("\n")
-			}
+			// if sb.Len() > 0 {
+			sb.WriteString("\n")
+			// }
 			sb.WriteString(ui.DrawLine(layoutWidth) + "\n")
 		}
 	}
@@ -577,6 +580,9 @@ func (m *Model) View() string {
 }
 
 // applyCompletedTaskPrefix настраивает префикс завершённой задачи в зависимости от параметров модели
+// @param task - задача
+// @param index - индекс задачи
+// @param hasError - есть ли ошибка в задаче
 func (m *Model) applyCompletedTaskPrefix(task common.Task, index int, hasError bool) {
 	setter, ok := task.(interface{ SetCompletedPrefix(string) })
 	if !ok {
@@ -603,6 +609,10 @@ func (m *Model) applyCompletedTaskPrefix(task common.Task, index int, hasError b
 	setter.SetCompletedPrefix(buildCompletedPrefix(number, m.numberFormat))
 }
 
+// applyInProgressTaskPrefix настраивает префикс активной задачи в зависимости от параметров модели
+// @param task - задача
+// @param index - индекс задачи
+// @param hasError - есть ли ошибка в задаче
 func (m *Model) applyInProgressTaskPrefix(task common.Task, index int, hasError bool) {
 	setter, ok := task.(interface{ SetInProgressPrefix(string) })
 	if !ok {
@@ -711,7 +721,40 @@ func (m *Model) formatTaskResult(task common.Task, width int) string {
 		}
 	}
 
-	return result.String()
+	finalResult := result.String()
+
+	// При отмене пользователем добавляем строку с префиксом "  │" под сообщением
+	shouldAppendCancelPrefix := false
+	cancelIndicators := []string{
+		defaults.TaskCancelledByUser,
+		defaults.ErrorMsgCanceled,
+		defaults.CancelShort,
+	}
+	// Проверяем наличие индикаторов отмены
+	for _, indicator := range cancelIndicators {
+		if indicator != "" && strings.Contains(finalResult, indicator) {
+			shouldAppendCancelPrefix = true
+			break
+		}
+	}
+
+	// Если найден индикатор отмены, добавляем строку с префиксом "  │"
+	if shouldAppendCancelPrefix {
+		prefixOnlyLine := performance.FastConcat(
+			performance.RepeatEfficient(" ", ui.MainLeftIndent),
+			ui.VerticalLineSymbol,
+		)
+		// Если строка уже заканчивается нужным префиксом, оставляем её как есть
+		trimmedNewlines := strings.TrimRight(finalResult, "\n")
+		trimmedSpaces := strings.TrimRight(trimmedNewlines, " ")
+		if !strings.HasSuffix(trimmedSpaces, prefixOnlyLine) {
+			finalResult = performance.FastConcat(trimmedNewlines, "\n", prefixOnlyLine)
+		} else {
+			finalResult = trimmedNewlines
+		}
+	}
+
+	return finalResult
 }
 
 /**

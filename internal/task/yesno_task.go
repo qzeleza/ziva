@@ -112,7 +112,7 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			t.done = true
 			t.err = cancelErr
 			t.icon = ui.IconCancelled
-			t.finalValue = ui.CancelStyle.Render(cancelErr.Error())
+			t.finalValue = ui.ErrorMessageStyle.Render(cancelErr.Error())
 			t.SetStopOnError(true)
 			return t, nil
 		}
@@ -166,6 +166,11 @@ func (t *YesNoTask) FinalView(width int) string {
 		return t.SingleSelectTask.FinalView(width)
 	}
 
+	// Для отмененных задач используем базовое представление, чтобы показать статус "ОТМЕНА"
+	if t.icon == ui.IconCancelled {
+		return t.BaseTask.FinalView(width)
+	}
+
 	// Используем новый префикс завершённой задачи
 	// Успешной считается выбор без ошибок и ("Да" или "Нет", если она не считается ошибкой)
 	success := !t.HasError() && (t.selectedOption == YesOption || !t.noCountsAsError)
@@ -199,10 +204,10 @@ func (t *YesNoTask) FinalView(width int) string {
 		}
 	}
 
-	// Сформируем строку результата
-	var result string
+	// Сформируем отрисовки линии результата
+	result := "\n"
 	// Если задача завершилась успешно и есть дополнительные строки для вывода
-	if t.showResultLine && t.icon == ui.IconDone && len(t.items) > 0 && t.cursor >= 0 && t.cursor < len(t.items) {
+	if t.showResultLine && t.icon == ui.IconDone { // && len(t.items) > 0 && t.cursor >= 0 && t.cursor < len(t.items) {
 		result = "\n" + ui.DrawSummaryLine(t.items[t.cursor].displayName())
 	}
 

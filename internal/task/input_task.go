@@ -333,7 +333,7 @@ func (t *InputTaskNew) handleCancel() (Task, tea.Cmd) {
 	t.SetError(cancelErr)
 	t.done = true
 	t.icon = ui.IconCancelled
-	t.finalValue = ui.CancelStyle.Render(defaults.CancelShort)
+	t.finalValue = ui.ErrorMessageStyle.Render(defaults.CancelShort)
 
 	return t, nil
 }

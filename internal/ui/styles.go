@@ -43,7 +43,7 @@ var (
 // Яркие иконки
 var (
 	IconDone      = lipgloss.NewStyle().SetString("✔").Foreground(ColorBrightGreen).String()          // Галочка (ярко-зелёная)
-	IconError     = lipgloss.NewStyle().SetString("✕").Foreground(ColorBrightYellow).String()         // Крестик (ярко-красный)
+	IconError     = lipgloss.NewStyle().SetString("✕").Foreground(ColorBrightRed).String()            // Крестик (ярко-красный)
 	IconCancelled = lipgloss.NewStyle().SetString("✕").Foreground(ColorBrightYellow).String()         // Отмена (ярко-жёлтый)
 	IconQuestion  = lipgloss.NewStyle().SetString("?").Foreground(ColorBrightGreen).String()          // Вопрос (ярко-жёлтый)
 	IconSelected  = lipgloss.NewStyle().SetString("■").Foreground(ColorBrightGreen).String()          // Галочка выбора (ярко-синий)

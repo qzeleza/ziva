@@ -257,42 +257,134 @@ func (eh *ErrorHandler) classifyError(err error) ErrorType {
 
 	errStr := performance.ToLowerEfficient(err.Error())
 
-	// Проверяем на отмену пользователем
-	if strings.Contains(errStr, "отменено") || strings.Contains(errStr, "canceled") ||
-		strings.Contains(errStr, "cancelled") {
+	// Унифицированная проверка по наборам ключевых слов для всех поддерживаемых языков (ru, en, tr, be, uk)
+	// Используем подстроки/стемы, чтобы охватить разные формы слов и склонения.
+	containsAny := func(s string, subs []string) bool {
+		for _, sub := range subs {
+			if sub != "" && strings.Contains(s, sub) {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Отмена пользователем
+	cancelWords := []string{
+		// ru
+		"отмен", "отмена",
+		// en
+		"canceled", "cancelled", "cancel",
+		// uk
+		"скас",
+		// be
+		"адмен",
+		// tr
+		"iptal",
+	}
+	if containsAny(errStr, cancelWords) {
 		return ErrorTypeUserCancel
 	}
 
-	// Проверяем на валидацию
-	if strings.Contains(errStr, "валидация") || strings.Contains(errStr, "validation") ||
-		strings.Contains(errStr, "некорректн") || strings.Contains(errStr, "неправильн") ||
-		strings.Contains(errStr, "должен содержать") {
+	// Ошибки валидации
+	validationWords := []string{
+		// ru
+		"валидац", "некоррект", "неправиль", "должен", "обязательн",
+		// en
+		"validat", "invalid", "must contain", "must be", "required", "should",
+		// uk
+		"валідац", "некорект", "повинен", "має містити", "має бути",
+		// be
+		"валідац", "некарэкт", "павін", "змяшчаць",
+		// tr
+		"doğrula", "dogrula", "geçersiz", "gecersiz", "içermelidir", "icermelidir", "olmalıdır", "olmalidir",
+	}
+	if containsAny(errStr, validationWords) {
 		return ErrorTypeValidation
 	}
 
-	// Проверяем на таймаут
-	if strings.Contains(errStr, "timeout") || strings.Contains(errStr, "таймаут") ||
-		strings.Contains(errStr, "deadline exceeded") {
+	// Таймаут
+	timeoutWords := []string{
+		// en
+		"timeout", "deadline exceeded", "timed out",
+		// ru
+		"таймаут",
+		// uk
+		"тайм-аут",
+		// be
+		"таймаўт",
+		// tr
+		"zaman aş", "zaman asim",
+	}
+	if containsAny(errStr, timeoutWords) {
 		return ErrorTypeTimeout
 	}
 
-	// Проверяем на сетевые ошибки
-	if strings.Contains(errStr, "network") || strings.Contains(errStr, "connection") ||
-		strings.Contains(errStr, "сеть") || strings.Contains(errStr, "соединение") {
+	// Сетевые ошибки
+	networkWords := []string{
+		// en
+		"network", "connection", "connect",
+		// ru
+		"сеть", "соединен", "подключен",
+		// uk
+		"мереж", "з'єднан", "зєднан",
+		// be
+		"сетк", "злучен",
+		// tr
+		"ağ", "ag", "bağlant", "baglant",
+	}
+	if containsAny(errStr, networkWords) {
 		return ErrorTypeNetwork
 	}
 
-	// Проверяем на файловые ошибки
-	if strings.Contains(errStr, "file") || strings.Contains(errStr, "directory") ||
-		strings.Contains(errStr, "path") || strings.Contains(errStr, "файл") {
+	// Ошибки файловой системы
+	fileWords := []string{
+		// en
+		"file", "directory", "path", "not found", "no such file",
+		// ru
+		"файл", "каталог", "директори", "путь", "не найден", "нет такого файла",
+		// uk
+		"файл", "каталог", "шлях", "не знайден",
+		// be
+		"файл", "каталог", "дырэктор", "шлях", "не знойдзен",
+		// tr
+		"dosya", "dizin", "yol", "bulunamad",
+	}
+	if containsAny(errStr, fileWords) {
 		return ErrorTypeFileSystem
 	}
 
-	// Проверяем на ошибки прав доступа
-	if strings.Contains(errStr, "permission") || strings.Contains(errStr, "access") ||
-		strings.Contains(errStr, "forbidden") || strings.Contains(errStr, "unauthorized") ||
-		strings.Contains(errStr, "права") || strings.Contains(errStr, "доступ") {
+	// Ошибки прав доступа
+	permissionWords := []string{
+		// en
+		"permission", "access", "forbidden", "unauthorized", "denied",
+		// ru
+		"права", "доступ", "запрещено", "отказано",
+		// uk
+		"доступ", "заборонено", "відмовлено", "прав",
+		// be
+		"даступ", "забаронена", "адмоўлена", "прав",
+		// tr
+		"izin", "erişim", "yasak", "yetkisiz", "reddedildi",
+	}
+	if containsAny(errStr, permissionWords) {
 		return ErrorTypePermission
+	}
+
+	// Ошибки конфигурации
+	configWords := []string{
+		// en
+		"config", "configuration",
+		// ru
+		"настройк", "конфиг",
+		// uk
+		"конфіг",
+		// be
+		"канфіг",
+		// tr
+		"yapılandır", "yapilandir",
+	}
+	if containsAny(errStr, configWords) {
+		return ErrorTypeConfiguration
 	}
 
 	// По умолчанию - неизвестная ошибка

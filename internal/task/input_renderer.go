@@ -48,7 +48,7 @@ func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, val
 	}
 
 	// Формируем заголовок с префиксом
-	titleWithPrefix := fmt.Sprintf("%s%s", prefix, ui.ActiveTaskStyle.Render(title))
+	titleWithPrefix := fmt.Sprintf("%s %s", prefix, ui.ActiveTaskStyle.Render(title))
 
 	// Если передан таймер, выравниваем его справа
 	var titleView string
@@ -136,10 +136,41 @@ func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, val
 func (r *InputRenderer) RenderFinal(title string, value string, hasError bool, err error, prefix string, width int) string {
 	var statusStyle lipgloss.Style
 	var valueToShow string
+	commentLines := make([]string, 0, 2)
+	defaultIndent := ui.GetResultIndentWhenNumberingEnabled()
 
+	buildCommentLine := func(indent, text string) string {
+		return performance.FastConcat(
+			performance.RepeatEfficient(" ", ui.MainLeftIndent),
+			ui.VerticalLineSymbol,
+			indent,
+			text,
+		)
+	}
+
+	// Если есть ошибка
 	if hasError {
 		statusStyle = ui.GetErrorStatusStyle()
-		valueToShow = err.Error()
+		if err != nil {
+			valueToShow = err.Error()
+		} else {
+			valueToShow = defaults.DefaultErrorLabel
+		}
+
+		if taskErr, ok := err.(*terrors.TaskError); ok && taskErr.Type == terrors.ErrorTypeUserCancel {
+			statusStyle = ui.ErrorMessageStyle
+			valueToShow = defaults.ErrorTypeUserCancel
+
+			cancelMessage := defaults.ErrorMsgCanceled
+			if taskErr.Err != nil {
+				// Используем текст исходной ошибки, если он отличается от стандартного
+				if msg := strings.TrimSpace(taskErr.Err.Error()); msg != "" {
+					cancelMessage = msg
+				}
+			}
+			cancelIndent := "   "
+			commentLines = append(commentLines, buildCommentLine(cancelIndent, ui.ErrorMessageStyle.Render(cancelMessage)))
+		}
 	} else {
 		statusStyle = ui.TaskStatusSuccessStyle
 		valueToShow = strings.ToUpper(defaults.DefaultSuccessLabel)
@@ -157,15 +188,40 @@ func (r *InputRenderer) RenderFinal(title string, value string, hasError bool, e
 	leftPart := fmt.Sprintf("%s  %s", prefix, title)
 	rightPart := statusStyle.Render(valueToShow)
 
-	result := ui.AlignTextToRight(leftPart, rightPart, width)
-	result += "\n" + ui.GetCommentPrefix(value)
-	return result
+	if value != "" {
+		commentLines = append(commentLines, buildCommentLine(defaultIndent, ui.SubtleStyle.Render(value)))
+	}
+
+	var resultBuilder strings.Builder
+	resultBuilder.WriteString(ui.AlignTextToRight(leftPart, rightPart, width))
+	if len(commentLines) > 0 {
+		resultBuilder.WriteString("\n")
+		for i, line := range commentLines {
+			if i > 0 {
+				resultBuilder.WriteString("\n")
+			}
+			resultBuilder.WriteString(line)
+		}
+		resultBuilder.WriteString("\n")
+	}
+	return resultBuilder.String()
 }
 
 // looksLikePassword определяет, является ли поле паролем по заголовку
 func (r *InputRenderer) looksLikePassword(title, value string) bool {
 	lowerTitle := strings.ToLower(title)
-	passwordKeywords := []string{"пароль", "password", "pass", "pwd", "ключ", "key"}
+	// Переводы и общеупотребимые варианты на поддерживаемых языках (ru, en, tr, be, uk):
+	// ru/be/uk: "пароль", "ключ"
+	// en:       "password", "pass", "pwd", "key"
+	// tr:       "şifre", "sifre", "parola", "anahtar"
+	passwordKeywords := []string{
+		// ru / be / uk
+		"пароль", "ключ",
+		// en
+		"password", "pass", "pwd", "key",
+		// tr
+		"şifre", "sifre", "parola", "anahtar",
+	}
 
 	for _, keyword := range passwordKeywords {
 		if strings.Contains(lowerTitle, keyword) {

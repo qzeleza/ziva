@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/qzeleza/ziva"
+	"github.com/qzeleza/ziva/internal/task"
 )
 
 // pingResult представляет результат проверки подключения
@@ -35,7 +36,7 @@ func main() {
 	queue := ziva.NewQueue(header)
 	queue.WithAppName("Жива™", "v1.0.0")
 	// queue.WithOutResultLine()
-	queue.WithOutSummary()
+	// queue.WithOutSummary()
 	queue.WithTasksNumbered(false, "[%d]")
 
 	// Формируем очередь задач
@@ -111,22 +112,14 @@ func main() {
 
 	// 3) Ввод с использованием всех стандартных валидаторов
 	//    Валидация будет происходить в момент подтверждения (Enter)
-	// v := ziva.DefaultValidators
+	v := ziva.DefaultValidators
 
 	// inPath := task.NewInputTaskNew("Путь к файлу/директории", "Введите путь:").
 	// 	WithValidator(v.Path())
 
-	queue.AddTasks(
-		ss,
-		// inUsername,
-		ms1,
-		// ms2,
-		// inPath,
-	)
-
 	// 4) Задача-выполнение функции (FuncTask)
 	//    Выполняет полезную работу и выводит результат в финальном представлении задачи (без fmt.Print)
-	errorTaskRun := false
+	errorTaskRun := true
 	var fn *ziva.FuncTask
 	if errorTaskRun {
 		data := pingResult{}
@@ -144,16 +137,27 @@ func main() {
 				}
 			}),
 			// Не останавливать очередь при ошибке (для демонстрации поведения)
-			ziva.WithStopOnError(true),
+			ziva.WithStopOnError(false),
 		)
-		queue.AddTasks(fn)
+		// queue.AddTasks(fn)
 	}
 	// 5) Подтверждение Да/Нет (например, для сохранения настроек)
 	// Используем языко-независимый метод вместо строки "Да"
 	ys := ziva.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").
-		WithTimeoutYes(2 * time.Second).
-		WithoutResultLine()
-	// WithNoAsError()
+		WithTimeoutYes(2 * time.Second)
+	ys.WithoutResultLine()
+	ys.WithNoAsError()
+
+	inRequired := task.NewInputTaskNew("Обязательное поле", "Нельзя оставлять пустым:").
+		WithValidator(v.Required())
+
+	queue.AddTasks(
+		ss,
+		ms1,
+		ys,
+		fn,
+		inRequired,
+	)
 
 	// inUsername := ziva.NewInputTask("Имя пользователя", "Введите username:").
 	// 	WithValidator(v.Username()).
@@ -205,18 +209,16 @@ func main() {
 	// inStrongPwd := task.NewInputTaskNew("Пароль (сильный)", "Введите пароль (>=12):").
 	// 	WithInputType(task.InputTypePassword).WithValidator(v.StrongPassword())
 
-	// inRequired := task.NewInputTaskNew("Обязательное поле", "Нельзя оставлять пустым:").
-	// 	WithValidator(v.Required())
-
-	queue.AddTasks(
-
-		//  inEmail, inOptionalEmail,
-		// inPath, inURL, inPort, inRange,
-		// inIPv4, inIPv6, inIPAny, inDomain,
-		// inAlphaNum, inMinLen, inMaxLen, inExactLen,
-		// inStdPwd, inStrongPwd, inRequired,
-		ys,
-	)
+	// queue.AddTasks(
+	// 	ss, ms1,
+	// 	//  inEmail, inOptionalEmail,
+	// 	// inPath, inURL, inPort, inRange,
+	// 	// inIPv4, inIPv6, inIPAny, inDomain,
+	// 	// inAlphaNum, inMinLen, inMaxLen, inExactLen,
+	// 	// inStdPwd, inStrongPwd,
+	// 	ys,
+	// 	inRequired,
+	// )
 
 	// Запускаем TUI c очередью задач. Результаты отображаются внутри интерфейса;
 	// дополнительный вывод через fmt.Print не используется.

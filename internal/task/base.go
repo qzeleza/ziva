@@ -260,11 +260,28 @@ func (t *BaseTask) FinalView(width int) string {
 		}
 
 		left := fmt.Sprintf("%s  %s", prefix, styledTitle)
-		// right := ui.SelectionStyle.Render(t.finalValue)
-		ready := strings.ToUpper(defaults.DefaultSuccessLabel)
-		right := ui.TaskStatusSuccessStyle.Render(ready)
-		//
-		return ui.AlignTextToRight(left, right, width)
+		statusLabel := strings.ToUpper(defaults.DefaultSuccessLabel)
+		statusStyle := ui.TaskStatusSuccessStyle
+		if t.icon == ui.IconCancelled {
+			statusLabel = defaults.ErrorTypeUserCancel
+			statusStyle = ui.ErrorMessageStyle
+		} else if !success {
+			statusLabel = defaults.TaskStatusError
+			statusStyle = ui.GetErrorStatusStyle()
+		}
+
+		right := statusStyle.Render(statusLabel)
+		result := ui.AlignTextToRight(left, right, width)
+
+		if t.icon == ui.IconCancelled {
+			trimmedValue := strings.TrimSpace(t.finalValue)
+			if trimmedValue != "" {
+				valueLine := strings.Repeat(" ", ui.MainLeftIndent) + ui.VerticalLineSymbol + ui.GetResultIndentWhenNumberingEnabled() + trimmedValue
+				result = result + "\n" + valueLine
+			}
+		}
+
+		return result
 	}
 
 	// Если finalValue уже содержит полное форматирование, возвращаем как есть

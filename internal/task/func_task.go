@@ -224,7 +224,9 @@ func (t *FuncTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			// Помечаем задачу как выполненную с отменой
 			t.done = true
 			t.icon = ui.IconCancelled
-			t.finalValue = fmt.Sprintf("  %s  %s %s", ui.IconCancelled, t.title, defaults.TaskCancelledByUser)
+			cancelErr := fmt.Errorf(defaults.ErrorMsgCanceled)
+			t.SetError(cancelErr)
+			t.finalValue = ui.ErrorMessageStyle.Render(cancelErr.Error())
 			return t, nil
 		}
 	}
@@ -270,8 +272,9 @@ func (t *FuncTask) FinalView(width int) string {
 	if t.icon == ui.IconDone && len(t.summaryLines) > 0 {
 		result += t.drawSummaryLines(width)
 	} else {
+		// Если задача завершилась с ошибкой
 		// Добавляем перенос строки, если есть дополнительные строки под заголовком
-		result += "\n" + ui.GetTaskBelowPrefix()
+		result += "\n"
 	}
 
 	return result
@@ -291,10 +294,10 @@ func (t *FuncTask) drawSummaryLines(width int) string {
 	}
 
 	// Добавляем нижнюю разделительную линию
-	result += performance.FastConcat(
-		performance.RepeatEfficient(" ", ui.MainLeftIndent),
-		ui.VerticalLineSymbol,
-	)
+	// result += performance.FastConcat(
+	// 	performance.RepeatEfficient(" ", ui.MainLeftIndent),
+	// 	ui.VerticalLineSymbol,
+	// )
 
 	return result
 }
