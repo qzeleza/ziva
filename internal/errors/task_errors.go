@@ -4,10 +4,10 @@ package errors
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/qzeleza/ziva/internal/defaults"
+	"github.com/qzeleza/ziva/internal/localization"
 	"github.com/qzeleza/ziva/internal/performance"
 )
 
@@ -250,145 +250,23 @@ func (eh *ErrorHandler) Handle(taskTitle string, err error) *TaskError {
 }
 
 // classifyError определяет тип ошибки по её содержанию
+// Использует централизованный реестр паттернов из пакета localization
 func (eh *ErrorHandler) classifyError(err error) ErrorType {
 	if err == nil {
 		return ErrorTypeUnknown
 	}
 
-	errStr := performance.ToLowerEfficient(err.Error())
+	// Используем централизованную классификацию из пакета localization
+	// Это позволяет управлять всеми паттернами ошибок в одном месте
+	return classifyErrorFromRegistry(err)
+}
 
-	// Унифицированная проверка по наборам ключевых слов для всех поддерживаемых языков (ru, en, tr, be, uk)
-	// Используем подстроки/стемы, чтобы охватить разные формы слов и склонения.
-	containsAny := func(s string, subs []string) bool {
-		for _, sub := range subs {
-			if sub != "" && strings.Contains(s, sub) {
-				return true
-			}
-		}
-		return false
-	}
-
-	// Отмена пользователем
-	cancelWords := []string{
-		// ru
-		"отмен", "отмена",
-		// en
-		"canceled", "cancelled", "cancel",
-		// uk
-		"скас",
-		// be
-		"адмен",
-		// tr
-		"iptal",
-	}
-	if containsAny(errStr, cancelWords) {
-		return ErrorTypeUserCancel
-	}
-
-	// Ошибки валидации
-	validationWords := []string{
-		// ru
-		"валидац", "некоррект", "неправиль", "должен", "обязательн",
-		// en
-		"validat", "invalid", "must contain", "must be", "required", "should",
-		// uk
-		"валідац", "некорект", "повинен", "має містити", "має бути",
-		// be
-		"валідац", "некарэкт", "павін", "змяшчаць",
-		// tr
-		"doğrula", "dogrula", "geçersiz", "gecersiz", "içermelidir", "icermelidir", "olmalıdır", "olmalidir",
-	}
-	if containsAny(errStr, validationWords) {
-		return ErrorTypeValidation
-	}
-
-	// Таймаут
-	timeoutWords := []string{
-		// en
-		"timeout", "deadline exceeded", "timed out",
-		// ru
-		"таймаут",
-		// uk
-		"тайм-аут",
-		// be
-		"таймаўт",
-		// tr
-		"zaman aş", "zaman asim",
-	}
-	if containsAny(errStr, timeoutWords) {
-		return ErrorTypeTimeout
-	}
-
-	// Сетевые ошибки
-	networkWords := []string{
-		// en
-		"network", "connection", "connect",
-		// ru
-		"сеть", "соединен", "подключен",
-		// uk
-		"мереж", "з'єднан", "зєднан",
-		// be
-		"сетк", "злучен",
-		// tr
-		"ağ", "ag", "bağlant", "baglant",
-	}
-	if containsAny(errStr, networkWords) {
-		return ErrorTypeNetwork
-	}
-
-	// Ошибки файловой системы
-	fileWords := []string{
-		// en
-		"file", "directory", "path", "not found", "no such file",
-		// ru
-		"файл", "каталог", "директори", "путь", "не найден", "нет такого файла",
-		// uk
-		"файл", "каталог", "шлях", "не знайден",
-		// be
-		"файл", "каталог", "дырэктор", "шлях", "не знойдзен",
-		// tr
-		"dosya", "dizin", "yol", "bulunamad",
-	}
-	if containsAny(errStr, fileWords) {
-		return ErrorTypeFileSystem
-	}
-
-	// Ошибки прав доступа
-	permissionWords := []string{
-		// en
-		"permission", "access", "forbidden", "unauthorized", "denied",
-		// ru
-		"права", "доступ", "запрещено", "отказано",
-		// uk
-		"доступ", "заборонено", "відмовлено", "прав",
-		// be
-		"даступ", "забаронена", "адмоўлена", "прав",
-		// tr
-		"izin", "erişim", "yasak", "yetkisiz", "reddedildi",
-	}
-	if containsAny(errStr, permissionWords) {
-		return ErrorTypePermission
-	}
-
-	// Ошибки конфигурации
-	configWords := []string{
-		// en
-		"config", "configuration",
-		// ru
-		"настройк", "конфиг",
-		// uk
-		"конфіг",
-		// be
-		"канфіг",
-		// tr
-		"yapılandır", "yapilandir",
-	}
-	if containsAny(errStr, configWords) {
-		return ErrorTypeConfiguration
-	}
-
-	// По умолчанию - неизвестная ошибка
-	return ErrorTypeUnknown
+// classifyErrorFromRegistry использует централизованный реестр паттернов
+// для классификации ошибок на основе текущего языка
+func classifyErrorFromRegistry(err error) ErrorType {
+	// Конвертируем тип из localization в errors.ErrorType
+	localType := localization.ClassifyError(err)
+	return ErrorType(localType)
 }
 
 // FormatForUser возвращает отформатированное для пользователя сообщение об ошибке

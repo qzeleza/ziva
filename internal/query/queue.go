@@ -461,10 +461,11 @@ func (m *Model) View() string {
 		if i < m.current {
 			// Проверяем, есть ли ошибка в задаче
 			hasError := t.HasError()
+			stripPrefixes := !m.showSummary && i == m.current-1 && m.current > 0
 			// Применяем префикс завершённой задачи
 			m.applyCompletedTaskPrefix(t, i, hasError)
 			// Завершенные задачи: отображаем их с форматированием (или без, если отключено)
-			sb.WriteString(m.formatTaskResult(t, layoutWidth))
+			sb.WriteString(m.formatTaskResult(t, layoutWidth, stripPrefixes))
 			// Добавляем префикс для следующей задачи в виде пустой строки с префиксом "  │"
 			sb.WriteString(ui.GetTaskBelowPrefix() + "\n")
 
@@ -473,8 +474,9 @@ func (m *Model) View() string {
 			hasError := t.HasError()
 			// Если задача завершена, отображаем её с форматированием
 			if t.IsDone() {
+				stripPrefixes := !m.showSummary && i == len(m.tasks)-1
 				m.applyCompletedTaskPrefix(t, i, hasError)
-				sb.WriteString(m.formatTaskResult(t, layoutWidth) + "\n")
+				sb.WriteString(m.formatTaskResult(t, layoutWidth, stripPrefixes) + "\n")
 			} else {
 				// Если задача не завершена, отображаем её в интерактивном виде
 				m.applyInProgressTaskPrefix(t, i, hasError)
@@ -566,6 +568,8 @@ func (m *Model) View() string {
 			)
 			sb.WriteString(footer)
 		} else {
+			// Убираем висящий префикс вертикальной линии перед пустой строкой
+			removeTrailingTaskBelowPrefix(&sb)
 			// Заменяем вертикальные линии перед символами задач ПЕРЕД добавлением финальных элементов
 			removeVerticalLinesBeforeTaskSymbols(&sb)
 			// Если сводка отключена, добавляем пустую строку перед финальной линией
@@ -666,10 +670,15 @@ func (m *Model) calculateResultLinePrefix() string {
 
 // formatTaskResult форматирует результат задачи с разделительной линией
 // Создает линию из префикса и символов "─", затем выводит результат задачи с новой строки
-func (m *Model) formatTaskResult(task common.Task, width int) string {
+// stripVerticalPrefixes управляет заменой вертикальной линии на пробел для последнего блока без сводки
+func (m *Model) formatTaskResult(task common.Task, width int, stripVerticalPrefixes bool) string {
 	if !m.resultFormattingEnabled {
 		// Если форматирование отключено, возвращаем обычное представление
-		return task.FinalView(width)
+		view := task.FinalView(width)
+		if stripVerticalPrefixes {
+			return stripResultPrefixes(view)
+		}
+		return view
 	}
 
 	var result strings.Builder
@@ -752,6 +761,10 @@ func (m *Model) formatTaskResult(task common.Task, width int) string {
 		} else {
 			finalResult = trimmedNewlines
 		}
+	}
+
+	if stripVerticalPrefixes {
+		finalResult = stripResultPrefixes(finalResult)
 	}
 
 	return finalResult
@@ -850,6 +863,43 @@ func removeDuplicateLines(sb *strings.Builder) {
 			}
 		}
 	}
+}
+
+// removeTrailingTaskBelowPrefix убирает последнюю строку, состоящую только из префикса вертикальной линии
+// Это необходимо когда итоговая сводка отключена и перед финальной линией должна быть пустая строка
+func removeTrailingTaskBelowPrefix(sb *strings.Builder) {
+	if sb == nil {
+		return
+	}
+
+	content := sb.String()
+	suffix := ui.GetTaskBelowPrefix() + "\n"
+	if strings.HasSuffix(content, suffix) {
+		sb.Reset()
+		sb.WriteString(content[:len(content)-len(suffix)])
+	}
+}
+
+// stripResultPrefixes заменяет вертикальную линию на пробел в строках результатов
+// Используется для последнего блока при отключенной сводке, чтобы не рисовать хвост линии
+func stripResultPrefixes(block string) string {
+	if block == "" {
+		return block
+	}
+
+	lines := strings.Split(block, "\n")
+	for i := 1; i < len(lines); i++ {
+		lines[i] = replaceFirstVerticalSymbol(lines[i])
+	}
+	return strings.Join(lines, "\n")
+}
+
+func replaceFirstVerticalSymbol(line string) string {
+	idx := strings.Index(line, ui.VerticalLineSymbol)
+	if idx == -1 {
+		return line
+	}
+	return performance.FastConcat(line[:idx], " ", line[idx+len(ui.VerticalLineSymbol):])
 }
 
 // removeVerticalLinesBeforeTaskSymbols убирает вертикальные линии, ведущие к последнему (самому нижнему)

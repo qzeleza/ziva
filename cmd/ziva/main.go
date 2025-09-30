@@ -32,13 +32,6 @@ func main() {
 	// Заголовок и краткое описание для TUI
 	header := "Демонстрация всех типов задач Жива™"
 
-	// Создаем очередь и добавляем задачи
-	queue := ziva.NewQueue(header)
-	queue.WithAppName("Жива™", "v1.0.0")
-	// queue.WithOutResultLine()
-	// queue.WithOutSummary()
-	queue.WithTasksNumbered(false, "[%d]")
-
 	// Формируем очередь задач
 	const (
 		componentCLI        = "cli"
@@ -87,6 +80,14 @@ func main() {
 		{Key: envCancel, Name: "отмена", Description: "Отмена выбора"},
 		{Key: envExit, Name: "выход", Description: "Выход из программы"},
 	}
+
+	// Создаем очередь и добавляем задачи
+	queue := ziva.NewQueue(header)
+	queue.WithAppName("Жива™", "v1.0.0")
+	// queue.WithOutResultLine()
+	// queue.WithOutSummary()
+	queue.WithTasksNumbered(false, "[%d]")
+
 	// 1) Задачи мультивыбора (без и с пунктом "Выбрать все")
 	//    Пример без "Выбрать все"
 	ms1 := ziva.NewMultiSelectTask("Выберите компоненты установки", msel).
@@ -152,11 +153,12 @@ func main() {
 		WithValidator(v.Required())
 
 	queue.AddTasks(
-		ss,
 		ms1,
 		ys,
 		fn,
 		inRequired,
+
+		ss,
 	)
 
 	// inUsername := ziva.NewInputTask("Имя пользователя", "Введите username:").
