@@ -456,12 +456,14 @@ func (m *Model) View() string {
 	sb.WriteString(m.setTitle(layoutWidth))
 	sb.WriteString(ui.DrawLine(layoutWidth) + "\n")
 
+	allTasksCompleted := m.current >= len(m.tasks)
+	lastTaskIndex := len(m.tasks) - 1
 	for i, t := range m.tasks {
 		// Если задача завершена, отображаем её с форматированием
 		if i < m.current {
 			// Проверяем, есть ли ошибка в задаче
 			hasError := t.HasError()
-			stripPrefixes := !m.showSummary && i == m.current-1 && m.current > 0
+			stripPrefixes := !m.showSummary && allTasksCompleted && lastTaskIndex >= 0 && i == lastTaskIndex
 			// Применяем префикс завершённой задачи
 			m.applyCompletedTaskPrefix(t, i, hasError)
 			// Завершенные задачи: отображаем их с форматированием (или без, если отключено)
@@ -474,7 +476,7 @@ func (m *Model) View() string {
 			hasError := t.HasError()
 			// Если задача завершена, отображаем её с форматированием
 			if t.IsDone() {
-				stripPrefixes := !m.showSummary && i == len(m.tasks)-1
+				stripPrefixes := !m.showSummary && allTasksCompleted && lastTaskIndex >= 0 && i == lastTaskIndex
 				m.applyCompletedTaskPrefix(t, i, hasError)
 				sb.WriteString(m.formatTaskResult(t, layoutWidth, stripPrefixes) + "\n")
 			} else {
@@ -888,7 +890,7 @@ func stripResultPrefixes(block string) string {
 	}
 
 	lines := strings.Split(block, "\n")
-	for i := 1; i < len(lines); i++ {
+	for i := 1; i < len(lines)-1; i++ {
 		lines[i] = replaceFirstVerticalSymbol(lines[i])
 	}
 	return strings.Join(lines, "\n")
@@ -899,7 +901,7 @@ func replaceFirstVerticalSymbol(line string) string {
 	if idx == -1 {
 		return line
 	}
-	return performance.FastConcat(line[:idx], " ", line[idx+len(ui.VerticalLineSymbol):])
+	return performance.FastConcat(line[:idx], line[idx+len(ui.VerticalLineSymbol):])
 }
 
 // removeVerticalLinesBeforeTaskSymbols убирает вертикальные линии, ведущие к последнему (самому нижнему)
