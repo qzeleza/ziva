@@ -460,20 +460,12 @@ func (m *Model) View() string {
 			hasError := t.HasError()
 			m.applyCompletedTaskPrefix(t, i, hasError)
 			// Завершенные задачи: отображаем их с форматированием (или без, если отключено)
-			sb.WriteString(m.formatTaskResult(t, layoutWidth))
-			// Добавляем строку с префиксом │ после каждой завершённой задачи
-			if i < len(m.tasks)-1 {
-				sb.WriteString(ui.GetTaskBelowPrefix() + "\n")
-			}
+			sb.WriteString(m.formatTaskResult(t, layoutWidth) + "\n")
 		} else if i == m.current {
 			hasError := t.HasError()
 			if t.IsDone() {
 				m.applyCompletedTaskPrefix(t, i, hasError)
-				sb.WriteString(m.formatTaskResult(t, layoutWidth))
-				// Добавляем строку с префиксом │ после каждой завершённой задачи
-				if i < len(m.tasks)-1 {
-					sb.WriteString(ui.GetTaskBelowPrefix() + "\n")
-				}
+				sb.WriteString(m.formatTaskResult(t, layoutWidth) + "\n")
 			} else {
 				m.applyInProgressTaskPrefix(t, i, hasError)
 				// Активная задача: отображаем ее интерактивный вид.
@@ -530,15 +522,22 @@ func (m *Model) View() string {
 			default:
 				summaryStyle = ui.SubtleStyle
 			}
-			// Рисуем разделитель
+
+			// Формируем разделитель перед итоговой строкой с учётом задач без строки результата
+			// separator := performance.FastConcat(
+			// 	// "\n",
+			// 	"  ", ui.VerticalLineSymbol,
+			// 	"\n",
+			// )
 			separator := performance.FastConcat(
-				"  ", ui.VerticalLineSymbol, "\n",
+				"  ", ui.VerticalLineSymbol,
+				"\n",
 			)
-			// если разделительная линия не выводится, добавляем вертикальный символ перед футером
 			if hasHiddenResultLine(m.tasks) {
 				separator = performance.FastConcat(
 					separator,
-					"  ", ui.VerticalLineSymbol, "\n",
+					"  ", ui.VerticalLineSymbol,
+					"\n",
 				)
 			}
 
@@ -559,16 +558,17 @@ func (m *Model) View() string {
 				separator,
 				footerLine,
 				"\n\n",
-				ui.DrawLine(layoutWidth), "\n",
+				ui.DrawLine(layoutWidth),
+				"\n",
 			)
 			sb.WriteString(footer)
 		} else {
-			// если флаг showSummary НЕ включен
 			// Заменяем вертикальные линии перед символами задач ПЕРЕД добавлением финальных элементов
 			removeVerticalLinesBeforeTaskSymbols(&sb)
-			// Добавляем пустую строку перед финальной линией
-			sb.WriteString("\n\n")
-			// Добавляем финальную линию
+			// Если сводка отключена, добавляем пустую строку перед финальной линией
+			if sb.Len() > 0 {
+				sb.WriteString("\n")
+			}
 			sb.WriteString(ui.DrawLine(layoutWidth) + "\n")
 		}
 	}

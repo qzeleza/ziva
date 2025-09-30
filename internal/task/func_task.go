@@ -224,7 +224,7 @@ func (t *FuncTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			// Помечаем задачу как выполненную с отменой
 			t.done = true
 			t.icon = ui.IconCancelled
-			t.finalValue = fmt.Sprintf("%s %s %s", ui.IconCancelled, t.title, defaults.TaskCancelledByUser)
+			t.finalValue = fmt.Sprintf("  %s  %s %s", ui.IconCancelled, t.title, defaults.TaskCancelledByUser)
 			return t, nil
 		}
 	}

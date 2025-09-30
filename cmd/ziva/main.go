@@ -34,7 +34,7 @@ func main() {
 	// Создаем очередь и добавляем задачи
 	queue := ziva.NewQueue(header)
 	queue.WithAppName("Жива™", "v1.0.0")
-	queue.WithOutResultLine()
+	// queue.WithOutResultLine()
 	queue.WithOutSummary()
 	queue.WithTasksNumbered(false, "[%d]")
 
