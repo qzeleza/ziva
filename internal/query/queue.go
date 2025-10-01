@@ -456,14 +456,13 @@ func (m *Model) View() string {
 	sb.WriteString(m.setTitle(layoutWidth))
 	sb.WriteString(ui.DrawLine(layoutWidth) + "\n")
 
-	allTasksCompleted := m.current >= len(m.tasks)
 	lastTaskIndex := len(m.tasks) - 1
 	for i, t := range m.tasks {
 		// Если задача завершена, отображаем её с форматированием
 		if i < m.current {
 			// Проверяем, есть ли ошибка в задаче
 			hasError := t.HasError()
-			stripPrefixes := !m.showSummary && allTasksCompleted && lastTaskIndex >= 0 && i == lastTaskIndex
+			stripPrefixes := !m.showSummary && lastTaskIndex >= 0 && i == lastTaskIndex
 			// Применяем префикс завершённой задачи
 			m.applyCompletedTaskPrefix(t, i, hasError)
 			// Завершенные задачи: отображаем их с форматированием (или без, если отключено)
@@ -476,7 +475,7 @@ func (m *Model) View() string {
 			hasError := t.HasError()
 			// Если задача завершена, отображаем её с форматированием
 			if t.IsDone() {
-				stripPrefixes := !m.showSummary && allTasksCompleted && lastTaskIndex >= 0 && i == lastTaskIndex
+				stripPrefixes := !m.showSummary && (i == lastTaskIndex || m.stoppedOnError)
 				m.applyCompletedTaskPrefix(t, i, hasError)
 				sb.WriteString(m.formatTaskResult(t, layoutWidth, stripPrefixes) + "\n")
 			} else {
@@ -574,11 +573,8 @@ func (m *Model) View() string {
 			removeTrailingTaskBelowPrefix(&sb)
 			// Заменяем вертикальные линии перед символами задач ПЕРЕД добавлением финальных элементов
 			removeVerticalLinesBeforeTaskSymbols(&sb)
-			// Если сводка отключена, добавляем пустую строку перед финальной линией
-			// if sb.Len() > 0 {
-			sb.WriteString("\n")
-			// }
-			sb.WriteString(ui.DrawLine(layoutWidth) + "\n")
+			ensureSingleBlankLine(&sb)
+			sb.WriteString(ui.DrawLine(layoutWidth))
 		}
 	}
 
@@ -900,6 +896,17 @@ func ensureTrailingSingleNewline(value string) string {
 	}
 	trimmed := strings.TrimRight(value, "\n")
 	return trimmed + "\n"
+}
+
+func ensureSingleBlankLine(sb *strings.Builder) {
+	if sb == nil {
+		return
+	}
+	content := sb.String()
+	trimmed := strings.TrimRight(content, "\n")
+	sb.Reset()
+	sb.WriteString(trimmed)
+	sb.WriteString("\n\n")
 }
 
 // removeVerticalLinesBeforeTaskSymbols убирает вертикальные линии, ведущие к последнему (самому нижнему)

@@ -3,9 +3,9 @@
   "name": "Жива",
   "theme": "willow",
   "colors": {
-    "primary": "#0ea5e9",
-    "light": "#0284c7",
-    "dark": "#0369a1"
+    "primary": "#269926",
+    "light": "#00CC00",
+    "dark": "#008500"
   },
   "codeblocks": "dark",
   "logo": {

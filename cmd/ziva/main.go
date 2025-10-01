@@ -146,7 +146,7 @@ func main() {
 	// Используем языко-независимый метод вместо строки "Да"
 	ys := ziva.NewYesNoTask("Сохранение конфигурации", "Сохранить изменения?").
 		WithTimeoutYes(2 * time.Second)
-	ys.WithoutResultLine()
+	// ys.WithoutResultLine()
 	ys.WithNoAsError()
 
 	inRequired := task.NewInputTaskNew("Обязательное поле", "Нельзя оставлять пустым:").

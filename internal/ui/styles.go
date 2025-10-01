@@ -113,12 +113,11 @@ const (
 
 // Функции для создания префиксов с новой системой отображения
 // GetTaskBelowPrefix возвращает префикс для задачи ниже текущей выполняющейся задачи
-// Формат: "   │ " (отступ + ветка + линия + пробел)
+// Формат: "  │" (отступ + ветка + линия)
 func GetTaskBelowPrefix() string {
 	return performance.FastConcat(
 		performance.RepeatEfficient(" ", MainLeftIndent),
 		VerticalLineSymbol,
-		" ",
 	)
 }
 
