@@ -109,7 +109,11 @@ func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, val
 	result.WriteString("\n")
 	result.WriteString(prompt + inputView)
 	result.WriteString("\n\n")
-	result.WriteString(ui.DrawLine(width))
+	lineWidth := width - 1
+	if lineWidth < 0 {
+		lineWidth = 0
+	}
+	result.WriteString(ui.DrawLine(lineWidth))
 
 	// Один перевод после линии для первой дополнительной секции
 	first := true

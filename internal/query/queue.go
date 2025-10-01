@@ -708,12 +708,16 @@ func (m *Model) formatTaskResult(task common.Task, width int, stripVerticalPrefi
 			lineStyle = ui.VerySubtleStyle
 		}
 
-		// Создаем стилизованную разделительную линию
-		separatorContent := performance.RepeatEfficient(ui.HorizontalLineSymbol, m.resultLineLength)
+		// Создаем стилизованную разделительную линию той же ширины, что и у активной задачи
+		dynamicPrefix := m.calculateResultLinePrefix()
+		lineLength := width - lipgloss.Width(dynamicPrefix) - 1
+		if lineLength < 0 {
+			lineLength = 0
+		}
+		separatorContent := performance.RepeatEfficient(ui.HorizontalLineSymbol, lineLength)
 		styledSeparator := lineStyle.Render(separatorContent)
 
-		// Вычисляем динамический префикс для разделительной линии
-		dynamicPrefix := m.calculateResultLinePrefix()
+		// Используем динамический префикс для разделительной линии
 		separatorLine := performance.FastConcat(dynamicPrefix, styledSeparator)
 		result.WriteString(separatorLine + "\n")
 

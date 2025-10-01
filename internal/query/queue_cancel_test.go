@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/qzeleza/ziva/internal/common"
 	"github.com/qzeleza/ziva/internal/ui"
 )
@@ -39,8 +40,20 @@ func TestFormatTaskResultCancelWithoutSummary(t *testing.T) {
 	model.WithSummary(false)
 	model.resultLineLength = 4
 	task := stubTask{final: "Задача\n  │    отменено пользователем\n"}
-	got := model.formatTaskResult(task, 50, true)
-	want := "Задача\n     ────\n       отменено пользователем\n"
+	width := 50
+	got := model.formatTaskResult(task, width, true)
+
+	linePrefix := model.calculateResultLinePrefix()
+	prefixWidth := lipgloss.Width(linePrefix)
+	spaces := strings.Repeat(" ", prefixWidth)
+	separator := strings.Repeat(ui.HorizontalLineSymbol, width-prefixWidth-1)
+	comment := replaceFirstVerticalSymbol("  │    отменено пользователем")
+	want := strings.Join([]string{
+		"Задача",
+		spaces + separator,
+		comment,
+		"",
+	}, "\n")
 	if got != want {
 		t.Fatalf("unexpected format: %q", got)
 	}
