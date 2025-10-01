@@ -506,6 +506,7 @@ func (m *Model) View() string {
 
 		// Отображаем сводку только если включен флаг showSummary
 		if m.showSummary {
+			ensureTrailingPrefixLine(&sb)
 			// Получаем форматированную сводку с статистикой
 			leftSummary, rightStatus := m.formatSummaryWithStats()
 
@@ -907,6 +908,32 @@ func ensureSingleBlankLine(sb *strings.Builder) {
 	sb.Reset()
 	sb.WriteString(trimmed)
 	sb.WriteString("\n\n")
+}
+
+func ensureTrailingPrefixLine(sb *strings.Builder) {
+	if sb == nil {
+		return
+	}
+	content := sb.String()
+	trimmed := strings.TrimRight(content, "\n")
+	prefix := ui.GetTaskBelowPrefix()
+	var lines []string
+	if trimmed != "" {
+		lines = strings.Split(trimmed, "\n")
+	}
+	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
+	}
+	hasPrefix := len(lines) > 0 && lines[len(lines)-1] == prefix
+	sb.Reset()
+	if len(lines) > 0 {
+		sb.WriteString(strings.Join(lines, "\n"))
+		sb.WriteString("\n")
+	}
+	if !hasPrefix {
+		sb.WriteString(prefix)
+		sb.WriteString("\n")
+	}
 }
 
 // removeVerticalLinesBeforeTaskSymbols убирает вертикальные линии, ведущие к последнему (самому нижнему)

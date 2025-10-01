@@ -2,9 +2,11 @@ package query
 
 import (
 	te "github.com/charmbracelet/bubbletea"
+	"strings"
 	"testing"
 
 	"github.com/qzeleza/ziva/internal/common"
+	"github.com/qzeleza/ziva/internal/ui"
 )
 
 func TestStripResultPrefixes_RemovesVerticalLineFromCancelMessage(t *testing.T) {
@@ -41,5 +43,28 @@ func TestFormatTaskResultCancelWithoutSummary(t *testing.T) {
 	want := "Задача\n     ────\n       отменено пользователем\n"
 	if got != want {
 		t.Fatalf("unexpected format: %q", got)
+	}
+}
+
+func TestEnsureTrailingPrefixLineAddsPrefix(t *testing.T) {
+	var sb strings.Builder
+	sb.WriteString("Задача\n")
+	ensureTrailingPrefixLine(&sb)
+	wantSuffix := ui.GetTaskBelowPrefix() + "\n"
+	if !strings.HasSuffix(sb.String(), wantSuffix) {
+		t.Fatalf("expected suffix %q, got %q", wantSuffix, sb.String())
+	}
+}
+
+func TestEnsureTrailingPrefixLineKeepsSinglePrefix(t *testing.T) {
+	var sb strings.Builder
+	prefix := ui.GetTaskBelowPrefix()
+	sb.WriteString("Задача\n")
+	sb.WriteString(prefix)
+	sb.WriteString("\n\n")
+	ensureTrailingPrefixLine(&sb)
+	res := sb.String()
+	if strings.Count(res, prefix+"\n") != 1 {
+		t.Fatalf("expected single prefix line, got %q", res)
 	}
 }
