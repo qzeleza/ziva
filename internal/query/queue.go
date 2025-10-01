@@ -734,8 +734,8 @@ func (m *Model) formatTaskResult(task common.Task, width int, stripVerticalPrefi
 
 	finalResult := result.String()
 
-	// При отмене пользователем добавляем строку с префиксом "  │" под сообщением
-	shouldAppendCancelPrefix := false
+	// Определяем, была ли задача отменена пользователем
+	cancelDetected := false
 	cancelIndicators := []string{
 		defaults.TaskCancelledByUser,
 		defaults.ErrorMsgCanceled,
@@ -744,29 +744,19 @@ func (m *Model) formatTaskResult(task common.Task, width int, stripVerticalPrefi
 	// Проверяем наличие индикаторов отмены
 	for _, indicator := range cancelIndicators {
 		if indicator != "" && strings.Contains(finalResult, indicator) {
-			shouldAppendCancelPrefix = true
+			cancelDetected = true
 			break
 		}
 	}
-
-	// Если найден индикатор отмены, добавляем строку с префиксом "  │"
-	if shouldAppendCancelPrefix {
-		prefixOnlyLine := performance.FastConcat(
-			performance.RepeatEfficient(" ", ui.MainLeftIndent),
-			ui.VerticalLineSymbol,
-		)
-		// Если строка уже заканчивается нужным префиксом, оставляем её как есть
-		trimmedNewlines := strings.TrimRight(finalResult, "\n")
-		trimmedSpaces := strings.TrimRight(trimmedNewlines, " ")
-		if !strings.HasSuffix(trimmedSpaces, prefixOnlyLine) {
-			finalResult = performance.FastConcat(trimmedNewlines, "\n", prefixOnlyLine)
-		} else {
-			finalResult = trimmedNewlines
-		}
+	if cancelDetected {
+		finalResult = ensureTrailingSingleNewline(finalResult)
 	}
 
 	if stripVerticalPrefixes {
 		finalResult = stripResultPrefixes(finalResult)
+		if cancelDetected {
+			finalResult = ensureTrailingSingleNewline(finalResult)
+		}
 	}
 
 	return finalResult
@@ -901,7 +891,15 @@ func replaceFirstVerticalSymbol(line string) string {
 	if idx == -1 {
 		return line
 	}
-	return performance.FastConcat(line[:idx], line[idx+len(ui.VerticalLineSymbol):])
+	return performance.FastConcat(line[:idx], " ", line[idx+len(ui.VerticalLineSymbol):])
+}
+
+func ensureTrailingSingleNewline(value string) string {
+	if value == "" {
+		return value
+	}
+	trimmed := strings.TrimRight(value, "\n")
+	return trimmed + "\n"
 }
 
 // removeVerticalLinesBeforeTaskSymbols убирает вертикальные линии, ведущие к последнему (самому нижнему)

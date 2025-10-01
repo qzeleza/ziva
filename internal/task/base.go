@@ -277,7 +277,7 @@ func (t *BaseTask) FinalView(width int) string {
 			trimmedValue := strings.TrimSpace(t.finalValue)
 			if trimmedValue != "" {
 				valueLine := strings.Repeat(" ", ui.MainLeftIndent) + ui.VerticalLineSymbol + ui.GetResultIndentWhenNumberingEnabled() + trimmedValue
-				result = result + "\n" + valueLine
+				result = result + "\n" + valueLine + "\n"
 			}
 		}
 

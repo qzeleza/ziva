@@ -85,7 +85,7 @@ func main() {
 	queue := ziva.NewQueue(header)
 	queue.WithAppName("Жива™", "v1.0.0")
 	queue.WithOutResultLine()
-	// queue.WithOutSummary()
+	queue.WithOutSummary()
 	queue.WithTasksNumbered(false, "[%d]")
 
 	// 1) Задачи мультивыбора (без и с пунктом "Выбрать все")
@@ -108,7 +108,7 @@ func main() {
 		"Выберите среду развертывания",
 		ssel,
 	).WithViewport(3).
-		WithTimeout(3*time.Second, envStaging).
+		// WithTimeout(3*time.Second, envStaging).
 		WithDefaultItem(envProduction)
 
 	// 3) Ввод с использованием всех стандартных валидаторов
@@ -154,10 +154,10 @@ func main() {
 
 	queue.AddTasks(
 		ms1,
-		ys,
-		fn,
 		inRequired,
 
+		ys,
+		fn,
 		ss,
 	)
 
