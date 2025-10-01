@@ -129,47 +129,48 @@ func TestMultiSelectTaskBoundaries(t *testing.T) {
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
 	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options))
 
-	// Проверяем, что курсор не выходит за нижнюю границу
-	// Нажимаем 'down' несколько раз, чтобы достичь нижней границы
-	for i := 0; i < len(options)+2; i++ {
+	// Движемся вниз до последнего элемента
+	for i := 0; i < len(options)-1; i++ {
 		updatedTask, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyDown})
 		multiSelectTask, _ = updatedTask.(*MultiSelectTask)
 	}
+	assert.Equal(t, len(options)-1, multiSelectTask.cursor, "Курсор должен находиться на последнем элементе")
 
-	// Выбираем последнюю опцию
-	updatedTask, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeySpace})
+	// Следующее нажатие вниз возвращает курсор к первому элементу
+	updatedTask, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyDown})
 	multiSelectTask, _ = updatedTask.(*MultiSelectTask)
+	assert.Equal(t, 0, multiSelectTask.cursor, "После достижения конца список должен зациклиться к началу")
 
-	// Завершаем задачу
+	// Стрелка вверх с первого элемента переносит на конец
+	updatedTask, _ = multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyUp})
+	multiSelectTask, _ = updatedTask.(*MultiSelectTask)
+	assert.Equal(t, len(options)-1, multiSelectTask.cursor, "Стрелка вверх на первом элементе должна переносить на последний")
+
+	// Выбираем последнюю опцию и завершаем задачу
+	updatedTask, _ = multiSelectTask.Update(tea.KeyMsg{Type: tea.KeySpace})
+	multiSelectTask, _ = updatedTask.(*MultiSelectTask)
 	updatedTask, _ = multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	multiSelectTaskDone, _ := updatedTask.(*MultiSelectTask)
-
-	// Проверяем, что задача завершена
 	assert.True(t, multiSelectTaskDone.IsDone(), "Задача должна быть завершена")
-	// Проверяем финальное представление
 	finalView := multiSelectTaskDone.FinalView(80)
 	assert.Contains(t, finalView, "Опция 3", "FinalView должен содержать выбранную опцию")
 
-	// Создаем новую задачу для проверки верхней границы
+	// Сбрасываем задачу и проверяем перенос вверх → вниз
 	multiSelectTask = NewMultiSelectTask(title, makeMultiItems(options))
+	updatedTask, _ = multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyUp})
+	multiSelectTask, _ = updatedTask.(*MultiSelectTask)
+	assert.Equal(t, len(options)-1, multiSelectTask.cursor, "Первое нажатие вверх должно переносить на последний элемент")
 
-	// Нажимаем 'up' несколько раз, чтобы попытаться выйти за верхнюю границу
-	for i := 0; i < 3; i++ {
-		updatedTask, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyUp})
-		multiSelectTask, _ = updatedTask.(*MultiSelectTask)
-	}
+	updatedTask, _ = multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyDown})
+	multiSelectTask, _ = updatedTask.(*MultiSelectTask)
+	assert.Equal(t, 0, multiSelectTask.cursor, "После возвращения вниз курсор должен оказаться на первом элементе")
 
-	// Выбираем первую опцию
+	// Выбираем первую опцию и завершаем задачу
 	updatedTask, _ = multiSelectTask.Update(tea.KeyMsg{Type: tea.KeySpace})
 	multiSelectTask, _ = updatedTask.(*MultiSelectTask)
-
-	// Завершаем задачу
 	updatedTask, _ = multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	multiSelectTaskDone, _ = updatedTask.(*MultiSelectTask)
-
-	// Проверяем, что задача завершена
 	assert.True(t, multiSelectTaskDone.IsDone(), "Задача должна быть завершена")
-	// Проверяем финальное представление
 	view := multiSelectTaskDone.FinalView(80)
 	assert.Contains(t, view, "Опция 1", "FinalView должен содержать выбранную опцию")
 }
@@ -189,6 +190,14 @@ func TestMultiSelectTaskWithSelectAll(t *testing.T) {
 	// Проверяем, что View содержит опцию "Выбрать все"
 	view := multiSelectTask.View(80)
 	assert.Contains(t, view, defaults.SelectAllDefaultText, "View должен содержать опцию 'Выбрать все'")
+
+	// Проверяем циклическую навигацию с учётом опции "Выбрать все"
+	updatedTaskNav, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyUp})
+	multiSelectTask, _ = updatedTaskNav.(*MultiSelectTask)
+	assert.Equal(t, len(options)-1, multiSelectTask.cursor, "Стрелка вверх на 'Выбрать все' должна переносить на последний элемент")
+	updatedTaskNav, _ = multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyDown})
+	multiSelectTask, _ = updatedTaskNav.(*MultiSelectTask)
+	assert.Equal(t, -1, multiSelectTask.cursor, "Стрелка вниз на последнем элементе должна возвращать к опции 'Выбрать все'")
 
 	// Выбираем "Выбрать все" с помощью пробела
 	updatedTask1, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeySpace})

@@ -215,35 +215,62 @@ func (t *MultiSelectTask) findEnabledBackward(from int) (int, bool) {
 
 // moveCursorForward перемещает курсор на следующий доступный элемент
 func (t *MultiSelectTask) moveCursorForward() bool {
-	if t.cursor == -1 {
-		if idx, ok := t.findEnabledForward(0); ok {
+	original := t.cursor
+	if original == -1 {
+		if idx, ok := t.findEnabledForward(0); ok && idx != original {
 			t.cursor = idx
 			return true
 		}
 		return false
 	}
 
-	start := t.cursor + 1
-	if idx, ok := t.findEnabledForward(start); ok {
+	if idx, ok := t.findEnabledForward(original + 1); ok && idx != original {
 		t.cursor = idx
 		return true
 	}
+
+	if t.hasSelectAll && original != -1 {
+		t.cursor = -1
+		return true
+	}
+
+	if idx, ok := t.findEnabledForward(0); ok && idx != original {
+		t.cursor = idx
+		return true
+	}
+
 	return false
 }
 
 // moveCursorBackward перемещает курсор на предыдущий доступный элемент
 func (t *MultiSelectTask) moveCursorBackward() bool {
-	if t.cursor == -1 {
+	original := t.cursor
+	if original == -1 {
+		if idx, ok := t.findEnabledBackward(len(t.items) - 1); ok && idx != original {
+			t.cursor = idx
+			return true
+		}
 		return false
 	}
-	if idx, ok := t.findEnabledBackward(t.cursor - 1); ok {
+
+	if idx, ok := t.findEnabledBackward(original - 1); ok && idx != original {
 		t.cursor = idx
 		return true
 	}
+
 	if t.hasSelectAll {
-		t.cursor = -1
+		if original != -1 {
+			t.cursor = -1
+			return true
+		}
+		return false
+	}
+
+	if idx, ok := t.findEnabledBackward(len(t.items) - 1); ok && idx != original {
+		t.cursor = idx
 		return true
 	}
+
 	return false
 }
 

@@ -126,11 +126,19 @@ func (t *SingleSelectTask) findEnabledBackward(from int) (int, bool) {
 
 // moveCursorForward перемещает курсор на следующий доступный элемент
 func (t *SingleSelectTask) moveCursorForward() bool {
-	start := t.cursor + 1
-	if t.cursor < 0 {
+	if len(t.items) == 0 {
+		return false
+	}
+	original := t.cursor
+	start := original + 1
+	if original < 0 {
 		start = 0
 	}
-	if idx, ok := t.findEnabledForward(start); ok {
+	if idx, ok := t.findEnabledForward(start); ok && idx != original {
+		t.cursor = idx
+		return true
+	}
+	if idx, ok := t.findEnabledForward(0); ok && idx != original {
 		t.cursor = idx
 		return true
 	}
@@ -139,8 +147,16 @@ func (t *SingleSelectTask) moveCursorForward() bool {
 
 // moveCursorBackward перемещает курсор на предыдущий доступный элемент
 func (t *SingleSelectTask) moveCursorBackward() bool {
-	start := t.cursor - 1
-	if idx, ok := t.findEnabledBackward(start); ok {
+	if len(t.items) == 0 {
+		return false
+	}
+	original := t.cursor
+	start := original - 1
+	if idx, ok := t.findEnabledBackward(start); ok && idx != original {
+		t.cursor = idx
+		return true
+	}
+	if idx, ok := t.findEnabledBackward(len(t.items) - 1); ok && idx != original {
 		t.cursor = idx
 		return true
 	}

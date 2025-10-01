@@ -177,31 +177,39 @@ func TestSingleSelectTaskBoundaries(t *testing.T) {
 	options := []string{"Опция 1", "Опция 2", "Опция 3"}
 	selectTask := NewSingleSelectTask(title, makeTestItems(options))
 
-	// Проверяем, что курсор не выходит за нижнюю границу
-	// Нажимаем 'down' несколько раз, чтобы достичь нижней границы
-	for i := 0; i < len(options)+2; i++ {
+	// Движемся вниз до последнего элемента
+	for i := 0; i < len(options)-1; i++ {
 		updatedTask, _ := selectTask.Update(tea.KeyMsg{Type: tea.KeyDown})
 		selectTask, _ = updatedTask.(*SingleSelectTask)
 	}
+	assert.Equal(t, len(options)-1, selectTask.cursor, "Курсор должен находиться на последнем элементе")
 
-	// Проверяем, что после достижения нижней границы и нажатия Enter
-	// выбрана последняя опция
-	updatedTask, _ := selectTask.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	// Ещё одно нажатие вниз возвращает курсор к первому элементу
+	updatedTask, _ := selectTask.Update(tea.KeyMsg{Type: tea.KeyDown})
+	selectTask, _ = updatedTask.(*SingleSelectTask)
+	assert.Equal(t, 0, selectTask.cursor, "После достижения конца список должен зациклиться к началу")
+
+	// Стрелка вверх с первого элемента переносит на последний
+	updatedTask, _ = selectTask.Update(tea.KeyMsg{Type: tea.KeyUp})
+	selectTask, _ = updatedTask.(*SingleSelectTask)
+	assert.Equal(t, len(options)-1, selectTask.cursor, "Стрелка вверх на первом элементе должна переносить на последний")
+
+	// Подтверждаем выбор последней опции
+	updatedTask, _ = selectTask.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	selectTaskDone, _ := updatedTask.(*SingleSelectTask)
 	finalView := selectTaskDone.FinalView(80)
 	assert.Contains(t, finalView, options[len(options)-1], "Значение задачи должно содержать последнюю опцию")
 
-	// Создаем новую задачу для проверки верхней границы
+	// Сбрасываем задачу и проверяем обратное направление
 	selectTask = NewSingleSelectTask(title, makeTestItems(options))
+	updatedTask, _ = selectTask.Update(tea.KeyMsg{Type: tea.KeyUp})
+	selectTask, _ = updatedTask.(*SingleSelectTask)
+	assert.Equal(t, len(options)-1, selectTask.cursor, "Первое нажатие вверх должно переносить на последний элемент")
 
-	// Нажимаем 'up' несколько раз, чтобы попытаться выйти за верхнюю границу
-	for i := 0; i < 3; i++ {
-		updatedTask, _ := selectTask.Update(tea.KeyMsg{Type: tea.KeyUp})
-		selectTask, _ = updatedTask.(*SingleSelectTask)
-	}
-
-	// Проверяем, что после попытки выйти за верхнюю границу и нажатия Enter
-	// выбрана первая опция
+	// После возврата в начало стрелкой вниз подтверждаем первую опцию
+	updatedTask, _ = selectTask.Update(tea.KeyMsg{Type: tea.KeyDown})
+	selectTask, _ = updatedTask.(*SingleSelectTask)
+	assert.Equal(t, 0, selectTask.cursor, "После переноса назад курсор должен вернуться к началу")
 	updatedTask, _ = selectTask.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	selectTaskDone, _ = updatedTask.(*SingleSelectTask)
 	finalView = selectTaskDone.FinalView(80)
