@@ -32,7 +32,12 @@ var (
 	MemoryPressureThreshold uint64 = 64 * 1024 * 1024 // 64MB - порог для запуска очистки памяти
 )
 
+// init инициализирует константы из переменных окружения
+// при запуске программы
+//
+// @return void
 func init() {
+	// Устанавливаем максимальное количество завершенных задач
 	// ZIVA_MAX_COMPLETED_TASKS=int
 	if v := strings.TrimSpace(os.Getenv("ZIVA_MAX_COMPLETED_TASKS")); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
@@ -40,6 +45,7 @@ func init() {
 		}
 	}
 
+	// Устанавливаем порог для запуска очистки памяти
 	// ZIVA_MEMORY_PRESSURE_THRESHOLD=64MB/65536KB/67108864/64MiB
 	if v := strings.TrimSpace(os.Getenv("ZIVA_MEMORY_PRESSURE_THRESHOLD")); v != "" {
 		if bytes, err := parseMemoryEnv(v); err == nil && bytes > 0 {
@@ -54,6 +60,9 @@ func init() {
 }
 
 // parseMemoryEnv — локальный парсер для значений памяти с суффиксами
+//
+// @param s Строка с значением памяти
+// @return uint64 - значение памяти в байтах
 func parseMemoryEnv(s string) (uint64, error) {
 	s = strings.TrimSpace(s)
 	s = strings.ReplaceAll(s, "_", "")
@@ -278,9 +287,15 @@ func (m *Model) WithTitleColor(titleColor lipgloss.TerminalColor, bold bool) *Mo
 }
 
 // WithAppName устанавливает название приложения.
+//
+// @param appName Название приложения
+// @param version Необязательная строка версии приложения
+// @return Указатель на очередь задач
 func (m *Model) WithAppName(appName string, version ...string) *Model {
+	// Устанавливаем название приложения
 	m.appName = "  " + appName + "  "
 
+	// Устанавливаем версию приложения
 	if len(version) > 0 {
 		trimmedVersion := strings.TrimSpace(version[0])
 		if trimmedVersion != "" {
@@ -296,18 +311,28 @@ func (m *Model) WithAppName(appName string, version ...string) *Model {
 }
 
 // WithAppNameStyle устанавливает стиль названия приложения.
+//
+// @param textColor Цвет текста
+// @param bold Флаг, указывающий, нужно ли сделать текст курсивом
+// @return Указатель на очередь задач
 func (m *Model) WithAppNameColor(textColor lipgloss.TerminalColor, bold bool) *Model {
 	m.appNameStyle = lipgloss.NewStyle().Foreground(textColor).Bold(bold).Background(ui.ColorBrightWhite)
 	return m
 }
 
 // WithSummary устанавливает флаг отображения сводки.
+//
+// @param show Флаг, указывающий, нужно ли отображать сводку
+// @return Указатель на очередь задач
 func (m *Model) WithSummary(show bool) *Model {
 	m.showSummary = show
 	return m
 }
 
 // WithClearScreen устанавливает флаг очистки экрана перед запуском очереди задач.
+//
+// @param clear Флаг, указывающий, нужно ли очищать экран перед запуском очереди задач
+// @return Указатель на очередь задач
 func (m *Model) WithClearScreen(clear bool) *Model {
 	m.clearScreen = clear
 	return m
@@ -317,6 +342,7 @@ func (m *Model) WithClearScreen(clear bool) *Model {
 // Если enabled=true, то перед каждым результатом задачи будет добавляться разделительная линия
 // из префикса и указанного количества символов "─".
 // При enabled=false поведение остается как и раньше - результаты выводятся сразу после строки с задачей.
+//
 // @param enabled - включить/выключить форматирование
 func (m *Model) WithResultFormatting(enabled bool) *Model {
 	m.resultFormattingEnabled = enabled
@@ -333,6 +359,9 @@ func (m *Model) applySelectionSeparatorFlag(tasks []common.Task) {
 }
 
 // SetErrorColor устанавливает цвет для отображения ошибок в очереди.
+//
+// @param color Цвет ошибки
+// @return Указатель на очередь задач
 func (m *Model) SetErrorColor(color ErrorColor) *Model {
 
 	switch color {
@@ -348,11 +377,15 @@ func (m *Model) SetErrorColor(color ErrorColor) *Model {
 
 // layoutWidth вычисляет ширину для рендеринга задач.
 // Использует функцию из пакета common.
+//
+// @return Ширина для рендеринга задач
 func (m *Model) layoutWidth() int {
 	return common.CalculateLayoutWidth(m.width)
 }
 
 // Init запускает первую задачу.
+//
+// @return Команда для запуска первой задачи
 func (m *Model) Init() tea.Cmd {
 	if len(m.tasks) > 0 {
 		return m.tasks[0].Run()
@@ -361,6 +394,9 @@ func (m *Model) Init() tea.Cmd {
 }
 
 // setTitle прорисовывает заголовок
+//
+// @param width Ширина окна
+// @return Строка заголовка
 func (m *Model) setTitle(width int) string {
 	var result string
 	if m.appName != "" {
@@ -378,6 +414,9 @@ func (m *Model) setTitle(width int) string {
 }
 
 // Update обрабатывает сообщения и делегирует их задачам.
+//
+// @param msg Сообщение
+// @return Обновленная модель и команда
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Обработка обновлений размера окна.
 	if size, ok := msg.(tea.WindowSizeMsg); ok {
@@ -438,6 +477,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // View отображает список задач.
+//
 // @return string - отображаемый список задач
 func (m *Model) View() string {
 

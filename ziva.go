@@ -504,6 +504,16 @@ func (t *InputTask) WithInputType(inputType task.InputType) *InputTask {
 	return t
 }
 
+// WithVisibleLength устанавливает видимую длину поля ввода.
+// Длинные значения будут прокручиваться по мере перемещения курсора
+// или ввода новых символов за пределами указанной длины.
+// Значение автоматически ограничивается минимальной и текущей полной
+// шириной поля, чтобы сохранить корректный рендеринг.
+func (t *InputTask) WithVisibleLength(length int) *InputTask {
+	t.InputTaskNew.WithVisibleLength(length)
+	return t
+}
+
 // GetValue возвращает введенное значение
 //
 // @return Введенное значение

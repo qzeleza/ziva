@@ -65,6 +65,7 @@ name.WithTimeout(30*time.Second, "demo-app")
 name.
   WithPlaceholder("например, billing-service").
   WithWidth(40).                     // минимальные/максимальные ограничения применяются автоматически
+  WithVisibleLength(20).             // управляет видимой частью ввода и включает горизонтальный скролл
   WithAllowEmpty(false)              // запретить пустой ввод
 ```
 

@@ -22,6 +22,7 @@ task := ziva.NewInputTask("Username", "Enter name:")
 task.WithValidator(ziva.DefaultValidators.Email())  // validator
 task.WithInputType(ziva.InputTypePassword)         // field type
 task.WithTimeout(30*time.Second, "default")          // timeout
+task.WithVisibleLength(20)                         // limit visible width with horizontal scroll
 
 // Get result
 value := task.GetValue() // string

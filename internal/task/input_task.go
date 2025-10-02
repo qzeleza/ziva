@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"unicode/utf8"
 
+	"github.com/qzeleza/ziva/internal/common"
 	"github.com/qzeleza/ziva/internal/defaults"
 	terrors "github.com/qzeleza/ziva/internal/errors"
 	"github.com/qzeleza/ziva/internal/performance"
@@ -47,9 +49,12 @@ type InputTaskNew struct {
 	placeholder   string    // Текст-заполнитель
 
 	// Настройки
-	width      int  // Ширина поля ввода
-	maskInput  bool // Маскировать ввод (для паролей)
-	allowEmpty bool // Разрешить пустое значение
+	width                   int  // Полная ширина поля ввода
+	widthCustomized         bool // Пользовательская настройка полной ширины
+	visibleLength           int  // Видимая длина поля ввода
+	visibleLengthCustomized bool // Пользовательская настройка видимой длины
+	maskInput               bool // Маскировать ввод (для паролей)
+	allowEmpty              bool // Разрешить пустое значение
 }
 
 // NewInputTaskNew создает новую улучшенную задачу ввода
@@ -63,19 +68,24 @@ func NewInputTaskNew(title, prompt string) *InputTaskNew {
 	ti.Placeholder = defaults.DefaultPlaceholder
 	ti.Focus()
 	ti.CharLimit = defaults.MaxInputLength
-	ti.Width = defaults.DefaultInputWidth
+	width := clampWidth(defaults.DefaultInputWidth)
+	visibleLength := defaultVisibleLength(width)
+	ti.Width = visibleLength
+	ti.Cursor.Style = lipgloss.NewStyle().Background(ui.ColorLightBlue).Bold(true)
+	ti.Cursor.TextStyle = lipgloss.NewStyle().Foreground(ui.ColorLightBlue).Bold(true)
 
 	return &InputTaskNew{
-		BaseTask:     baseTask,
-		textInput:    ti,
-		renderer:     NewInputRenderer(),
-		errorHandler: terrors.DefaultErrorHandler,
-		inputType:    InputTypeText,
-		prompt:       prompt,
-		placeholder:  defaults.DefaultPlaceholder,
-		width:        defaults.DefaultInputWidth,
-		maskInput:    false,
-		allowEmpty:   false,
+		BaseTask:      baseTask,
+		textInput:     ti,
+		renderer:      NewInputRenderer(),
+		errorHandler:  terrors.DefaultErrorHandler,
+		inputType:     InputTypeText,
+		prompt:        prompt,
+		placeholder:   defaults.DefaultPlaceholder,
+		width:         width,
+		visibleLength: visibleLength,
+		maskInput:     false,
+		allowEmpty:    false,
 	}
 }
 
@@ -127,15 +137,112 @@ func (t *InputTaskNew) WithInputType(inputType InputType) *InputTaskNew {
 
 // WithWidth устанавливает ширину поля ввода
 func (t *InputTaskNew) WithWidth(width int) *InputTaskNew {
-	if width < defaults.MinInputWidth {
-		width = defaults.MinInputWidth
-	} else if width > defaults.MaxInputWidth {
-		width = defaults.MaxInputWidth
+	t.width = clampWidth(width)
+	t.widthCustomized = true
+	if !t.visibleLengthCustomized {
+		t.visibleLength = defaultVisibleLength(t.width)
+	} else {
+		t.visibleLength = clampVisibleLength(t.visibleLength, t.width)
 	}
-
-	t.width = width
-	t.textInput.Width = width
+	t.applyVisibleLength()
 	return t
+}
+
+// WithVisibleLength задает видимую длину вводимых данных.
+// Значение автоматически ограничивается допустимыми границами,
+// чтобы сохранить корректный рендеринг виджета текстового ввода.
+func (t *InputTaskNew) WithVisibleLength(length int) *InputTaskNew {
+	t.visibleLengthCustomized = true
+	t.visibleLength = clampVisibleLength(length, t.width)
+	t.applyVisibleLength()
+	return t
+}
+
+// applyVisibleLength обновляет ширину текстового ввода с учетом текущих настроек.
+func (t *InputTaskNew) applyVisibleLength() {
+	t.textInput.Width = t.visibleLength
+}
+
+// refreshAutoDimensions обновляет ширину и видимую длину вводимых данных
+// автоматически в зависимости от текущего размера экрана.
+//
+// @param screenWidth Ширина экрана
+func (t *InputTaskNew) refreshAutoDimensions(screenWidth int) {
+	autoWidth, autoVisible := calculateAutoDimensions(screenWidth)
+	if !t.widthCustomized {
+		t.width = autoWidth
+	}
+	if !t.visibleLengthCustomized {
+		if t.widthCustomized {
+			t.visibleLength = defaultVisibleLength(t.width)
+		} else {
+			t.visibleLength = clampVisibleLength(autoVisible, t.width)
+		}
+	} else {
+		t.visibleLength = clampVisibleLength(t.visibleLength, t.width)
+	}
+	t.applyVisibleLength()
+}
+
+// defaultVisibleLength вычисляет видимую длину вводимых данных по умолчанию.
+// Значение автоматически ограничивается допустимыми границами,
+// чтобы сохранить корректный рендеринг виджета текстового ввода.
+func defaultVisibleLength(width int) int {
+	return clampVisibleLength(adjustVisibleLength(width), width)
+}
+
+// adjustVisibleLength корректирует видимую длину вводимых данных,
+// уменьшая её на количество символов, на которое по умолчанию
+// уменьшается видимая область относительно полной ширины поля.
+func adjustVisibleLength(width int) int {
+	length := width - defaults.InputVisiblePadding
+	if length < defaults.MinInputWidth {
+		return width
+	}
+	return length
+}
+
+// clampVisibleLength ограничивает видимую длину вводимых данных
+// минимальной и текущей полной шириной поля, чтобы сохранить
+// корректный рендеринг виджета текстового ввода.
+func clampVisibleLength(length, width int) int {
+	if length < defaults.MinInputWidth {
+		length = defaults.MinInputWidth
+	}
+	if width > 0 && length > width {
+		length = width
+	}
+	if length > defaults.MaxInputWidth {
+		length = defaults.MaxInputWidth
+	}
+	return length - defaults.InputVisiblePadding + 1
+}
+
+// clampWidth ограничивает ширину поля ввода минимальной и максимальной шириной,
+// чтобы сохранить корректный рендеринг виджета текстового ввода.
+func clampWidth(width int) int {
+	if width < defaults.MinInputWidth {
+		return defaults.MinInputWidth
+	}
+	if width > defaults.MaxInputWidth {
+		return defaults.MaxInputWidth
+	}
+	return width
+}
+
+func calculateAutoDimensions(screenWidth int) (int, int) {
+	layoutWidth := clampWidth(common.CalculateLayoutWidth(screenWidth))
+	available := layoutWidth - inputPromptWidth()
+	if available < defaults.MinInputWidth {
+		available = defaults.MinInputWidth
+	}
+	fieldWidth := clampWidth(available)
+	visible := fieldWidth - defaults.InputVisiblePadding
+	return fieldWidth, clampVisibleLength(visible, fieldWidth)
+}
+
+func inputPromptWidth() int {
+	return ui.MainLeftIndent + utf8.RuneCountInString(ui.CornerDownSymbol) + utf8.RuneCountInString(ui.HorizontalLineSymbol)
 }
 
 // WithPlaceholder устанавливает текст-заполнитель
@@ -405,6 +512,13 @@ func (t *InputTaskNew) applyDefaultValue() {
 
 // View отображает текущее состояние задачи
 func (t *InputTaskNew) View(width int) string {
+	if !t.widthCustomized || !t.visibleLengthCustomized {
+		t.refreshAutoDimensions(width)
+	} else {
+		t.visibleLength = clampVisibleLength(t.visibleLength, t.width)
+		t.applyVisibleLength()
+	}
+
 	if t.IsDone() {
 		return t.FinalView(width)
 	}
@@ -479,6 +593,12 @@ func (b *InputTaskBuilder) IP() *InputTaskBuilder {
 // Domain настраивает задачу для ввода домена
 func (b *InputTaskBuilder) Domain() *InputTaskBuilder {
 	b.task.WithInputType(InputTypeDomain)
+	return b
+}
+
+// VisibleLength задает видимую длину вводимых данных для задачи.
+func (b *InputTaskBuilder) VisibleLength(length int) *InputTaskBuilder {
+	b.task.WithVisibleLength(length)
 	return b
 }
 
