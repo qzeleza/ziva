@@ -440,40 +440,41 @@ func TestMultiSelectTaskToggleSelectAllLogic(t *testing.T) {
 	assert.False(t, multiSelectTask.isAllSelected(), "Все элементы должны быть не выбраны")
 }
 
-// TestMultiSelectTaskEmptySelectionHandling проверяет обработку Enter без выбранных элементов
-func TestMultiSelectTaskEmptySelectionHandling(t *testing.T) {
-	// Создаем задачу MultiSelectTask
-	title := "Выберите элементы"
+// TestMultiSelectTaskAllowsEmptySelection проверяет, что по умолчанию можно завершить задачу без выбора
+func TestMultiSelectTaskAllowsEmptySelection(t *testing.T) {
 	options := []string{"Элемент 1", "Элемент 2", "Элемент 3"}
-	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options))
+	multiSelectTask := NewMultiSelectTask("Выберите элементы", makeMultiItems(options))
 
-	// Нажимаем Enter без выбора элементов
+	updatedTask, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	completedTask, _ := updatedTask.(*MultiSelectTask)
+
+	assert.True(t, completedTask.IsDone(), "Задача должна завершаться даже при пустом выборе")
+	assert.False(t, completedTask.HasError(), "При пустом выборе не должно быть ошибки")
+	assert.False(t, completedTask.showHelpMessage, "Подсказка не должна отображаться по умолчанию")
+	assert.Equal(t, defaults.DefaultSuccessLabel, completedTask.finalValue, "Финальный статус должен соответствовать успеху")
+}
+
+// TestMultiSelectTaskRequireSelection проверяет поведение при обязательном выборе хотя бы одного пункта
+func TestMultiSelectTaskRequireSelection(t *testing.T) {
+	options := []string{"Элемент 1", "Элемент 2", "Элемент 3"}
+	multiSelectTask := NewMultiSelectTask("Выберите элементы", makeMultiItems(options)).WithRequireSelection(true)
+
 	updatedTask1, _ := multiSelectTask.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	multiSelectTaskAfterEnter, _ := updatedTask1.(*MultiSelectTask)
 
-	// Проверяем, что задача НЕ завершена и НЕТ ошибки
-	assert.False(t, multiSelectTaskAfterEnter.IsDone(), "Задача не должна быть завершена при пустом выборе")
+	assert.False(t, multiSelectTaskAfterEnter.IsDone(), "Задача не должна завершиться при пустом выборе, когда выбор обязателен")
 	assert.False(t, multiSelectTaskAfterEnter.HasError(), "Не должно быть ошибки при пустом выборе")
 	assert.True(t, multiSelectTaskAfterEnter.showHelpMessage, "Должно показываться сообщение-подсказка")
-	assert.NotEmpty(t, multiSelectTaskAfterEnter.helpMessage, "Сообщение-подсказка не должно быть пустым")
+	assert.Equal(t, defaults.NeedSelectAtLeastOne, multiSelectTaskAfterEnter.helpMessage, "Сообщение подсказки должно быть локализованным текстом")
 
-	// Проверяем, что сообщение-подсказка отображается в View
-	view := multiSelectTaskAfterEnter.View(80)
-	assert.Contains(t, view, "Необходимо выбрать хотя бы один элемент", "View должен содержать сообщение-подсказку")
-
-	// Нажимаем пробел (любую другую клавишу) - сообщение должно исчезнуть
+	// Выбираем элемент и завершаем задачу
 	updatedTask2, _ := multiSelectTaskAfterEnter.Update(tea.KeyMsg{Type: tea.KeySpace})
 	multiSelectTaskAfterSpace, _ := updatedTask2.(*MultiSelectTask)
-
-	assert.False(t, multiSelectTaskAfterSpace.showHelpMessage, "Сообщение-подсказка должно исчезнуть")
-	assert.Empty(t, multiSelectTaskAfterSpace.helpMessage, "Текст сообщения-подсказки должен быть очищен")
-
-	// Теперь выбираем элемент и нажимаем Enter - задача должна завершиться успешно
 	updatedTask3, _ := multiSelectTaskAfterSpace.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	multiSelectTaskFinal, _ := updatedTask3.(*MultiSelectTask)
+	completedTask, _ := updatedTask3.(*MultiSelectTask)
 
-	assert.True(t, multiSelectTaskFinal.IsDone(), "Задача должна завершиться после выбора элемента")
-	assert.False(t, multiSelectTaskFinal.HasError(), "Не должно быть ошибки при успешном завершении")
+	assert.True(t, completedTask.IsDone(), "Задача должна завершиться после выбора элемента")
+	assert.False(t, completedTask.HasError(), "Не должно быть ошибки при успешном завершении")
 }
 
 func TestMultiSelectDependenciesDisableAndEnable(t *testing.T) {

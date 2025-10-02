@@ -68,8 +68,8 @@ var (
 	SelectionStyle       = lipgloss.NewStyle().Foreground(ColorBrightGreen)             // Выделение (Да): ярко-зелёный
 	SelectionNoStyle     = lipgloss.NewStyle().Foreground(ColorBrightRed).Bold(true)    // Выделение (Нет): ярко-красный
 	ActiveStyle          = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Активный элемент: ярко-синий
-	MenuExitItemStyle    = lipgloss.NewStyle().Foreground(ColorBrightYellow)            // Специальный стиль для пунктов выхода
-	MenuBackItemStyle    = lipgloss.NewStyle().Foreground(ColorDarkYellow)              // Специальный стиль для пунктов возврата
+	MenuExitItemStyle    = lipgloss.NewStyle()                                          // По умолчанию стиль пунктов выхода совпадает с обычным текстом
+	MenuBackItemStyle    = lipgloss.NewStyle()                                          // По умолчанию стиль пунктов возврата совпадает с обычным текстом
 	InputStyle           = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Стиль для активного ввода
 	SpinnerStyle         = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Стиль для спиннера
 	ActiveTitleStyle     = lipgloss.NewStyle().Foreground(ColorBrightGreen).Bold(true)  // Активный заголовок ввода
@@ -134,7 +134,7 @@ func GetCurrentTaskPrefix() string {
 }
 
 // GetCurrentSelectTaskPrefix возвращает префикс для текущей выполняющейся задачи
-// Формат: "└─> " (отступ + угловой символ + линия + стрелка + пробел)
+// Формат: "└─>  " (отступ + угловой символ + линия + стрелка + два пробела)
 func GetCurrentActiveTaskPrefix() string {
 	return performance.FastConcat(
 		performance.RepeatEfficient(" ", MainLeftIndent),
@@ -209,7 +209,7 @@ func GetSelectItemPrefix(itemType string) string {
 		return performance.FastConcat(
 			performance.RepeatEfficient(" ", MainLeftIndent),
 			VerticalLineSymbol,
-			"   ",
+			performance.RepeatEfficient(" ", MainLeftIndent+1),
 		)
 
 	case "active":
@@ -269,6 +269,12 @@ func CapitalizeFirst(s string) string {
 	}
 
 	return string(unicode.ToUpper(r)) + s[size:]
+}
+
+// WrapText разбивает текст на строки заданной максимальной длины.
+// Экспортируется для повторного использования в других пакетах.
+func WrapText(text string, maxWidth int) []string {
+	return wrapText(text, maxWidth)
 }
 
 // wrapText разбивает текст на строки заданной максимальной длины

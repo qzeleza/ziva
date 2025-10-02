@@ -20,6 +20,7 @@ func renderSelectionSeparator(width int, enabled bool, inProgressPrefix string) 
 	basePrefix := performance.FastConcat(
 		performance.RepeatEfficient(" ", ui.MainLeftIndent),
 		ui.VerticalLineSymbol,
+		"  ",
 	)
 
 	targetWidth := lipgloss.Width(inProgressPrefix)

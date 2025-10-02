@@ -41,14 +41,23 @@ func (r *InputRenderer) WithHelp(enabled bool) *InputRenderer {
 }
 
 // RenderInput отображает активное состояние задачи ввода с поддержкой таймера
-func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, validator validation.Validator, err error, inputType InputType, prefix string, width int, timerStr ...string) string {
+func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, validator validation.Validator, err error, inputType InputType, prefix string, showSeparator bool, width int, timerStr ...string) string {
 	// Используем переданный префикс или значение по умолчанию
 	if strings.TrimSpace(prefix) == "" {
 		prefix = ui.GetCurrentTaskPrefix()
 	}
 
-	// Формируем заголовок с префиксом
-	titleWithPrefix := fmt.Sprintf("%s %s", prefix, ui.ActiveTaskStyle.Render(title))
+	// При активной нумерации выравниваем префикс так же, как в задачах выбора
+	if ui.NumberingEnabled && strings.TrimSpace(prefix) != "" {
+		prefix = strings.TrimRight(prefix, " ")
+		if !strings.HasPrefix(prefix, " ") {
+			prefix = " " + prefix
+		}
+		prefix += "  "
+	}
+
+	// Заголовок с учётом префикса, который уже содержит нужные пробелы
+	titleWithPrefix := fmt.Sprintf("%s%s", prefix, ui.ActiveTaskStyle.Render(title))
 
 	// Если передан таймер, выравниваем его справа
 	var titleView string
@@ -107,13 +116,10 @@ func (r *InputRenderer) RenderInput(title string, textInput textinput.Model, val
 	// Основная часть
 	result.WriteString(titleView)
 	result.WriteString("\n")
+	result.WriteString(renderSelectionSeparator(width, showSeparator, prefix))
 	result.WriteString(prompt + inputView)
 	result.WriteString("\n\n")
-	lineWidth := width - 1
-	if lineWidth < 0 {
-		lineWidth = 0
-	}
-	result.WriteString(ui.DrawLine(lineWidth))
+	result.WriteString(ui.DrawLine(width))
 
 	// Один перевод после линии для первой дополнительной секции
 	first := true
@@ -193,7 +199,22 @@ func (r *InputRenderer) RenderFinal(title string, value string, hasError bool, e
 	rightPart := statusStyle.Render(valueToShow)
 
 	if value != "" {
-		commentLines = append(commentLines, buildCommentLine(defaultIndent, ui.SubtleStyle.Render(value)))
+		prefix := performance.FastConcat(
+			performance.RepeatEfficient(" ", ui.MainLeftIndent),
+			ui.VerticalLineSymbol,
+			defaultIndent,
+		)
+		availableWidth := width - lipgloss.Width(prefix) - 2
+		if availableWidth < 1 {
+			availableWidth = 1
+		}
+		wrapped := ui.WrapText(value, availableWidth)
+		if len(wrapped) == 0 {
+			wrapped = []string{""}
+		}
+		for _, line := range wrapped {
+			commentLines = append(commentLines, prefix+ui.SubtleStyle.Render(line))
+		}
 	}
 
 	var resultBuilder strings.Builder

@@ -134,9 +134,10 @@ type MultiSelectTask struct {
 	showHelpMessage bool                   // Показывать ли сообщение-подсказку
 	helpMessage     string                 // Текст сообщения-подсказки
 	// Viewport (окно просмотра) для ограничения количества отображаемых элементов
-	viewportSize  int // Размер viewport (количество видимых элементов), 0 = показать все
-	viewportStart int // Начальная позиция viewport в списке элементов
-	showCounters  bool
+	viewportSize     int  // Размер viewport (количество видимых элементов), 0 = показать все
+	viewportStart    int  // Начальная позиция viewport в списке элементов
+	showCounters     bool // Показывать ли счетчики для выбранных элементов
+	requireSelection bool // Требовать выбор хотя бы одного элемента перед завершением задачи
 }
 
 // NewMultiSelectTask создает новую задачу множественного выбора.
@@ -161,9 +162,10 @@ func NewMultiSelectTask(title string, items []Item) *MultiSelectTask {
 		showHelpMessage: false,
 		helpMessage:     "",
 		// Viewport по умолчанию отключен (показываем все элементы)
-		viewportSize:  0,
-		viewportStart: 0,
-		showCounters:  true,
+		viewportSize:     0,
+		viewportStart:    0,
+		showCounters:     true,
+		requireSelection: false,
 	}
 
 	// Для embedded устройств: используем битсет для списков <= 32 элементов,
@@ -764,6 +766,14 @@ func (t *MultiSelectTask) WithDefaultItems(defauiltSelection interface{}) *Multi
 	return t
 }
 
+// WithRequireSelection управляет необходимостью выбрать хотя бы один пункт перед завершением задачи.
+// При required=true поведение соответствует прежнему: Enter без выбора покажет подсказку.
+// По умолчанию (false) пользователь может подтвердить пустой выбор.
+func (t *MultiSelectTask) WithRequireSelection(required bool) *MultiSelectTask {
+	t.requireSelection = required
+	return t
+}
+
 // toggleSelectAll переключает состояние всех элементов списка.
 // Если все элементы выбраны - снимает выбор со всех.
 // Если хотя бы один элемент не выбран - выбирает все.
@@ -980,10 +990,20 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			t.stopTimeout()
 			keys, names := t.collectSelectionSnapshot()
 			if len(keys) == 0 {
-				// Если ничего не выбрано, показываем сообщение-подсказку
-				// но НЕ устанавливаем ошибку и НЕ завершаем задачу
-				t.showHelpMessage = true
-				t.helpMessage = defaults.NeedSelectAtLeastOne
+				if t.requireSelection {
+					// Если ничего не выбрано и требуется выбор, показываем подсказку
+					t.showHelpMessage = true
+					t.helpMessage = defaults.NeedSelectAtLeastOne
+					return t, nil
+				}
+				// Пустой выбор разрешен: завершаем задачу без выбранных элементов
+				t.done = true
+				t.icon = ui.IconDone
+				t.finalValue = defaults.DefaultSuccessLabel
+				// Убеждаемся, что ошибка очищена
+				t.SetError(nil)
+				t.showHelpMessage = false
+				t.helpMessage = ""
 				return t, nil
 			}
 			// Если есть выбранные элементы, завершаем задачу успешно

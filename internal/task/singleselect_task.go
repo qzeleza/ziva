@@ -522,19 +522,22 @@ func (t *SingleSelectTask) View(width int) string {
 			break
 		}
 
-		item := t.items[i]
-		label := item.displayName()
-		description := item.helpText()
-		checked := ui.IconRadioOff
-		var itemPrefix string
-		isDisabled := t.isDisabled(i)
-		isExit := isExitChoice(item)
-		isBack := !isExit && isBackChoice(item)
+		item := t.items[i]                      // Получаем элемент списка
+		label := item.displayName()             // Получаем отображаемый текст
+		description := item.helpText()          // Получаем подсказку
+		checked := ui.IconRadioOff              // Получаем иконку
+		var itemPrefix string                   // Получаем префикс
+		isDisabled := t.isDisabled(i)           // Проверяем, отключена ли задача
+		isExit := isExitChoice(item)            // Проверяем, является ли задача выходом
+		isBack := !isExit && isBackChoice(item) // Проверяем, является ли задача возвратом
+
 		if isDisabled {
+			// Если задача отключена, применяем стиль отключения
 			label = ui.DisabledStyle.Render(label)
 			checked = ui.DisabledStyle.Render(checked)
 		}
 		if !isDisabled && t.cursor != i {
+			// Если задача не отключена и не является активной, применяем стиль
 			switch {
 			case isExit:
 				label = ui.MenuExitItemStyle.Render(label)
@@ -544,24 +547,30 @@ func (t *SingleSelectTask) View(width int) string {
 		}
 
 		if t.cursor == i {
+			// Если задача является активной, применяем стиль активности
 			itemPrefix = ui.GetSelectItemPrefix("active")
 			checked = ui.IconRadioOn
 			label = t.activeStyle.Render(label)
 			checked = t.activeStyle.Render(checked)
 		} else if i < t.cursor {
+			// Если задача находится выше активной, применяем стиль выше
 			itemPrefix = ui.GetSelectItemPrefix("above")
 		} else {
+			// Если задача находится ниже активной, применяем стиль ниже
 			itemPrefix = ui.GetSelectItemPrefix("below")
 		}
 
 		if t.cursor == i {
+			// Если задача является активной, добавляем скобки и иконку
 			bracketsOpen := t.activeStyle.Render("(")
 			bracketsClose := t.activeStyle.Render(")")
 			sb.WriteString(fmt.Sprintf("%s%s%s%s %s\n", itemPrefix, bracketsOpen, checked, bracketsClose, label))
 		} else {
+			// Если задача не является активной, добавляем скобки и иконку
 			openBracket := "("
 			closeBracket := ")"
 			if isDisabled {
+				// Если задача отключена, применяем стиль отключения
 				openBracket = ui.DisabledStyle.Render(openBracket)
 				closeBracket = ui.DisabledStyle.Render(closeBracket)
 			}

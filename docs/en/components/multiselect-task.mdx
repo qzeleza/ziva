@@ -33,6 +33,55 @@ task.WithItemsDisabled([]string{"item3"})            // disable items by key
 selected := task.GetSelected() // []string
 ```
 
+## Advanced configuration
+
+### Dependencies between items
+
+`WithDependencies` lets you describe relationships between options. Each map entry uses a `MultiSelectDependencyRule` with actions that run when the trigger item is selected or deselected. Actions accept item keys:
+
+- `Disable` / `Enable` — temporarily lock or unlock other options.
+- `ForceSelect` — automatically mark related items (for required prerequisites).
+- `ForceClear` — unselect items that are no longer valid.
+
+```go
+diagnostics := []ziva.Item{
+    {Key: "logging", Name: "Logging"},
+    {Key: "debug", Name: "Debug"},
+    {Key: "tracing", Name: "Tracing"},
+    {Key: "metrics", Name: "Metrics"},
+}
+
+rules := map[string]ziva.MultiSelectDependencyRule{
+    "logging": {
+        OnSelect: ziva.MultiSelectDependencyActions{
+            Enable: []string{"debug"},
+        },
+        OnDeselect: ziva.MultiSelectDependencyActions{
+            Disable:    []string{"debug"},
+            ForceClear: []string{"debug", "tracing"},
+        },
+    },
+    "debug": {
+        OnSelect: ziva.MultiSelectDependencyActions{
+            ForceSelect: []string{"logging"},
+        },
+    },
+    "tracing": {
+        OnSelect: ziva.MultiSelectDependencyActions{
+            ForceSelect: []string{"logging"},
+        },
+    },
+}
+
+task := ziva.NewMultiSelectTask("Diagnostics", diagnostics).
+    WithDependencies(rules).
+    WithDefaultItems([]string{"logging", "metrics"})
+```
+
+### Optional empty selection
+
+Multi-select tasks allow confirming with no items selected by default. Call `WithRequireSelection(true)` if you want to enforce the classic “select at least one item” rule and show the localized hint when Enter is pressed without a choice.
+
 ## Usage Example
 
 ```go

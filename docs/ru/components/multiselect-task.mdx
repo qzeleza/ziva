@@ -61,6 +61,53 @@ multi.WithTimeout(20*time.Second, []string{"web", "docs"})
 
 По истечении времени задача завершится указанным набором значений.
 
+### Зависимости между пунктами
+
+`WithDependencies` описывает связи между пунктами меню. Для каждого ключа задаётся `MultiSelectDependencyRule` с действиями при выборе (`OnSelect`) и снятии выбора (`OnDeselect`). Доступные действия:
+
+- `Disable` / `Enable` — временно блокируют или возвращают пункт.
+- `ForceSelect` — автоматически отмечает связанные пункты (например, обязательные зависимости).
+- `ForceClear` — снимает выбор, если условия больше не выполнены.
+
+```go
+diagnostics := []ziva.Item{
+    {Key: "logging", Name: "Логирование"},
+    {Key: "debug", Name: "Отладка"},
+    {Key: "tracing", Name: "Трассировка"},
+    {Key: "metrics", Name: "Метрики"},
+}
+
+rules := map[string]ziva.MultiSelectDependencyRule{
+    "logging": {
+        OnSelect: ziva.MultiSelectDependencyActions{
+            Enable: []string{"debug"},
+        },
+        OnDeselect: ziva.MultiSelectDependencyActions{
+            Disable:    []string{"debug"},
+            ForceClear: []string{"debug", "tracing"},
+        },
+    },
+    "debug": {
+        OnSelect: ziva.MultiSelectDependencyActions{
+            ForceSelect: []string{"logging"},
+        },
+    },
+    "tracing": {
+        OnSelect: ziva.MultiSelectDependencyActions{
+            ForceSelect: []string{"logging"},
+        },
+    },
+}
+
+multi := ziva.NewMultiSelectTask("Диагностика", diagnostics).
+    WithDependencies(rules).
+    WithDefaultItems([]string{"logging", "metrics"})
+```
+
+### Пустой выбор как отдельный сценарий
+
+По умолчанию `MultiSelectTask` позволяет завершить задачу без выбора — удобно для опциональных блоков. Если нужно требовать хотя бы один пункт, вызовите `WithRequireSelection(true)`: при нажатии Enter без выбора пользователь увидит подсказку `NeedSelectAtLeastOne`.
+
 ## Получение результата
 
 ```go

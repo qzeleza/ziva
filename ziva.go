@@ -457,6 +457,12 @@ func (t *MultiSelectTask) WithDefaultItems(defauiltSelection interface{}) *Multi
 	return t
 }
 
+// WithRequireSelection управляет требованием выбрать хотя бы один пункт перед завершением задачи.
+func (t *MultiSelectTask) WithRequireSelection(required bool) *MultiSelectTask {
+	t.MultiSelectTask.WithRequireSelection(required)
+	return t
+}
+
 // WithDependencies задаёт правила динамического включения и отключения пунктов меню.
 // Правила принимаются в виде карты ключа элемента к действиям при выборе и снятии отметки.
 func (t *MultiSelectTask) WithDependencies(rules map[string]MultiSelectDependencyRule) *MultiSelectTask {

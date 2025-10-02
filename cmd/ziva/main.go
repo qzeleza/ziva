@@ -96,7 +96,7 @@ func main() {
 	queue.WithAppName("Жива™", "v1.0.0")
 	// queue.WithOutResultLine()
 	queue.WithOutSummary()
-	queue.WithTasksNumbered(false, "[%d]")
+	// queue.WithTasksNumbered(false, "[%d]")
 
 	// 1) Задачи мультивыбора (без и с пунктом "Выбрать все")
 	//    Пример без "Выбрать все"
@@ -136,6 +136,16 @@ func main() {
 			},
 		}).
 		WithDefaultItems([]string{diagnosticLogging, diagnosticMetrics})
+
+	securityItems := []ziva.Item{
+		{Key: "firewall", Name: "Firewall", Description: "Базовая сетевой фильтр"},
+		{Key: "ids", Name: "IDS", Description: "Система обнаружения вторжений"},
+		{Key: "waf", Name: "WAF", Description: "Веб-фильтр для приложений"},
+	}
+
+	securityTask := ziva.NewMultiSelectTask("Минимальные требования безопасности", securityItems).
+		WithViewport(3, false).
+		WithRequireSelection(true)
 
 	// //    Пример с пунктом "Выбрать все"
 	// ms2 := ziva.NewMultiSelectTask("Выберите модули для сборки", ssel).
@@ -197,6 +207,7 @@ func main() {
 	queue.AddTasks(
 		ms1,
 		diagnosticsTask,
+		securityTask,
 		inRequired,
 
 		ys,

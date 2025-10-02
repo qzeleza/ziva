@@ -208,7 +208,7 @@ func (t *BaseTask) FinalView(width int) string {
 			styledTitle = ui.GetErrorStatusStyle().Render(t.title)
 		}
 
-		left := fmt.Sprintf("%s  %s", prefix, styledTitle)
+		left := fmt.Sprintf("%s %s", prefix, styledTitle)
 		var right string
 		if t.finalValue == defaults.DefaultYes {
 			right = ui.TaskStatusSuccessStyle.Render(t.finalValue)
@@ -318,7 +318,7 @@ func (t *BaseTask) SetInProgressPrefix(prefix string) {
 // InProgressPrefix возвращает текущий префикс активной задачи (с учётом значения по умолчанию)
 func (t *BaseTask) InProgressPrefix() string {
 	if strings.TrimSpace(t.inProgressPrefix) != "" {
-		return t.inProgressPrefix
+		return t.inProgressPrefix + " "
 	}
 	return ui.GetCurrentTaskPrefix()
 }

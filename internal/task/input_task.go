@@ -539,6 +539,7 @@ func (t *InputTaskNew) View(width int) string {
 		t.validationErr,
 		t.inputType,
 		t.InProgressPrefix(),
+		t.SelectionSeparatorEnabled(),
 		width,
 		timerStr,
 	)
