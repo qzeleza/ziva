@@ -52,6 +52,12 @@ type YesNoOption = task.YesNoOption
 // Item описывает элемент списка для задач выбора.
 type Item = task.Item
 
+// MultiSelectDependencyActions описывает действия, выполняемые при изменении состояния пунктов мультивыбора.
+type MultiSelectDependencyActions = task.MultiSelectDependencyActions
+
+// MultiSelectDependencyRule определяет, что должно произойти при выборе и снятии отметки с пункта мультивыбора.
+type MultiSelectDependencyRule = task.MultiSelectDependencyRule
+
 const (
 	// YesOption - опция "Да"
 	YesOption = task.YesOption
@@ -448,6 +454,13 @@ func (t *MultiSelectTask) WithSelectAll(text ...string) *MultiSelectTask {
 // @return Указатель на задачу для цепочки вызовов
 func (t *MultiSelectTask) WithDefaultItems(defauiltSelection interface{}) *MultiSelectTask {
 	t.MultiSelectTask.WithDefaultItems(defauiltSelection)
+	return t
+}
+
+// WithDependencies задаёт правила динамического включения и отключения пунктов меню.
+// Правила принимаются в виде карты ключа элемента к действиям при выборе и снятии отметки.
+func (t *MultiSelectTask) WithDependencies(rules map[string]MultiSelectDependencyRule) *MultiSelectTask {
+	t.MultiSelectTask.WithDependencies(rules)
 	return t
 }
 

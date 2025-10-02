@@ -48,6 +48,10 @@ func main() {
 		componentValidation = "validation"
 		componentBack       = "back"
 		componentExit       = "exit"
+		diagnosticLogging   = "logging"
+		diagnosticDebug     = "debug"
+		diagnosticTracing   = "tracing"
+		diagnosticMetrics   = "metrics"
 	)
 
 	msel := []ziva.Item{
@@ -100,6 +104,38 @@ func main() {
 		WithViewport(5, false).
 		WithTimeout(3*time.Second, []string{componentCLI, componentServer}).
 		WithItemsDisabled([]string{componentAgent, componentWeb})
+
+	diagnosticsItems := []ziva.Item{
+		{Key: diagnosticLogging, Name: "Логирование", Description: "Писать события в файл"},
+		{Key: diagnosticDebug, Name: "Отладка", Description: "Расширенный вывод отладки"},
+		{Key: diagnosticTracing, Name: "Трассировка", Description: "Профилирование производительности"},
+		{Key: diagnosticMetrics, Name: "Метрики", Description: "Экспортировать Prometheus показатели"},
+	}
+
+	diagnosticsTask := ziva.NewMultiSelectTask("Настройка диагностики", diagnosticsItems).
+		WithViewport(4, true).
+		WithDependencies(map[string]ziva.MultiSelectDependencyRule{
+			diagnosticLogging: {
+				OnSelect: ziva.MultiSelectDependencyActions{
+					Enable: []string{diagnosticDebug},
+				},
+				OnDeselect: ziva.MultiSelectDependencyActions{
+					Disable:    []string{diagnosticDebug},
+					ForceClear: []string{diagnosticDebug, diagnosticTracing},
+				},
+			},
+			diagnosticDebug: {
+				OnSelect: ziva.MultiSelectDependencyActions{
+					ForceSelect: []string{diagnosticLogging},
+				},
+			},
+			diagnosticTracing: {
+				OnSelect: ziva.MultiSelectDependencyActions{
+					ForceSelect: []string{diagnosticLogging},
+				},
+			},
+		}).
+		WithDefaultItems([]string{diagnosticLogging, diagnosticMetrics})
 
 	// //    Пример с пунктом "Выбрать все"
 	// ms2 := ziva.NewMultiSelectTask("Выберите модули для сборки", ssel).
@@ -160,6 +196,7 @@ func main() {
 
 	queue.AddTasks(
 		ms1,
+		diagnosticsTask,
 		inRequired,
 
 		ys,

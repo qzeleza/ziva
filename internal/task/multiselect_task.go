@@ -17,6 +17,32 @@ import (
 // Поддерживает до 32 элементов выбора, что покрывает большинство практических случаев
 type SelectionBitset uint32
 
+type dependencyAction struct {
+	disable     []int
+	enable      []int
+	forceSelect []int
+	forceClear  []int
+}
+
+type dependencyRule struct {
+	onSelect   dependencyAction
+	onDeselect dependencyAction
+}
+
+// MultiSelectDependencyActions описывает действия, выполняемые при смене состояния пункта.
+type MultiSelectDependencyActions struct {
+	Disable     []string
+	Enable      []string
+	ForceSelect []string
+	ForceClear  []string
+}
+
+// MultiSelectDependencyRule задаёт набор действий при выборе и снятии выбора пункта меню.
+type MultiSelectDependencyRule struct {
+	OnSelect   MultiSelectDependencyActions
+	OnDeselect MultiSelectDependencyActions
+}
+
 // Set устанавливает бит в позиции index
 func (s *SelectionBitset) Set(index int) {
 	if index >= 0 && index < 32 {
@@ -64,6 +90,15 @@ func popcount32(x uint32) int {
 	return count
 }
 
+func clearIndexSet(set map[int]struct{}) {
+	if set == nil {
+		return
+	}
+	for idx := range set {
+		delete(set, idx)
+	}
+}
+
 // Clear очищает все биты
 func (s *SelectionBitset) ClearAll() {
 	*s = 0
@@ -85,16 +120,19 @@ func (s *SelectionBitset) SetAll(n int) {
 // MultiSelectTask позволяет выбрать несколько вариантов из списка.
 type MultiSelectTask struct {
 	BaseTask
-	items           []choice         // Список вариантов выбора
-	disabled        map[int]struct{} // Набор отключённых пунктов
-	selected        SelectionBitset  // Битовый набор выбранных элементов (оптимизировано для embedded)
-	fallbackMap     map[int]struct{} // Резервная карта для списков > 64 элементов
-	cursor          int              // Текущая позиция курсора
-	activeStyle     lipgloss.Style   // Стиль для активного элемента
-	hasSelectAll    bool             // Включена ли опция "Выбрать все"
-	selectAllText   string           // Текст опции "Выбрать все"
-	showHelpMessage bool             // Показывать ли сообщение-подсказку
-	helpMessage     string           // Текст сообщения-подсказки
+	items           []choice               // Список вариантов выбора
+	disabled        map[int]struct{}       // Итоговый набор отключённых пунктов
+	staticDisabled  map[int]struct{}       // Статические блокировки из конфигурации
+	dynamicDisabled map[int]struct{}       // Динамические блокировки по зависимостям
+	dependencies    map[int]dependencyRule // Правила зависимостей по индексам
+	selected        SelectionBitset        // Битовый набор выбранных элементов (оптимизировано для embedded)
+	fallbackMap     map[int]struct{}       // Резервная карта для списков > 64 элементов
+	cursor          int                    // Текущая позиция курсора
+	activeStyle     lipgloss.Style         // Стиль для активного элемента
+	hasSelectAll    bool                   // Включена ли опция "Выбрать все"
+	selectAllText   string                 // Текст опции "Выбрать все"
+	showHelpMessage bool                   // Показывать ли сообщение-подсказку
+	helpMessage     string                 // Текст сообщения-подсказки
 	// Viewport (окно просмотра) для ограничения количества отображаемых элементов
 	viewportSize  int // Размер viewport (количество видимых элементов), 0 = показать все
 	viewportStart int // Начальная позиция viewport в списке элементов
@@ -113,6 +151,9 @@ func NewMultiSelectTask(title string, items []Item) *MultiSelectTask {
 		BaseTask:        NewBaseTask(title),
 		items:           normalized,
 		disabled:        make(map[int]struct{}),
+		staticDisabled:  make(map[int]struct{}),
+		dynamicDisabled: make(map[int]struct{}),
+		dependencies:    make(map[int]dependencyRule),
 		cursor:          0, // Начинаем с первого элемента списка
 		activeStyle:     ui.ActiveStyle,
 		hasSelectAll:    false,
@@ -367,6 +408,66 @@ func (t *MultiSelectTask) clearAllSelections() {
 	t.selected.ClearAll()
 }
 
+func (t *MultiSelectTask) rebuildDisabled() {
+	if t.disabled == nil {
+		t.disabled = make(map[int]struct{})
+	}
+	clearIndexSet(t.disabled)
+	for idx := range t.staticDisabled {
+		t.disabled[idx] = struct{}{}
+	}
+	for idx := range t.dynamicDisabled {
+		t.disabled[idx] = struct{}{}
+	}
+}
+
+func (t *MultiSelectTask) resetDynamicDisabled() {
+	if t.dynamicDisabled == nil {
+		t.dynamicDisabled = make(map[int]struct{})
+		return
+	}
+	clearIndexSet(t.dynamicDisabled)
+}
+
+func (t *MultiSelectTask) resolveDependencyTargets(keys []string) []int {
+	if len(keys) == 0 {
+		return nil
+	}
+	seen := make(map[int]struct{}, len(keys))
+	result := make([]int, 0, len(keys))
+	for _, key := range keys {
+		idx := t.choiceIndex(key)
+		if idx == -1 {
+			continue
+		}
+		if _, exists := seen[idx]; exists {
+			continue
+		}
+		seen[idx] = struct{}{}
+		result = append(result, idx)
+	}
+	return result
+}
+
+func (t *MultiSelectTask) resolveDependencyActionConfig(cfg MultiSelectDependencyActions) dependencyAction {
+	return dependencyAction{
+		disable:     t.resolveDependencyTargets(cfg.Disable),
+		enable:      t.resolveDependencyTargets(cfg.Enable),
+		forceSelect: t.resolveDependencyTargets(cfg.ForceSelect),
+		forceClear:  t.resolveDependencyTargets(cfg.ForceClear),
+	}
+}
+
+func (t *MultiSelectTask) clearDependencies() {
+	if t.dependencies == nil {
+		t.dependencies = make(map[int]dependencyRule)
+		return
+	}
+	for idx := range t.dependencies {
+		delete(t.dependencies, idx)
+	}
+}
+
 // selectAllEnabled отмечает все доступные элементы выбранными
 func (t *MultiSelectTask) selectAllEnabled() {
 	if len(t.items) > 32 {
@@ -392,6 +493,47 @@ func (t *MultiSelectTask) selectAllEnabled() {
 	}
 }
 
+func (t *MultiSelectTask) isSelectedRaw(index int) bool {
+	if index < 0 || index >= len(t.items) {
+		return false
+	}
+	if len(t.items) > 32 {
+		if t.fallbackMap == nil {
+			return false
+		}
+		_, exists := t.fallbackMap[index]
+		return exists
+	}
+	return t.selected.IsSet(index)
+}
+
+func (t *MultiSelectTask) setSelectedState(index int, active bool) bool {
+	if index < 0 || index >= len(t.items) {
+		return false
+	}
+	current := t.isSelectedRaw(index)
+	if active == current {
+		return false
+	}
+	if len(t.items) > 32 {
+		if t.fallbackMap == nil {
+			t.fallbackMap = make(map[int]struct{})
+		}
+		if active {
+			t.fallbackMap[index] = struct{}{}
+		} else {
+			delete(t.fallbackMap, index)
+		}
+	} else {
+		if active {
+			t.selected.Set(index)
+		} else {
+			t.selected.Clear(index)
+		}
+	}
+	return true
+}
+
 // WithViewport устанавливает размер viewport (окна просмотра) для ограничения количества отображаемых элементов.
 // Это полезно для длинных списков, когда нужно показывать только часть элементов.
 //
@@ -412,20 +554,43 @@ func (t *MultiSelectTask) WithViewport(size int, showCounters ...bool) *MultiSel
 // WithItemsDisabled помечает элементы меню как недоступные для выбора.
 // Поддерживаются типы: int, []int, string, []string. Nil очищает список отключённых элементов.
 func (t *MultiSelectTask) WithItemsDisabled(disabled interface{}) *MultiSelectTask {
-	for idx := range t.disabled {
-		delete(t.disabled, idx)
+	if t.staticDisabled == nil {
+		t.staticDisabled = make(map[int]struct{})
 	}
+	clearIndexSet(t.staticDisabled)
 
 	indices := t.resolveDisabledIndices(disabled)
 	for _, idx := range indices {
 		if idx >= 0 && idx < len(t.items) {
-			t.disabled[idx] = struct{}{}
+			t.staticDisabled[idx] = struct{}{}
 		}
 	}
 
-	t.clearDisabledSelections()
-	t.ensureCursorSelectable()
-	t.updateViewport()
+	t.applyDependencies()
+	return t
+}
+
+// WithDependencies задаёт правила динамической блокировки пунктов меню.
+func (t *MultiSelectTask) WithDependencies(rules map[string]MultiSelectDependencyRule) *MultiSelectTask {
+	t.clearDependencies()
+	if len(rules) == 0 {
+		// Даже при очистке необходимо пересчитать состояния, чтобы снять предыдущие блокировки
+		t.applyDependencies()
+		return t
+	}
+
+	for key, cfg := range rules {
+		idx := t.choiceIndex(key)
+		if idx == -1 {
+			continue
+		}
+		t.dependencies[idx] = dependencyRule{
+			onSelect:   t.resolveDependencyActionConfig(cfg.OnSelect),
+			onDeselect: t.resolveDependencyActionConfig(cfg.OnDeselect),
+		}
+	}
+
+	t.applyDependencies()
 	return t
 }
 
@@ -595,8 +760,7 @@ func (t *MultiSelectTask) WithDefaultItems(defauiltSelection interface{}) *Multi
 		}
 	}
 
-	// После обновления выбора синхронизируем viewport
-	t.updateViewport()
+	t.applyDependencies()
 	return t
 }
 
@@ -610,10 +774,11 @@ func (t *MultiSelectTask) toggleSelectAll() {
 
 	if t.isAllSelected() {
 		t.clearAllSelections()
-		return
+	} else {
+		t.selectAllEnabled()
 	}
 
-	t.selectAllEnabled()
+	t.applyDependencies()
 }
 
 // isAllSelected проверяет, выбраны ли все элементы списка
@@ -654,6 +819,77 @@ func (t *MultiSelectTask) toggleSelection(index int) {
 		// Используем битсет для оптимизации
 		t.selected.Toggle(index)
 	}
+
+	t.applyDependencies()
+}
+
+func (t *MultiSelectTask) applyDependencies() {
+	if len(t.dependencies) == 0 {
+		t.resetDynamicDisabled()
+		t.rebuildDisabled()
+		t.clearDisabledSelections()
+		t.ensureCursorSelectable()
+		t.updateViewport()
+		return
+	}
+
+	t.resetDynamicDisabled()
+	maxIterations := len(t.items)*4 + 10
+	if maxIterations < 16 {
+		maxIterations = 16
+	}
+	for iteration := 0; iteration < maxIterations; iteration++ {
+		stateChanged := false
+		for idx, rule := range t.dependencies {
+			var actions dependencyAction
+			if t.isSelectedRaw(idx) {
+				actions = rule.onSelect
+			} else {
+				actions = rule.onDeselect
+			}
+
+			for _, target := range actions.disable {
+				if target < 0 || target >= len(t.items) {
+					continue
+				}
+				if _, exists := t.dynamicDisabled[target]; !exists {
+					t.dynamicDisabled[target] = struct{}{}
+					stateChanged = true
+				}
+				if t.setSelectedState(target, false) {
+					stateChanged = true
+				}
+			}
+
+			for _, target := range actions.enable {
+				if _, exists := t.dynamicDisabled[target]; exists {
+					delete(t.dynamicDisabled, target)
+					stateChanged = true
+				}
+			}
+
+			for _, target := range actions.forceSelect {
+				if t.setSelectedState(target, true) {
+					stateChanged = true
+				}
+			}
+
+			for _, target := range actions.forceClear {
+				if t.setSelectedState(target, false) {
+					stateChanged = true
+				}
+			}
+		}
+
+		if !stateChanged {
+			break
+		}
+	}
+
+	t.rebuildDisabled()
+	t.clearDisabledSelections()
+	t.ensureCursorSelectable()
+	t.updateViewport()
 }
 
 // isSelected проверяет, выбран ли элемент по индексу (оптимизировано для embedded)
@@ -813,6 +1049,8 @@ func (t *MultiSelectTask) applyDefaultValue() {
 				}
 			}
 		}
+
+		t.applyDependencies()
 
 		// Проверяем, есть ли хотя бы один выбранный элемент
 		hasSelection := false

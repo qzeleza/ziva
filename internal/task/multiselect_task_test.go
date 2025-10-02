@@ -475,3 +475,41 @@ func TestMultiSelectTaskEmptySelectionHandling(t *testing.T) {
 	assert.True(t, multiSelectTaskFinal.IsDone(), "Задача должна завершиться после выбора элемента")
 	assert.False(t, multiSelectTaskFinal.HasError(), "Не должно быть ошибки при успешном завершении")
 }
+
+func TestMultiSelectDependenciesDisableAndEnable(t *testing.T) {
+	items := []Item{
+		{Key: "logging", Name: "Логирование"},
+		{Key: "debug", Name: "Отладка"},
+		{Key: "metrics", Name: "Метрики"},
+	}
+
+	task := NewMultiSelectTask("Опции", items)
+	task.WithDependencies(map[string]MultiSelectDependencyRule{
+		"logging": {
+			OnSelect: MultiSelectDependencyActions{
+				Enable: []string{"debug"},
+			},
+			OnDeselect: MultiSelectDependencyActions{
+				Disable:    []string{"debug"},
+				ForceClear: []string{"debug"},
+			},
+		},
+	})
+
+	assert.True(t, task.isDisabled(1))
+	assert.False(t, task.isSelected(1))
+	task.toggleSelection(1)
+	assert.False(t, task.isSelected(1))
+
+	task.toggleSelection(0)
+	assert.False(t, task.isDisabled(1))
+	assert.False(t, task.isSelected(1))
+
+	task.toggleSelection(1)
+	assert.True(t, task.isSelected(1))
+
+	task.toggleSelection(0)
+	assert.False(t, task.isSelected(1))
+	assert.True(t, task.isDisabled(1))
+	assert.Equal(t, 0, task.cursor)
+}
