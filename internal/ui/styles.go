@@ -68,6 +68,8 @@ var (
 	SelectionStyle       = lipgloss.NewStyle().Foreground(ColorBrightGreen)             // Выделение (Да): ярко-зелёный
 	SelectionNoStyle     = lipgloss.NewStyle().Foreground(ColorBrightRed).Bold(true)    // Выделение (Нет): ярко-красный
 	ActiveStyle          = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Активный элемент: ярко-синий
+	MenuExitItemStyle    = lipgloss.NewStyle().Foreground(ColorBrightYellow)            // Специальный стиль для пунктов выхода
+	MenuBackItemStyle    = lipgloss.NewStyle().Foreground(ColorDarkYellow)              // Специальный стиль для пунктов возврата
 	InputStyle           = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Стиль для активного ввода
 	SpinnerStyle         = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Стиль для спиннера
 	ActiveTitleStyle     = lipgloss.NewStyle().Foreground(ColorBrightGreen).Bold(true)  // Активный заголовок ввода
@@ -370,6 +372,16 @@ func DrawSpecialHeaderLine(width int) string {
 func SetErrorColor(errorsColor lipgloss.TerminalColor, statusColor lipgloss.TerminalColor) {
 	ErrorMessageStyle = ErrorMessageStyle.Foreground(errorsColor)
 	ErrorStatusStyle = ErrorStatusStyle.Foreground(statusColor)
+}
+
+// SetMenuExitItemStyle обновляет стиль для пунктов меню выхода
+func SetMenuExitItemStyle(style lipgloss.Style) {
+	MenuExitItemStyle = style
+}
+
+// SetMenuBackItemStyle обновляет стиль для пунктов меню возврата
+func SetMenuBackItemStyle(style lipgloss.Style) {
+	MenuBackItemStyle = style
 }
 
 // ResetErrorColors сбрасывает цвета ошибок к значениям по умолчанию

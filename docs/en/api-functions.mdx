@@ -132,6 +132,24 @@ Resets error colors to default values.
 ziva.ResetErrorColors()
 ```
 
+### SetExitMenuItemStyle(style lipgloss.Style)
+
+Changes the style used to render localized “Exit” menu items in list tasks.
+
+```go
+exitStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888")).Bold(true)
+ziva.SetExitMenuItemStyle(exitStyle)
+```
+
+### SetBackMenuItemStyle(style lipgloss.Style)
+
+Changes the style used to render localized “Back” menu items in list tasks.
+
+```go
+backStyle := lipgloss.NewStyle().Italic(true)
+ziva.SetBackMenuItemStyle(backStyle)
+```
+
 ### EnableEmbeddedMode()
 
 Enables embedded system mode with simplified color palette.

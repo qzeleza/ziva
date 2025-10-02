@@ -69,6 +69,16 @@ func DisableCompletionDelay() {
 	defaults.SetCompletionDelayEnabled(false)
 }
 
+// SetExitMenuItemStyle обновляет стиль отображения пунктов меню выхода.
+func SetExitMenuItemStyle(style lipgloss.Style) {
+	ui.SetMenuExitItemStyle(style)
+}
+
+// SetBackMenuItemStyle обновляет стиль отображения пунктов меню возврата.
+func SetBackMenuItemStyle(style lipgloss.Style) {
+	ui.SetMenuBackItemStyle(style)
+}
+
 // ----------------------------------------------------------------------------
 // Queue
 // ----------------------------------------------------------------------------

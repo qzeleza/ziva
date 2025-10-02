@@ -188,6 +188,8 @@ var (
 	MultiSelectHelp          = "[↑/↓ навигация, пробел выбор, Enter подтверждение, Q/Esc - Выход]"
 	MultiSelectHelpSelectAll = "[↑/↓ навигация, пробел выбор/переключение всех, Enter подтверждение, Q/Esc - Выход]"
 	SelectAllDefaultText     = "Выбрать все"
+	MenuExitKeywords         = []string{"выйти", "выход", "выход из программы"}
+	MenuBackKeywords         = []string{"назад", "обратно", "вернуться"}
 	InputConfirmHint         = "[Enter - подтвердить, Ctrl+C - отменить]"
 	InputFormatLabel         = "Формат:"
 	InputHintPassword        = "Используйте надежный пароль"

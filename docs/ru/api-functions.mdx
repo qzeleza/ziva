@@ -126,6 +126,24 @@ ziva.SetErrorColor(
 ziva.ResetErrorColors()
 ```
 
+### SetExitMenuItemStyle(style lipgloss.Style)
+
+Меняет стиль отображения локализованных пунктов меню «Выход» в задачах со списками.
+
+```go
+exitStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888")).Bold(true)
+ziva.SetExitMenuItemStyle(exitStyle)
+```
+
+### SetBackMenuItemStyle(style lipgloss.Style)
+
+Меняет стиль отображения локализованных пунктов меню «Назад» в задачах со списками.
+
+```go
+backStyle := lipgloss.NewStyle().Underline(true)
+ziva.SetBackMenuItemStyle(backStyle)
+```
+
 ## Строковые и производительные утилиты
 
 ### RepeatEfficient(s string, count int) string

@@ -528,9 +528,19 @@ func (t *SingleSelectTask) View(width int) string {
 		checked := ui.IconRadioOff
 		var itemPrefix string
 		isDisabled := t.isDisabled(i)
+		isExit := isExitChoice(item)
+		isBack := !isExit && isBackChoice(item)
 		if isDisabled {
 			label = ui.DisabledStyle.Render(label)
 			checked = ui.DisabledStyle.Render(checked)
+		}
+		if !isDisabled && t.cursor != i {
+			switch {
+			case isExit:
+				label = ui.MenuExitItemStyle.Render(label)
+			case isBack:
+				label = ui.MenuBackItemStyle.Render(label)
+			}
 		}
 
 		if t.cursor == i {

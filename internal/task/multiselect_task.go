@@ -933,6 +933,8 @@ func (t *MultiSelectTask) View(width int) string {
 		checked := " "
 		var itemPrefix string
 		itemDisabled := t.isDisabled(i)
+		isExit := isExitChoice(item)
+		isBack := !isExit && isBackChoice(item)
 
 		if t.isSelected(i) {
 			checked = ui.IconSelected
@@ -941,6 +943,14 @@ func (t *MultiSelectTask) View(width int) string {
 		if itemDisabled {
 			label = ui.DisabledStyle.Render(label)
 			checked = ui.DisabledStyle.Render(checked)
+		}
+		if !itemDisabled && t.cursor != i {
+			switch {
+			case isExit:
+				label = ui.MenuExitItemStyle.Render(label)
+			case isBack:
+				label = ui.MenuBackItemStyle.Render(label)
+			}
 		}
 
 		if t.cursor == i {

@@ -66,6 +66,8 @@ type dictionary struct {
 	MultiSelectHelp           string
 	MultiSelectHelpSelectAll  string
 	SelectAllDefaultText      string
+	MenuExitKeywords          []string
+	MenuBackKeywords          []string
 	InputConfirmHint          string
 	InputFormatLabel          string
 	InputHintPassword         string
@@ -185,6 +187,8 @@ var (
 			MultiSelectHelp:                      "[↑/↓ навигация, →/пробел выбор, Enter подтверждение, Q/←/Esc - выход]",
 			MultiSelectHelpSelectAll:             "[↑/↓ навигация, →/пробел выбор/переключение всех, Enter подтверждение, Q/←/Esc - выход]",
 			SelectAllDefaultText:                 "Выбрать все",
+			MenuExitKeywords:                    []string{"выйти", "выход", "выход из программы", "выйти из приложения"},
+			MenuBackKeywords:                    []string{"назад", "обратно", "вернуться", "назад в меню"},
 			InputConfirmHint:                     "[Enter - подтвердить, Ctrl+C - отменить]",
 			InputFormatLabel:                     "Формат:",
 			InputHintPassword:                    "Используйте надежный пароль",
@@ -296,6 +300,8 @@ var (
 			MultiSelectHelp:                      "[↑/↓ navigate, →/space toggle, Enter confirm, Q/←/Esc exit]",
 			MultiSelectHelpSelectAll:             "[↑/↓ navigate, →/space toggle all, Enter confirm, Q/←/Esc exit]",
 			SelectAllDefaultText:                 "Select all",
+			MenuExitKeywords:                    []string{"exit", "quit", "leave", "log out"},
+			MenuBackKeywords:                    []string{"back", "return", "go back", "previous"},
 			InputConfirmHint:                     "[Enter to confirm, Ctrl+C to cancel]",
 			InputFormatLabel:                     "Format:",
 			InputHintPassword:                    "Use a reliable password",
@@ -407,6 +413,8 @@ var (
 			MultiSelectHelp:                      "[↑/↓ gezin, →/boşluk seç, Enter onay, Q/←/Esc çıkış]",
 			MultiSelectHelpSelectAll:             "[↑/↓ gezin, →/boşluk tümünü değiştir, Enter onay, Q/←/Esc çıkış]",
 			SelectAllDefaultText:                 "Tümünü seç",
+			MenuExitKeywords:                    []string{"çık", "çıkış", "çıkmak", "çıkış yap"},
+			MenuBackKeywords:                    []string{"geri", "geri dön", "dön", "geri git"},
 			InputConfirmHint:                     "[Enter onay, Ctrl+C iptal]",
 			InputFormatLabel:                     "Biçim:",
 			InputHintPassword:                    "Güçlü bir parola kullanın",
@@ -518,6 +526,8 @@ var (
 			MultiSelectHelp:                      "[← выхад, ↑/↓ навігацыя, →/прабел выбар, Enter — пацвярджэнне, Q/Esc — выхад]",
 			MultiSelectHelpSelectAll:             "[← выхад, ↑/↓ навігацыя, →/прабел пераключыць усе, Enter — пацвярджэнне, Q/Esc — выхад]",
 			SelectAllDefaultText:                 "Выбраць усе",
+			MenuExitKeywords:                    []string{"выйсці", "выхад", "выйсці з праграмы"},
+			MenuBackKeywords:                    []string{"назад", "вярнуцца", "назад у меню"},
 			InputConfirmHint:                     "[Enter — пацвердзіць, Ctrl+C — скасаваць]",
 			InputFormatLabel:                     "Фармат:",
 			InputHintPassword:                    "Выкарыстоўвайце надзейны пароль",
@@ -629,6 +639,8 @@ var (
 			MultiSelectHelp:                      "[↑/↓ навігація, →/пробіл вибір, Enter — підтвердження, Q/←/Esc — вихід]",
 			MultiSelectHelpSelectAll:             "[↑/↓ навігація, →/пробіл перемкнути всі, Enter — підтвердження, Q/←/Esc — вихід]",
 			SelectAllDefaultText:                 "Вибрати всі",
+			MenuExitKeywords:                    []string{"вийти", "вихід", "вийти з програми"},
+			MenuBackKeywords:                    []string{"назад", "повернутися", "назад до меню"},
 			InputConfirmHint:                     "[Enter — підтвердити, Ctrl+C — скасувати]",
 			InputFormatLabel:                     "Формат:",
 			InputHintPassword:                    "Використовуйте надійний пароль",
@@ -744,6 +756,8 @@ func applyDictionary(dict dictionary) {
 	MultiSelectHelp = dict.MultiSelectHelp
 	MultiSelectHelpSelectAll = dict.MultiSelectHelpSelectAll
 	SelectAllDefaultText = dict.SelectAllDefaultText
+	MenuExitKeywords = append([]string(nil), dict.MenuExitKeywords...)
+	MenuBackKeywords = append([]string(nil), dict.MenuBackKeywords...)
 	InputConfirmHint = dict.InputConfirmHint
 	InputFormatLabel = dict.InputFormatLabel
 	InputHintPassword = dict.InputHintPassword

@@ -46,6 +46,8 @@ func main() {
 		componentMulti      = "multi"
 		componentSingle     = "single"
 		componentValidation = "validation"
+		componentBack       = "back"
+		componentExit       = "exit"
 	)
 
 	msel := []ziva.Item{
@@ -61,6 +63,8 @@ func main() {
 		{Key: componentMulti, Name: "Мультивыбор", Description: "Дополнительные параметры"},
 		{Key: componentSingle, Name: "Одиночный выбор", Description: "Переключатель режимов"},
 		{Key: componentValidation, Name: "Проверка ввода", Description: "Встроенные валидаторы"},
+		{Key: componentBack, Name: "Назад", Description: "Возврат к предыдущему шагу"},
+		{Key: componentExit, Name: "Выйти", Description: "Завершить выбор"},
 	}
 
 	const (
@@ -69,6 +73,7 @@ func main() {
 		envProduction  = "production"
 		envCustom      = "custom"
 		envCancel      = "cancel"
+		envBack        = "back"
 		envExit        = "exit"
 	)
 
@@ -78,6 +83,7 @@ func main() {
 		{Key: envProduction, Name: "production", Description: "Боевая среда"},
 		{Key: envCustom, Name: "другое", Description: "Пользовательское значение"},
 		{Key: envCancel, Name: "отмена", Description: "Отмена выбора"},
+		{Key: envBack, Name: "назад", Description: "Вернуться к предыдущему пункту"},
 		{Key: envExit, Name: "выход", Description: "Выход из программы"},
 	}
 
