@@ -188,9 +188,9 @@ var (
 	NeedSelectAtLeastOne     = "! Необходимо выбрать хотя бы один элемент"
 	ScrollAboveFormat        = "%s %s %d выше"
 	ScrollBelowFormat        = "%s %s %d ниже"
-	SingleSelectHelp         = "[↑/↓ навигация, Enter - выбор, Q/Esc - Выход]"
-	MultiSelectHelp          = "[↑/↓ навигация, пробел выбор, Enter подтверждение, Q/Esc - Выход]"
-	MultiSelectHelpSelectAll = "[↑/↓ навигация, пробел выбор/переключение всех, Enter подтверждение, Q/Esc - Выход]"
+	SingleSelectHelp         = "[↑/↓ навигация, →/Enter выбор, Q/←/Esc/Ctrl+C - выход]"
+	MultiSelectHelp          = "[↑/↓ навигация, →/пробел выбор, Enter подтверждение, Q/←/Esc/Ctrl+C - выход]"
+	MultiSelectHelpSelectAll = "[↑/↓ навигация, →/пробел выбор/переключение всех, Enter подтверждение, Q/←/Esc/Ctrl+C - выход]"
 	SelectAllDefaultText     = "Выбрать все"
 	MenuExitKeywords         = []string{"выйти", "выход", "выход из программы"}
 	MenuBackKeywords         = []string{"назад", "обратно", "вернуться"}

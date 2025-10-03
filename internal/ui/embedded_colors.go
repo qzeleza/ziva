@@ -98,7 +98,7 @@ func EnableASCIIMode() {
 	IconCancelled = "!"
 	IconQuestion = "?"
 	IconSelected = ">"
-	IconRadioOn = "(x)"
+	IconRadioOn = "●"
 	IconCursor = ">"
 	IconUndone = "."
 }

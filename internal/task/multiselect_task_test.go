@@ -328,9 +328,8 @@ func TestMultiSelectTaskLeftCancels(t *testing.T) {
 	canceledTask, ok := updated.(*MultiSelectTask)
 	assert.True(t, ok, "Обновленная задача должна быть типа *MultiSelectTask")
 	assert.True(t, canceledTask.IsDone(), "Задача должна завершиться после нажатия ←")
-	if err := canceledTask.Error(); assert.NotNil(t, err, "Ошибка должна быть установлена") {
-		assert.Equal(t, defaults.ErrorMsgCanceled, err.Error())
-	}
+	assert.NoError(t, canceledTask.Error(), "После нажатия ← не должно быть ошибки")
+	assert.Equal(t, defaults.DefaultSuccessLabel, canceledTask.finalValue, "Завершение должно соответствовать поведению Enter без выбора")
 }
 
 func TestMultiSelectTaskRightToggles(t *testing.T) {

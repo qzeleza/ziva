@@ -106,15 +106,6 @@ func (t *YesNoTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		switch msg.String() {
 		case " ", "up", "down", "j", "k", "enter":
 			t.stopTimeout()
-		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C":
-			// Отмена пользователем
-			cancelErr := fmt.Errorf(defaults.ErrorMsgCanceled)
-			t.done = true
-			t.err = cancelErr
-			t.icon = ui.IconCancelled
-			t.finalValue = ui.ErrorMessageStyle.Render(cancelErr.Error())
-			t.SetStopOnError(true)
-			return t, nil
 		}
 	}
 

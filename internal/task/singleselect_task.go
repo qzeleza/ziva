@@ -58,6 +58,79 @@ func (t *SingleSelectTask) captureSelection(index int) {
 	t.finalValue = selection.name
 }
 
+// finalizeSelection завершает задачу с выбранным элементом.
+// Возвращает true, если удалось завершить задачу без ошибок.
+func (t *SingleSelectTask) finalizeSelection(index int) bool {
+	if index < 0 || index >= len(t.items) {
+		return false
+	}
+	if t.isDisabled(index) {
+		return false
+	}
+
+	t.done = true
+	t.icon = ui.IconDone
+	t.captureSelection(index)
+	t.SetError(nil)
+	return true
+}
+
+// handleExitShortcut обрабатывает быстрый выход без ошибки по Ctrl+C, Esc, ← и т.п.
+func (t *SingleSelectTask) handleExitShortcut() (Task, tea.Cmd) {
+	// Останавливаем таймер, если он активен
+	t.stopTimeout()
+
+	// В первую очередь пытаемся выбрать явный пункт "Выход"
+	if idx, ok := t.findSelectableChoice(isExitChoice); ok {
+		if t.finalizeWithIndex(idx) {
+			return t, nil
+		}
+	}
+
+	// Затем пробуем варианты "Назад", если таковые есть
+	if idx, ok := t.findSelectableChoice(isBackChoice); ok {
+		if t.finalizeWithIndex(idx) {
+			return t, nil
+		}
+	}
+
+	// В остальных случаях завершаем задачу текущим выделением, как по Enter
+	if t.finalizeSelection(t.cursor) {
+		return t, nil
+	}
+
+	// Если выбрать нечего (например, пустой список), завершаем без ошибки
+	t.done = true
+	t.icon = ui.IconDone
+	if strings.TrimSpace(t.finalValue) == "" {
+		t.finalValue = defaults.DefaultSuccessLabel
+	}
+	t.SetError(nil)
+	return t, nil
+}
+
+// finalizeWithIndex перемещает курсор и завершает задачу для указанного индекса.
+func (t *SingleSelectTask) finalizeWithIndex(index int) bool {
+	if index < 0 || index >= len(t.items) {
+		return false
+	}
+	t.cursor = index
+	return t.finalizeSelection(index)
+}
+
+// findSelectableChoice возвращает индекс первого доступного элемента, удовлетворяющего условию.
+func (t *SingleSelectTask) findSelectableChoice(match func(choice) bool) (int, bool) {
+	for idx, item := range t.items {
+		if t.isDisabled(idx) {
+			continue
+		}
+		if match(item) {
+			return idx, true
+		}
+	}
+	return -1, false
+}
+
 // isDisabled проверяет, помечен ли элемент как недоступный
 func (t *SingleSelectTask) isDisabled(index int) bool {
 	if index < 0 || index >= len(t.items) {
@@ -389,35 +462,20 @@ func (t *SingleSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 			}
 			return t, nil
 		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C", "left", "Left":
-			// Отмена пользователем
-			cancelErr := fmt.Errorf(defaults.ErrorMsgCanceled)
-			t.done = true
-			t.err = cancelErr
-			t.icon = ui.IconCancelled
-			t.finalValue = ui.ErrorMessageStyle.Render(cancelErr.Error())
-			t.SetStopOnError(true)
-			return t, nil
-
+			return t.handleExitShortcut()
 		case "enter", "right", "Right":
 			// Если таймер активен, останавливаем его
 			t.stopTimeout()
-			if t.cursor < 0 || t.cursor >= len(t.items) || t.isDisabled(t.cursor) {
+			if t.finalizeSelection(t.cursor) {
 				return t, nil
 			}
-			t.done = true
-			t.icon = ui.IconDone
-			t.captureSelection(t.cursor)
 			return t, nil
 		case " ":
 			// Если таймер активен, останавливаем его
 			t.stopTimeout()
-			// В любом случае выбираем текущий элемент
-			if t.cursor < 0 || t.cursor >= len(t.items) || t.isDisabled(t.cursor) {
+			if t.finalizeSelection(t.cursor) {
 				return t, nil
 			}
-			t.done = true
-			t.icon = ui.IconDone
-			t.captureSelection(t.cursor)
 			return t, nil
 		}
 		// После обработки клавиш возвращаем команду для продолжения тикера

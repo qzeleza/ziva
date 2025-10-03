@@ -977,44 +977,12 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 				t.toggleSelection(t.cursor)
 			}
 		case "q", "Q", "esc", "Esc", "ctrl+c", "Ctrl+C", "left", "Left":
-			// Отмена пользователем
-			cancelErr := fmt.Errorf(defaults.ErrorMsgCanceled)
-			t.done = true
-			t.err = cancelErr
-			t.icon = ui.IconCancelled
-			t.finalValue = ui.ErrorMessageStyle.Render(cancelErr.Error())
-			t.SetStopOnError(true)
-			return t, nil
+			t.stopTimeout()
+			return t.confirmSelection()
 
 		case "enter":
 			t.stopTimeout()
-			keys, names := t.collectSelectionSnapshot()
-			if len(keys) == 0 {
-				if t.requireSelection {
-					// Если ничего не выбрано и требуется выбор, показываем подсказку
-					t.showHelpMessage = true
-					t.helpMessage = defaults.NeedSelectAtLeastOne
-					return t, nil
-				}
-				// Пустой выбор разрешен: завершаем задачу без выбранных элементов
-				t.done = true
-				t.icon = ui.IconDone
-				t.finalValue = defaults.DefaultSuccessLabel
-				// Убеждаемся, что ошибка очищена
-				t.SetError(nil)
-				t.showHelpMessage = false
-				t.helpMessage = ""
-				return t, nil
-			}
-			// Если есть выбранные элементы, завершаем задачу успешно
-			t.done = true
-			t.icon = ui.IconDone
-			t.finalValue = strings.Join(names, defaults.DefaultSeparator)
-			// Убеждаемся, что ошибка очищена
-			t.SetError(nil)
-			t.showHelpMessage = false
-			t.helpMessage = ""
-			return t, nil
+			return t.confirmSelection()
 		}
 		// После обработки клавиш возвращаем команду для продолжения тикера
 		if t.timeoutEnabled && t.timeoutManager != nil && t.timeoutManager.IsActive() {
@@ -1027,6 +995,36 @@ func (t *MultiSelectTask) Update(msg tea.Msg) (Task, tea.Cmd) {
 		return t, t.timeoutManager.StartTickerAndTimeout()
 	}
 
+	return t, nil
+}
+
+// confirmSelection завершает задачу, имитируя поведение клавиши Enter.
+func (t *MultiSelectTask) confirmSelection() (Task, tea.Cmd) {
+	keys, names := t.collectSelectionSnapshot()
+	if len(keys) == 0 {
+		if t.requireSelection {
+			// Если требуется выбор, показываем подсказку и остаемся активными
+			t.showHelpMessage = true
+			t.helpMessage = defaults.NeedSelectAtLeastOne
+			return t, nil
+		}
+		// Пустой выбор разрешен — завершаем без ошибок
+		t.done = true
+		t.icon = ui.IconDone
+		t.finalValue = defaults.DefaultSuccessLabel
+		t.SetError(nil)
+		t.showHelpMessage = false
+		t.helpMessage = ""
+		return t, nil
+	}
+
+	// Есть выбранные элементы — завершаем с их перечислением
+	t.done = true
+	t.icon = ui.IconDone
+	t.finalValue = strings.Join(names, defaults.DefaultSeparator)
+	t.SetError(nil)
+	t.showHelpMessage = false
+	t.helpMessage = ""
 	return t, nil
 }
 

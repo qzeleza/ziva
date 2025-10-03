@@ -152,9 +152,8 @@ func TestSingleSelectTaskLeftCancels(t *testing.T) {
 	canceledTask, ok := updated.(*SingleSelectTask)
 	assert.True(t, ok, "Обновленная задача должна быть типа *SingleSelectTask")
 	assert.True(t, canceledTask.IsDone(), "Задача должна завершиться после нажатия ←")
-	if err := canceledTask.Error(); assert.NotNil(t, err, "Ошибка должна быть установлена") {
-		assert.Equal(t, defaults.ErrorMsgCanceled, err.Error())
-	}
+	assert.NoError(t, canceledTask.Error(), "После нажатия ← не должно быть ошибки")
+	assert.Equal(t, options[0], canceledTask.GetSelected(), "Должна быть выбрана текущая опция")
 }
 
 func TestSingleSelectTaskRightSelects(t *testing.T) {
