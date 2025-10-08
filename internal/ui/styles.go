@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/qzeleza/ziva/internal/performance"
+	"reflect"
 )
 
 var (
@@ -68,8 +69,8 @@ var (
 	SelectionStyle       = lipgloss.NewStyle().Foreground(ColorBrightGreen)             // Выделение (Да): ярко-зелёный
 	SelectionNoStyle     = lipgloss.NewStyle().Foreground(ColorBrightRed).Bold(true)    // Выделение (Нет): ярко-красный
 	ActiveStyle          = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Активный элемент: ярко-синий
-	MenuExitItemStyle    = lipgloss.NewStyle()                                          // По умолчанию стиль пунктов выхода совпадает с обычным текстом
-	MenuBackItemStyle    = lipgloss.NewStyle()                                          // По умолчанию стиль пунктов возврата совпадает с обычным текстом
+	MenuExitItemStyle    = menuActionDefaultStyle()                                     // По умолчанию кнопки выхода подсвечены
+	MenuBackItemStyle    = menuActionDefaultStyle()                                     // По умолчанию кнопки возврата подсвечены
 	InputStyle           = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Стиль для активного ввода
 	SpinnerStyle         = lipgloss.NewStyle().Foreground(ColorLightBlue).Bold(true)    // Стиль для спиннера
 	ActiveTitleStyle     = lipgloss.NewStyle().Foreground(ColorBrightGreen).Bold(true)  // Активный заголовок ввода
@@ -95,6 +96,26 @@ const (
 var (
 	MessageIndent = strings.Repeat(" ", MessageIndentSpaces) // Отступ для сообщений об ошибках
 )
+
+func menuActionDefaultStyle() lipgloss.Style {
+	return lipgloss.NewStyle().
+		Foreground(ColorBrightCyan).
+		Bold(true)
+}
+
+// MenuActionDefaultStyle возвращает стиль подсветки для специальных пунктов меню.
+func MenuActionDefaultStyle() lipgloss.Style {
+	return menuActionDefaultStyle()
+}
+
+// MenuItemPlainStyle возвращает стиль, совпадающий с обычными пунктами меню (белый текст).
+func MenuItemPlainStyle() lipgloss.Style {
+	return lipgloss.NewStyle().Foreground(ColorBrightWhite)
+}
+
+func isStyleEmpty(style lipgloss.Style) bool {
+	return reflect.DeepEqual(style, lipgloss.Style{})
+}
 
 // Символы для новой системы отображения
 const (
@@ -380,14 +401,34 @@ func SetErrorColor(errorsColor lipgloss.TerminalColor, statusColor lipgloss.Term
 	ErrorStatusStyle = ErrorStatusStyle.Foreground(statusColor)
 }
 
-// SetMenuExitItemStyle обновляет стиль для пунктов меню выхода
+// SetMenuExitItemStyle обновляет стиль для пунктов меню выхода.
+// Пустой стиль сбрасывает подсветку к значениям по умолчанию.
 func SetMenuExitItemStyle(style lipgloss.Style) {
+	if isStyleEmpty(style) {
+		MenuExitItemStyle = menuActionDefaultStyle()
+		return
+	}
 	MenuExitItemStyle = style
 }
 
-// SetMenuBackItemStyle обновляет стиль для пунктов меню возврата
+// ResetMenuExitItemStyle сбрасывает стиль пункта выхода к значениям по умолчанию.
+func ResetMenuExitItemStyle() {
+	MenuExitItemStyle = menuActionDefaultStyle()
+}
+
+// SetMenuBackItemStyle обновляет стиль для пунктов меню возврата.
+// Пустой стиль сбрасывает подсветку к значениям по умолчанию.
 func SetMenuBackItemStyle(style lipgloss.Style) {
+	if isStyleEmpty(style) {
+		MenuBackItemStyle = menuActionDefaultStyle()
+		return
+	}
 	MenuBackItemStyle = style
+}
+
+// ResetMenuBackItemStyle сбрасывает стиль пункта "Назад" к значениям по умолчанию.
+func ResetMenuBackItemStyle() {
+	MenuBackItemStyle = menuActionDefaultStyle()
 }
 
 // ResetErrorColors сбрасывает цвета ошибок к значениям по умолчанию

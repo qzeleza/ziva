@@ -134,20 +134,61 @@ ziva.ResetErrorColors()
 
 ### SetExitMenuItemStyle(style lipgloss.Style)
 
-Changes the style used to render localized “Exit” menu items in list tasks.
+Changes the style used to render localized “Exit” menu items in list tasks. By default Ziva highlights the action with a cyan bold style (`ziva.MenuActionDefaultStyle()`).
 
 ```go
-exitStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888")).Bold(true)
-ziva.SetExitMenuItemStyle(exitStyle)
+// Make the exit item look like a regular menu row
+ziva.SetExitMenuItemStyle(ziva.MenuItemDefaultStyle())
+
+// Or keep the highlight but adjust the color
+altExit := ziva.MenuActionDefaultStyle().Foreground(lipgloss.Color("#FFB000"))
+ziva.SetExitMenuItemStyle(altExit)
 ```
 
 ### SetBackMenuItemStyle(style lipgloss.Style)
 
-Changes the style used to render localized “Back” menu items in list tasks.
+Changes the style used to render localized “Back” menu items in list tasks. Uses the same highlighted style as the exit action by default.
 
 ```go
-backStyle := lipgloss.NewStyle().Italic(true)
-ziva.SetBackMenuItemStyle(backStyle)
+// Turn the "Back" item into a neutral entry
+ziva.SetBackMenuItemStyle(ziva.MenuItemDefaultStyle())
+
+// Restore the highlight later
+ziva.ResetBackMenuItemStyle()
+```
+
+### ResetExitMenuItemStyle()
+
+Restores the default highlight for “Exit” items.
+
+```go
+ziva.ResetExitMenuItemStyle()
+```
+
+### ResetBackMenuItemStyle()
+
+Restores the default highlight for “Back” items.
+
+```go
+ziva.ResetBackMenuItemStyle()
+```
+
+### MenuActionDefaultStyle() lipgloss.Style
+
+Returns the cyan bold style used for special menu actions.
+
+```go
+// Reuse the default highlight for a custom shortcut
+task.WithSelectAll("Enable all", "Disable all", ziva.MenuActionDefaultStyle())
+```
+
+### MenuItemDefaultStyle() lipgloss.Style
+
+Returns the neutral style that matches regular menu items.
+
+```go
+// Align a special entry with standard items
+task.WithSelectAll("Enable all", "Disable all", ziva.MenuItemDefaultStyle())
 ```
 
 ### EnableEmbeddedMode()

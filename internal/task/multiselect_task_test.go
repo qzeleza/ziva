@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/qzeleza/ziva/internal/defaults"
+	"github.com/qzeleza/ziva/internal/ui"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -185,7 +187,9 @@ func TestMultiSelectTaskWithSelectAll(t *testing.T) {
 	// Проверяем, что опция "Выбрать все" включена
 	assert.True(t, multiSelectTask.hasSelectAll, "Опция 'Выбрать все' должна быть включена")
 	assert.Equal(t, -1, multiSelectTask.cursor, "Курсор должен быть на опции 'Выбрать все'")
-	assert.Equal(t, defaults.SelectAllDefaultText, multiSelectTask.selectAllText, "Текст по умолчанию должен совпадать с локализацией")
+	assert.Equal(t, defaults.SelectAllDefaultText, multiSelectTask.selectAllEnableText, "Текст по умолчанию должен совпадать с локализацией")
+	assert.Equal(t, defaults.SelectAllDisableDefaultText, multiSelectTask.selectAllDisableText, "Текст отключения по умолчанию должен совпадать с локализацией")
+	assert.Equal(t, ui.MenuActionDefaultStyle(), multiSelectTask.selectAllStyle, "Стиль по умолчанию должен совпадать с ожидаемым")
 
 	// Проверяем, что View содержит опцию "Выбрать все"
 	view := multiSelectTask.View(80)
@@ -206,6 +210,8 @@ func TestMultiSelectTaskWithSelectAll(t *testing.T) {
 	// Проверяем, что все элементы выбраны
 	assert.True(t, multiSelectTaskAfterSelectAll.isAllSelected(), "Все элементы должны быть выбраны")
 	assert.Equal(t, len(options), multiSelectTaskAfterSelectAll.selected.Count(), "Количество выбранных элементов должно равняться количеству опций")
+	selectAllView := stripANSI(multiSelectTaskAfterSelectAll.View(80))
+	assert.Contains(t, selectAllView, defaults.SelectAllDisableDefaultText, "После выбора всех элементов текст должен переключаться на режим отключения")
 
 	// Повторно выбираем "Выбрать все" чтобы снять выбор со всех
 	updatedTask2, _ := multiSelectTaskAfterSelectAll.Update(tea.KeyMsg{Type: tea.KeySpace})
@@ -214,6 +220,8 @@ func TestMultiSelectTaskWithSelectAll(t *testing.T) {
 	// Проверяем, что все элементы не выбраны
 	assert.False(t, multiSelectTaskAfterUnselectAll.isAllSelected(), "Все элементы должны быть не выбраны")
 	assert.Equal(t, 0, multiSelectTaskAfterUnselectAll.selected.Count(), "Количество выбранных элементов должно быть равно 0")
+	selectNoneView := stripANSI(multiSelectTaskAfterUnselectAll.View(80))
+	assert.Contains(t, selectNoneView, defaults.SelectAllDefaultText, "После отключения всех элементов должен отображаться текст включения")
 }
 
 func TestMultiSelectTaskDisabledItems(t *testing.T) {
@@ -354,12 +362,37 @@ func TestMultiSelectTaskWithCustomSelectAllText(t *testing.T) {
 	multiSelectTask := NewMultiSelectTask(title, makeMultiItems(options)).WithSelectAll(customText)
 
 	// Проверяем, что кастомный текст установлен
-	assert.Equal(t, customText, multiSelectTask.selectAllText, "Кастомный текст должен быть установлен")
+	assert.Equal(t, customText, multiSelectTask.selectAllEnableText, "Кастомный текст должен быть установлен")
+	assert.Equal(t, defaults.SelectAllDisableDefaultText, multiSelectTask.selectAllDisableText, "Текст отключения должен остаться значением по умолчанию")
+	assert.Equal(t, ui.MenuActionDefaultStyle(), multiSelectTask.selectAllStyle, "При отсутствии кастомного стиля должен применяться стиль по умолчанию")
 
 	// Проверяем, что View содержит кастомный текст
 	view := multiSelectTask.View(80)
 	assert.Contains(t, view, customText, "View должен содержать кастомный текст")
 	assert.NotContains(t, view, "Выбрать все", "View не должен содержать текст по умолчанию")
+}
+
+func TestMultiSelectTaskWithCustomSelectAllDisableText(t *testing.T) {
+	title := "Выберите пакеты"
+	options := []string{"Пакет 1", "Пакет 2"}
+	enableText := "Включить все"
+	disableText := "Снять весь выбор"
+	customStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#ff9f1c")).Bold(true)
+	task := NewMultiSelectTask(title, makeMultiItems(options)).WithSelectAll(enableText, disableText, customStyle)
+
+	assert.Equal(t, enableText, task.selectAllEnableText, "Кастомный текст включения должен быть установлен")
+	assert.Equal(t, disableText, task.selectAllDisableText, "Кастомный текст отключения должен быть установлен")
+	assert.Equal(t, customStyle, task.selectAllStyle, "Должен использоваться кастомный стиль для опции")
+
+	initialView := stripANSI(task.View(80))
+	assert.Contains(t, initialView, enableText, "Начальный вид должен содержать текст включения")
+	assert.NotContains(t, initialView, disableText, "Начальный вид не должен содержать текст отключения")
+
+	updated, _ := task.Update(tea.KeyMsg{Type: tea.KeySpace})
+	taskSelected, _ := updated.(*MultiSelectTask)
+	selectedView := stripANSI(taskSelected.View(80))
+	assert.Contains(t, selectedView, disableText, "После выбора всех элементов должен отображаться текст отключения")
+	assert.NotContains(t, selectedView, enableText, "После выбора всех элементов не должен отображаться текст включения")
 }
 
 // TestMultiSelectTaskNavigationWithSelectAll проверяет навигацию с опцией "Выбрать все"

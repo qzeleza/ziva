@@ -660,10 +660,11 @@ func (t *SingleSelectTask) View(width int) string {
 
 	sb.WriteString("\n" + ui.DrawLine(width))
 	if activeHelp != "" {
-		sb.WriteString(ui.HelpTextStyle.Render(fmt.Sprintf("%s%s", helpIndent, activeHelp)))
+		sb.WriteString(ui.HelpTextStyle.Render(indentLines(activeHelp, helpIndent)))
 		sb.WriteString("\n")
 	}
-	sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s%s", helpIndent, defaults.SingleSelectHelp)))
+	navigationHelp := indentLines(formatNavigationHelpText(defaults.SingleSelectHelp, width), helpIndent)
+	sb.WriteString(ui.SubtleStyle.Render(navigationHelp))
 
 	return sb.String()
 }

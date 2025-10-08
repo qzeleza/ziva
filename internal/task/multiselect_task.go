@@ -120,19 +120,21 @@ func (s *SelectionBitset) SetAll(n int) {
 // MultiSelectTask позволяет выбрать несколько вариантов из списка.
 type MultiSelectTask struct {
 	BaseTask
-	items           []choice               // Список вариантов выбора
-	disabled        map[int]struct{}       // Итоговый набор отключённых пунктов
-	staticDisabled  map[int]struct{}       // Статические блокировки из конфигурации
-	dynamicDisabled map[int]struct{}       // Динамические блокировки по зависимостям
-	dependencies    map[int]dependencyRule // Правила зависимостей по индексам
-	selected        SelectionBitset        // Битовый набор выбранных элементов (оптимизировано для embedded)
-	fallbackMap     map[int]struct{}       // Резервная карта для списков > 64 элементов
-	cursor          int                    // Текущая позиция курсора
-	activeStyle     lipgloss.Style         // Стиль для активного элемента
-	hasSelectAll    bool                   // Включена ли опция "Выбрать все"
-	selectAllText   string                 // Текст опции "Выбрать все"
-	showHelpMessage bool                   // Показывать ли сообщение-подсказку
-	helpMessage     string                 // Текст сообщения-подсказки
+	items                []choice               // Список вариантов выбора
+	disabled             map[int]struct{}       // Итоговый набор отключённых пунктов
+	staticDisabled       map[int]struct{}       // Статические блокировки из конфигурации
+	dynamicDisabled      map[int]struct{}       // Динамические блокировки по зависимостям
+	dependencies         map[int]dependencyRule // Правила зависимостей по индексам
+	selected             SelectionBitset        // Битовый набор выбранных элементов (оптимизировано для embedded)
+	fallbackMap          map[int]struct{}       // Резервная карта для списков > 64 элементов
+	cursor               int                    // Текущая позиция курсора
+	activeStyle          lipgloss.Style         // Стиль для активного элемента
+	hasSelectAll         bool                   // Включена ли опция "Выбрать все"
+	selectAllEnableText  string                 // Текст опции активации "Выбрать все"
+	selectAllDisableText string                 // Текст опции отключения выбора
+	selectAllStyle       lipgloss.Style         // Стиль отображения опции "Выбрать все"
+	showHelpMessage      bool                   // Показывать ли сообщение-подсказку
+	helpMessage          string                 // Текст сообщения-подсказки
 	// Viewport (окно просмотра) для ограничения количества отображаемых элементов
 	viewportSize     int  // Размер viewport (количество видимых элементов), 0 = показать все
 	viewportStart    int  // Начальная позиция viewport в списке элементов
@@ -149,18 +151,20 @@ func NewMultiSelectTask(title string, items []Item) *MultiSelectTask {
 	normalized := normalizeItems(items)
 
 	task := &MultiSelectTask{
-		BaseTask:        NewBaseTask(title),
-		items:           normalized,
-		disabled:        make(map[int]struct{}),
-		staticDisabled:  make(map[int]struct{}),
-		dynamicDisabled: make(map[int]struct{}),
-		dependencies:    make(map[int]dependencyRule),
-		cursor:          0, // Начинаем с первого элемента списка
-		activeStyle:     ui.ActiveStyle,
-		hasSelectAll:    false,
-		selectAllText:   defaults.SelectAllDefaultText,
-		showHelpMessage: false,
-		helpMessage:     "",
+		BaseTask:             NewBaseTask(title),
+		items:                normalized,
+		disabled:             make(map[int]struct{}),
+		staticDisabled:       make(map[int]struct{}),
+		dynamicDisabled:      make(map[int]struct{}),
+		dependencies:         make(map[int]dependencyRule),
+		cursor:               0, // Начинаем с первого элемента списка
+		activeStyle:          ui.ActiveStyle,
+		hasSelectAll:         false,
+		selectAllEnableText:  defaults.SelectAllDefaultText,
+		selectAllDisableText: defaults.SelectAllDisableDefaultText,
+		selectAllStyle:       ui.MenuActionDefaultStyle(),
+		showHelpMessage:      false,
+		helpMessage:          "",
 		// Viewport по умолчанию отключен (показываем все элементы)
 		viewportSize:     0,
 		viewportStart:    0,
@@ -672,16 +676,42 @@ func (t *MultiSelectTask) getVisibleRange() (int, int, bool) {
 // WithSelectAll добавляет опцию "Выбрать все" в начало списка.
 // При выборе этой опции все остальные пункты автоматически помечаются/снимаются.
 //
-// @param text Текст для опции "Выбрать все" (по умолчанию "Выбрать все")
+// @param options Дополнительные параметры: сначала текст включения, затем текст отключения, далее стиль (lipgloss.Style)
 // @return Указатель на задачу для цепочки вызовов
-func (t *MultiSelectTask) WithSelectAll(text ...string) *MultiSelectTask {
+func (t *MultiSelectTask) WithSelectAll(options ...interface{}) *MultiSelectTask {
 	t.hasSelectAll = true
 	t.cursor = -1 // Начинаем с опции "Выбрать все"
-	if len(text) > 0 && strings.TrimSpace(text[0]) != "" {
-		t.selectAllText = text[0]
-	} else {
-		t.selectAllText = defaults.SelectAllDefaultText
+	enableText := defaults.SelectAllDefaultText
+	disableText := defaults.SelectAllDisableDefaultText
+	style := ui.MenuActionDefaultStyle()
+	stringIndex := 0
+
+	for _, option := range options {
+		switch v := option.(type) {
+		case string:
+			trimmed := strings.TrimSpace(v)
+			if trimmed == "" {
+				continue
+			}
+			switch stringIndex {
+			case 0:
+				enableText = trimmed
+			case 1:
+				disableText = trimmed
+			}
+			stringIndex++
+		case lipgloss.Style:
+			style = v
+		case *lipgloss.Style:
+			if v != nil {
+				style = *v
+			}
+		}
 	}
+
+	t.selectAllEnableText = enableText
+	t.selectAllDisableText = disableText
+	t.selectAllStyle = style
 	t.ensureCursorSelectable()
 	t.updateViewport()
 	return t
@@ -1129,26 +1159,30 @@ func (t *MultiSelectTask) View(width int) string {
 	if showSelectAll {
 		checked := " "
 		var itemPrefix string
-		selectAllText := t.selectAllText
+		displayText := t.selectAllEnableText
 
 		// Проверяем, выбраны ли все элементы
 		if t.isAllSelected() {
 			checked = ui.IconSelected
+			displayText = t.selectAllDisableText
 		}
 
 		// Определяем префикс для опции "Выбрать все"
 		if t.cursor == -1 {
 			// Опция "Выбрать все" активна
 			itemPrefix = ui.GetSelectItemPrefix("active")
-			selectAllText = t.activeStyle.Render(selectAllText)
 		} else {
 			// Опция "Выбрать все" не активна - всегда показываем префикс "above"
 			// потому что курсор находится ниже неё (на элементах списка)
 			itemPrefix = ui.GetSelectItemPrefix("above")
 		}
 
+		// Применяем стиль отображения
+		styleToApply := t.selectAllStyle
+		displayText = styleToApply.Render(displayText)
+
 		// Формируем строку для отображения опции "Выбрать все"
-		sb.WriteString(fmt.Sprintf("%s[%s] %s\n", itemPrefix, checked, selectAllText))
+		sb.WriteString(fmt.Sprintf("%s[%s] %s\n", itemPrefix, checked, displayText))
 	}
 
 	// Добавляем индикатор прокрутки вверх, если есть скрытые элементы выше
@@ -1281,10 +1315,14 @@ func (t *MultiSelectTask) View(width int) string {
 	}
 	// Если есть активный элемент, добавляем его подсказку
 	if activeHelp != "" {
-		sb.WriteString(ui.HelpTextStyle.Render(fmt.Sprintf("%s%s", helpIndent, activeHelp)))
+		sb.WriteString(ui.HelpTextStyle.Render(indentLines(activeHelp, helpIndent)))
 	}
 	// Добавляем подсказку
-	sb.WriteString(ui.SubtleStyle.Render(fmt.Sprintf("%s%s%s", helpLine, helpIndent, helpText)))
+	if helpLine != "" {
+		sb.WriteString(helpLine)
+	}
+	formattedHelp := indentLines(formatNavigationHelpText(helpText, width), helpIndent)
+	sb.WriteString(ui.SubtleStyle.Render(formattedHelp))
 
 	return sb.String()
 }

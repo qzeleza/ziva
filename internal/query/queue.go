@@ -400,13 +400,18 @@ func (m *Model) Init() tea.Cmd {
 func (m *Model) setTitle(width int) string {
 	var result string
 	if m.appName != "" {
-		rightParts := []string{m.appNameStyle.Render(m.appName)}
+		// Если есть версия, добавляем её в левую часть заголовка
+		rightParts := make([]string, 0, 3)
 		if m.appVersion != "" {
-			rightParts = append(rightParts, performance.FastConcat(" ", m.appVersionStyle.Render(m.appVersion)))
+			rightParts = append(rightParts, m.appVersionStyle.Render(m.appVersion), " ")
 		}
+		// Добавляем отступ в конце
+		rightParts = append(rightParts, m.appNameStyle.Render(m.appName))
 		right := performance.FastConcat(rightParts...)
 		title := m.titleStyle.Render(m.title)
-		result = ui.AlignTextToRight(" "+title, right, width) + "\n"
+		line := ui.AlignTextToRight(" "+title, right, width+1)
+		line = strings.TrimRight(line, " ")
+		result = line + "\n"
 	} else {
 		result = "  " + m.title + "\n"
 	}

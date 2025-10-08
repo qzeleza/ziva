@@ -76,13 +76,37 @@ func DisableCompletionDelay() {
 }
 
 // SetExitMenuItemStyle обновляет стиль отображения пунктов меню выхода.
+// Передайте ziva.MenuActionDefaultStyle() для стандартной подсветки
+// или ziva.MenuItemDefaultStyle() для оформления как обычных пунктов.
 func SetExitMenuItemStyle(style lipgloss.Style) {
 	ui.SetMenuExitItemStyle(style)
 }
 
 // SetBackMenuItemStyle обновляет стиль отображения пунктов меню возврата.
+// Передайте ziva.MenuActionDefaultStyle() для стандартной подсветки
+// или ziva.MenuItemDefaultStyle() для оформления как обычных пунктов.
 func SetBackMenuItemStyle(style lipgloss.Style) {
 	ui.SetMenuBackItemStyle(style)
+}
+
+// ResetExitMenuItemStyle возвращает стиль пункта выхода к подсвеченному значению по умолчанию.
+func ResetExitMenuItemStyle() {
+	ui.ResetMenuExitItemStyle()
+}
+
+// ResetBackMenuItemStyle возвращает стиль пункта "Назад" к подсвеченному значению по умолчанию.
+func ResetBackMenuItemStyle() {
+	ui.ResetMenuBackItemStyle()
+}
+
+// MenuActionDefaultStyle возвращает стиль подсветки специальных пунктов меню (яркий циан, жирный).
+func MenuActionDefaultStyle() lipgloss.Style {
+	return ui.MenuActionDefaultStyle()
+}
+
+// MenuItemDefaultStyle возвращает стиль, совпадающий с обычными пунктами меню (белый текст).
+func MenuItemDefaultStyle() lipgloss.Style {
+	return ui.MenuItemPlainStyle()
 }
 
 // ----------------------------------------------------------------------------
@@ -441,10 +465,10 @@ func (t *MultiSelectTask) WithItemsDisabled(disabled interface{}) *MultiSelectTa
 
 // WithSelectAll добавляет опцию "Выбрать все" в начало списка
 //
-// @param text Текст опции "Выбрать все" (по умолчанию "Выбрать все")
+// @param options Дополнительные параметры: текст включения, текст отключения, стиль (lipgloss.Style)
 // @return Указатель на задачу для цепочки вызовов
-func (t *MultiSelectTask) WithSelectAll(text ...string) *MultiSelectTask {
-	t.MultiSelectTask.WithSelectAll(text...)
+func (t *MultiSelectTask) WithSelectAll(options ...interface{}) *MultiSelectTask {
+	t.MultiSelectTask.WithSelectAll(options...)
 	return t
 }
 

@@ -128,20 +128,59 @@ ziva.ResetErrorColors()
 
 ### SetExitMenuItemStyle(style lipgloss.Style)
 
-Меняет стиль отображения локализованных пунктов меню «Выход» в задачах со списками.
+Меняет стиль отображения локализованных пунктов меню «Выход» в задачах со списками. По умолчанию пункт подсвечивается бирюзовым жирным стилем (`ziva.MenuActionDefaultStyle()`).
 
 ```go
-exitStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#888")).Bold(true)
-ziva.SetExitMenuItemStyle(exitStyle)
+// Сделать «Выход» визуально таким же, как остальные строки меню
+ziva.SetExitMenuItemStyle(ziva.MenuItemDefaultStyle())
+
+// Настроить собственный вариант подсветки
+altExit := ziva.MenuActionDefaultStyle().Foreground(lipgloss.Color("#FFB000"))
+ziva.SetExitMenuItemStyle(altExit)
 ```
 
 ### SetBackMenuItemStyle(style lipgloss.Style)
 
-Меняет стиль отображения локализованных пунктов меню «Назад» в задачах со списками.
+Меняет стиль отображения локализованных пунктов меню «Назад». По умолчанию используется тот же подсвеченный стиль, что и для «Выход».
 
 ```go
-backStyle := lipgloss.NewStyle().Underline(true)
-ziva.SetBackMenuItemStyle(backStyle)
+// Сделать пункт «Назад» нейтральным
+ziva.SetBackMenuItemStyle(ziva.MenuItemDefaultStyle())
+
+// Вернуть стандартную подсветку позже
+ziva.ResetBackMenuItemStyle()
+```
+
+### ResetExitMenuItemStyle()
+
+Возвращает подсветку пункта «Выход» к значениям по умолчанию.
+
+```go
+ziva.ResetExitMenuItemStyle()
+```
+
+### ResetBackMenuItemStyle()
+
+Возвращает подсветку пункта «Назад» к значениям по умолчанию.
+
+```go
+ziva.ResetBackMenuItemStyle()
+```
+
+### MenuActionDefaultStyle() lipgloss.Style
+
+Возвращает бирюзовый жирный стиль для специальных пунктов меню.
+
+```go
+multi.WithSelectAll("Включить всё", "Убрать всё", ziva.MenuActionDefaultStyle())
+```
+
+### MenuItemDefaultStyle() lipgloss.Style
+
+Возвращает стиль, совпадающий с обычными пунктами меню (белый текст).
+
+```go
+multi.WithSelectAll("Включить всё", "Убрать всё", ziva.MenuItemDefaultStyle())
 ```
 
 ## Строковые и производительные утилиты

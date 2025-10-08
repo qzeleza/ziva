@@ -9,6 +9,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/qzeleza/ziva/internal/defaults"
+	"github.com/qzeleza/ziva/internal/ui"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -278,15 +279,21 @@ func TestSingleSelectTaskHelpTagRendering(t *testing.T) {
 	assert.NotContains(t, view, "подсказка 1", "Пустая подсказка не должна добавлять строку")
 
 	cleanView := stripANSI(view)
+	helpIndent := strings.Repeat(" ", ui.MainLeftIndent)
+	expectedHelp := indentLines(formatNavigationHelpText(defaults.SingleSelectHelp, 80), helpIndent)
+	assert.Contains(t, cleanView, expectedHelp, "Подсказка должна отображаться в выводе")
+
 	lines := strings.Split(cleanView, "\n")
+	expectedLines := strings.Split(expectedHelp, "\n")
+	firstHelpLine := expectedLines[0]
 	hintLineIndex := -1
 	for i, line := range lines {
-		if strings.Contains(line, defaults.SingleSelectHelp) {
+		if line == firstHelpLine {
 			hintLineIndex = i
 			break
 		}
 	}
-	assert.GreaterOrEqual(t, hintLineIndex, 0, "Подсказка должна отображаться в выводе")
+	assert.GreaterOrEqual(t, hintLineIndex, 0, "Первая строка подсказки должна отображаться в выводе")
 	if hintLineIndex > 0 {
 		prevLine := strings.TrimSpace(lines[hintLineIndex-1])
 		assert.NotEqual(t, "", prevLine, "Строка подсказки не должна отделяться пустой строкой")

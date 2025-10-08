@@ -24,10 +24,14 @@ task := ziva.NewMultiSelectTask("Select components", options)
 
 ```go
 // Settings
-task.WithSelectAll("Select all")                    // add "select all" option
+task.WithSelectAll(                                 // add "select all" option with custom texts and style
+    "Select all",                                   // label when the action enables everything
+    "Deselect all",                                 // label when everything is already selected
+    ziva.MenuActionDefaultStyle(),                  // optional style (defaults to highlighted cyan)
+)
 task.WithDefaultItems([]string{"item1", "item2"})   // default selected keys
 task.WithViewport(5, true)                          // viewport window
-task.WithItemsDisabled([]string{"item3"})            // disable items by key
+task.WithItemsDisabled([]string{"item3"})           // disable items by key
 
 // Get results
 selected := task.GetSelected() // []string
@@ -82,6 +86,14 @@ task := ziva.NewMultiSelectTask("Diagnostics", diagnostics).
 
 Multi-select tasks allow confirming with no items selected by default. Call `WithRequireSelection(true)` if you want to enforce the classic “select at least one item” rule and show the localized hint when Enter is pressed without a choice.
 
+### Select-all shortcut styling
+
+`WithSelectAll` accepts up to three arguments:
+
+1. Label that appears when the shortcut will select every option (defaults to the localized “Select all” string).
+2. Label that replaces it after all items are picked (defaults to the localized “Deselect all”).
+3. Optional `lipgloss.Style` for the shortcut itself. If you skip it, Ziva highlights the entry with a cyan bold style (`ziva.MenuActionDefaultStyle()`), so it stands out from regular list elements. Pass `ziva.MenuItemDefaultStyle()` if you prefer it to look like the rest of the menu.
+
 ## Usage Example
 
 ```go
@@ -92,7 +104,7 @@ components := []ziva.Item{
 }
 
 task := ziva.NewMultiSelectTask("Components", components).
-    WithSelectAll("Install all").
+    WithSelectAll("Install all", "Disable all", ziva.MenuActionDefaultStyle()).
     WithDefaultItems([]string{"web", "api"})
 
 queue := ziva.NewQueue("Setup")

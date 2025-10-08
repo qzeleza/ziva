@@ -321,6 +321,14 @@ func (t *InputTaskNew) Update(msg tea.Msg) (Task, tea.Cmd) {
 		case "ctrl+c", "esc", "Ctrl+C", "Esc":
 			// Отмена ввода
 			return t.handleCancel()
+		case "left", "Left":
+			// Обрабатываем выход по стрелке влево при пустом поле ввода
+			if performance.TrimSpaceEfficient(t.textInput.Value()) == "" {
+				return t.handleCancel()
+			}
+			var cmd tea.Cmd
+			t.textInput, cmd = t.textInput.Update(msg)
+			return t, cmd
 		case "enter":
 			// Подтверждение ввода
 			return t.handleSubmit()

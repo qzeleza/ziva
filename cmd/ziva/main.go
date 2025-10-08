@@ -93,8 +93,8 @@ func main() {
 
 	// Создаем очередь и добавляем задачи
 	queue := ziva.NewQueue(header)
-	queue.WithAppName("Жива™", "v1.0.0")
-	// queue.WithOutResultLine()
+	queue.WithAppName("Жива™", "версия 1.0.0")
+	queue.WithOutResultLine()
 	queue.WithOutSummary()
 	// queue.WithTasksNumbered(false, "[%d]")
 
@@ -135,6 +135,7 @@ func main() {
 				},
 			},
 		}).
+		WithSelectAll().
 		WithDefaultItems([]string{diagnosticLogging, diagnosticMetrics})
 
 	securityItems := []ziva.Item{

@@ -66,6 +66,7 @@ type dictionary struct {
 	MultiSelectHelp           string
 	MultiSelectHelpSelectAll  string
 	SelectAllDefaultText      string
+	SelectAllDisableText      string
 	MenuExitKeywords          []string
 	MenuBackKeywords          []string
 	InputConfirmHint          string
@@ -187,6 +188,7 @@ var (
 			MultiSelectHelp:                      "[↑/↓ навигация, →/пробел выбор, Enter подтверждение, Q/←/Esc/Ctrl+C - выход]",
 			MultiSelectHelpSelectAll:             "[↑/↓ навигация, →/пробел выбор/переключение всех, Enter подтверждение, Q/←/Esc/Ctrl+C - выход]",
 			SelectAllDefaultText:                 "Выбрать все",
+			SelectAllDisableText:                 "Отключить все",
 			MenuExitKeywords:                     []string{"выйти", "выход", "выход из программы", "выйти из приложения"},
 			MenuBackKeywords:                     []string{"назад", "обратно", "вернуться", "назад в меню"},
 			InputConfirmHint:                     "[Enter - подтвердить, Ctrl+C - отменить]",
@@ -300,6 +302,7 @@ var (
 			MultiSelectHelp:                      "[↑/↓ navigate, →/space toggle, Enter confirm, Q/←/Esc/Ctrl+C exit]",
 			MultiSelectHelpSelectAll:             "[↑/↓ navigate, →/space toggle all, Enter confirm, Q/←/Esc/Ctrl+C exit]",
 			SelectAllDefaultText:                 "Select all",
+			SelectAllDisableText:                 "Deselect all",
 			MenuExitKeywords:                     []string{"exit", "quit", "leave", "log out"},
 			MenuBackKeywords:                     []string{"back", "return", "go back", "previous"},
 			InputConfirmHint:                     "[Enter to confirm, Ctrl+C to cancel]",
@@ -413,6 +416,7 @@ var (
 			MultiSelectHelp:                      "[↑/↓ gezin, →/boşluk seç, Enter onay, Q/←/Esc/Ctrl+C çıkış]",
 			MultiSelectHelpSelectAll:             "[↑/↓ gezin, →/boşluk tümünü değiştir, Enter onay, Q/←/Esc/Ctrl+C çıkış]",
 			SelectAllDefaultText:                 "Tümünü seç",
+			SelectAllDisableText:                 "Tümünü kaldır",
 			MenuExitKeywords:                     []string{"çık", "çıkış", "çıkmak", "çıkış yap"},
 			MenuBackKeywords:                     []string{"geri", "geri dön", "dön", "geri git"},
 			InputConfirmHint:                     "[Enter onay, Ctrl+C iptal]",
@@ -526,6 +530,7 @@ var (
 			MultiSelectHelp:                      "[← выхад, ↑/↓ навігацыя, →/прабел выбар, Enter — пацвярджэнне, Q/Esc/Ctrl+C — выхад]",
 			MultiSelectHelpSelectAll:             "[← выхад, ↑/↓ навігацыя, →/прабел пераключыць усе, Enter — пацвярджэнне, Q/Esc/Ctrl+C — выхад]",
 			SelectAllDefaultText:                 "Выбраць усе",
+			SelectAllDisableText:                 "Адключыць усе",
 			MenuExitKeywords:                     []string{"выйсці", "выхад", "выйсці з праграмы"},
 			MenuBackKeywords:                     []string{"назад", "вярнуцца", "назад у меню"},
 			InputConfirmHint:                     "[Enter — пацвердзіць, Ctrl+C — скасаваць]",
@@ -639,6 +644,7 @@ var (
 			MultiSelectHelp:                      "[↑/↓ навігація, →/пробіл вибір, Enter — підтвердження, Q/←/Esc/Ctrl+C — вихід]",
 			MultiSelectHelpSelectAll:             "[↑/↓ навігація, →/пробіл перемкнути всі, Enter — підтвердження, Q/←/Esc/Ctrl+C — вихід]",
 			SelectAllDefaultText:                 "Вибрати всі",
+			SelectAllDisableText:                 "Зняти всі",
 			MenuExitKeywords:                     []string{"вийти", "вихід", "вийти з програми"},
 			MenuBackKeywords:                     []string{"назад", "повернутися", "назад до меню"},
 			InputConfirmHint:                     "[Enter — підтвердити, Ctrl+C — скасувати]",
@@ -756,6 +762,7 @@ func applyDictionary(dict dictionary) {
 	MultiSelectHelp = dict.MultiSelectHelp
 	MultiSelectHelpSelectAll = dict.MultiSelectHelpSelectAll
 	SelectAllDefaultText = dict.SelectAllDefaultText
+	SelectAllDisableDefaultText = dict.SelectAllDisableText
 	MenuExitKeywords = append([]string(nil), dict.MenuExitKeywords...)
 	MenuBackKeywords = append([]string(nil), dict.MenuBackKeywords...)
 	InputConfirmHint = dict.InputConfirmHint
