@@ -249,3 +249,4 @@ var (
 )
 
 const ClearScreen = "\033[H\033[2J"
+const HardClearScreen = "\033[3J\033[H\033[2J"

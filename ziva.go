@@ -196,9 +196,10 @@ func (q *Queue) WithTitleColor(titleColor lipgloss.TerminalColor, bold bool) *Qu
 // WithClearScreen включает/выключает очистку экрана перед запуском очереди задач
 //
 // @param clear Флаг, указывающий, нужно ли очищать экран перед запуском очереди задач
+// @param hardClear Флаг, указывающий, нужно ли использовать твердую очистку экрана (true) или нет (false)
 // @return Указатель на очередь задач
-func (q *Queue) WithClearScreen(clear bool) *Queue {
-	q.model.WithClearScreen(clear)
+func (q *Queue) WithClearScreen(clear bool, hardClear ...bool) *Queue {
+	q.model.WithClearScreen(clear, hardClear...)
 	return q
 }
 

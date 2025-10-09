@@ -119,6 +119,7 @@ type Model struct {
 	appVersionStyle lipgloss.Style // Стиль версии приложения.
 	errorTask       common.Task    // Задача, вызвавшая прерывание очереди.
 	clearScreen     bool           // Флаг очистки экрана перед запуском
+	hardClearScreen bool           // Флаг твердой очистки экрана перед запуском
 
 	// Счетчики для подсчета результатов выполнения
 	successCount int  // Количество успешно выполненных задач
@@ -154,6 +155,7 @@ func New(title string) *Model {
 		appNameStyle:    lipgloss.NewStyle().Foreground(ui.ColorDarkGray).Background(ui.ColorBrightWhite).Bold(false),
 		appVersionStyle: lipgloss.NewStyle().Foreground(ui.ColorBrightGray).Bold(false),
 		numberFormat:    defauiltNumberFormat,
+		hardClearScreen: true, // По умолчанию используется твердая очистка экрана (вместе с буфером)
 		// Инициализация параметров форматирования результатов
 		resultFormattingEnabled: true,                           // По умолчанию отключено
 		resultLinePrefix:        "  │  ",                        // Префикс по умолчанию с символом │
@@ -273,7 +275,11 @@ func (m *Model) Run() error {
 	// Если установлен флаг очистки экрана, очищаем экран перед запуском
 	if m.clearScreen {
 		// Используем ANSI-последовательность для очистки экрана
-		fmt.Print(defaults.ClearScreen)
+		if m.hardClearScreen {
+			fmt.Print(defaults.HardClearScreen) // Очищаем весь экран и его буфер
+		} else {
+			fmt.Print(defaults.ClearScreen) // Очищаем только область вывода
+		}
 	}
 
 	_, err := tea.NewProgram(m).Run()
@@ -332,9 +338,14 @@ func (m *Model) WithSummary(show bool) *Model {
 // WithClearScreen устанавливает флаг очистки экрана перед запуском очереди задач.
 //
 // @param clear Флаг, указывающий, нужно ли очищать экран перед запуском очереди задач
+// @param hardClear Флаг, указывающий, нужно ли использовать твердую очистку экрана (true) или нет (false)
+//
 // @return Указатель на очередь задач
-func (m *Model) WithClearScreen(clear bool) *Model {
+func (m *Model) WithClearScreen(clear bool, hardClear ...bool) *Model {
 	m.clearScreen = clear
+	if len(hardClear) > 0 {
+		m.hardClearScreen = hardClear[0]
+	}
 	return m
 }
 
